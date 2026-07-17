@@ -228,7 +228,7 @@
   <p class="frag big" style="margin-top:18px">You now know: a <span class="em-p">coordinator</span> is essential — it keeps every unit acting
      in the <em>right order, at the right time</em>.</p>
   <p class="frag" style="margin-top:14px">That coordinator is the <b>Control unit</b>. We'll meet it properly — clocks, signals and all —
-     <span class="em-a">later in this chapter</span>.</p>
+     <span class="em-a">right now, over the next two slides</span>.</p>
 </section>
 
 <!-- CLOCK CYCLE — introduced straight after the clap role-play -->
@@ -256,6 +256,67 @@
   <div class="card tint-teal frag" style="margin-top:8px"><h3>Our role-play, one clock cycle at a time</h3>
     <p>Clap 1 → read the numbers · Clap 2 → add · Clap 3 → increment · Clap 4 → display. Each clap was <b>one clock cycle</b>.</p></div>
   <p class="frag big em-p" style="margin-top:8px"><b>Clock cycle</b> = the time from one pulse to the next — the steady beat the whole computer marches to.</p>
+</section>
+
+<!-- ══════ CONTROL UNIT — finished here, right after the clock, BEFORE the other units ══════ -->
+
+<!-- Control in depth: the clock / heartbeat (Extended but essential) -->
+<section class="slide" data-ch="Ch 1 · The clock — the heartbeat">
+  <div class="badge b-ext"><span class="dot"></span>Extended</div>
+  <h2 style="margin-bottom:6px">What Control really runs on: the clock</h2>
+  <svg viewBox="0 0 1160 320" width="100%" height="300">
+    <!-- clock-distribution wires (Control → every unit) -->
+    <g stroke="var(--yellow)" stroke-width="2" stroke-dasharray="6 6" fill="none">
+      <path d="M 490 150 L 240 63"/><path d="M 690 150 L 920 63"/>
+      <path d="M 490 190 L 240 259"/><path d="M 690 190 L 920 259"/>
+      <path d="M 580 212 L 580 238"/>
+    </g>
+    <!-- CONTROL — the clock source -->
+    <rect x="470" y="120" width="220" height="92" rx="10" fill="var(--card)" stroke="var(--yellow)" stroke-width="3"/>
+    <text x="580" y="150" text-anchor="middle" fill="var(--yellow)" font-size="22" font-weight="700">CONTROL</text>
+    <path d="M 500 190 L 500 176 L 520 176 L 520 190 L 540 190 L 540 176 L 560 176 L 560 190 L 580 190 L 580 176 L 600 176 L 600 190 L 620 190 L 620 176 L 640 176 L 640 190 L 660 190"
+      fill="none" stroke="var(--yellow)" stroke-width="2"/>
+    <!-- units that OBEY the beat (each flashes when the pulse arrives) -->
+    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
+      <rect x="70" y="32" width="170" height="62" rx="10" class="reg" style="stroke:var(--teal)"/><text x="155" y="70" text-anchor="middle" fill="var(--teal)" font-size="19" font-weight="700">MEMORY</text></g>
+    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
+      <rect x="920" y="32" width="170" height="62" rx="10" class="reg" style="stroke:var(--teal)"/><text x="1005" y="70" text-anchor="middle" fill="var(--teal)" font-size="19" font-weight="700">REGISTERS</text></g>
+    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
+      <rect x="70" y="228" width="170" height="62" rx="10" class="reg" style="stroke:var(--green)"/><text x="155" y="266" text-anchor="middle" fill="var(--green)" font-size="19" font-weight="700">INPUT</text></g>
+    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
+      <rect x="920" y="228" width="170" height="62" rx="10" class="reg" style="stroke:var(--orange)"/><text x="1005" y="266" text-anchor="middle" fill="var(--orange)" font-size="19" font-weight="700">OUTPUT</text></g>
+    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
+      <rect x="490" y="240" width="180" height="62" rx="10" class="reg" style="stroke:var(--accent)"/><text x="580" y="278" text-anchor="middle" fill="var(--accent)" font-size="19" font-weight="700">ALU</text></g>
+    <!-- clock pulses travelling out to each unit, one per beat -->
+    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 490 150 L 240 63"/></circle>
+    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 690 150 L 920 63"/></circle>
+    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 490 190 L 240 259"/></circle>
+    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 690 190 L 920 259"/></circle>
+    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 580 212 L 580 238"/></circle>
+    <text x="580" y="316" text-anchor="middle" fill="var(--muted)" font-size="17">one clock signal fans out — every unit obeys the same beat</text>
+  </svg>
+  <p class="frag big">① The Control unit generates a steady <span class="em-y">clock</span> — a square-wave pulse, the computer's heartbeat — and sends it to <em>every</em> unit.</p>
+  <p class="frag big">② On each <span class="em-y">tick</span>, every unit does exactly one step in lock-step — latch a register, open a bus, set the ALU's operation.</p>
+  <p class="frag big">③ Ticks per second = the <span class="em-a">clock rate</span> (hertz). <b>3 GHz = 3,000,000,000 ticks/second</b> → faster clock, faster machine — same architecture, better organisation.</p>
+</section>
+
+<!-- Control unit: the SECOND kind of signal — control signals — finishes the control unit -->
+<section class="slide" data-ch="Ch 1 · Control unit">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2>Control — the conductor: its two kinds of signal</h2>
+  <p class="frag big">The clock we just met is only <em>half</em> the story. Reading the instruction sitting in the
+     <span class="em-t">IR</span> and decoding it, the control unit drives every other unit at exactly the right instant
+     by sending out <b>two kinds of signal</b>:</p>
+  <div class="row" style="margin-top:18px">
+    <div class="card tint-yellow frag"><h3>① Clock (timing) signals</h3>
+      <p>The steady <em>beat</em> — <b>WHEN</b> each step may happen. Every unit acts on the tick, then waits.</p></div>
+    <div class="card tint-purple frag"><h3>② Control signals</h3>
+      <p><b>WHAT</b> to do on that tick — "latch this register", "put that value on the bus", "tell the ALU to add".</p></div>
+  </div>
+  <p class="frag" style="margin-top:16px"><b>Processor = ALU + Control + registers.</b> Its circuitry is spread through
+     the machine, not sitting in one spot.</p>
+  <p class="frag big em-p" style="margin-top:14px">Clock (WHEN) + control signals (WHAT) — that completes the <b>Control unit</b>,
+     the coordinator. Now let's watch all five units work together, then meet the other units one by one. →</p>
 </section>
 
 <!-- five functional units — run a calculator program (no instruction-sequencing detail) -->
@@ -418,6 +479,59 @@
      <span class="em-p">cache and RAM exist</span>. (We build this whole hierarchy properly in Unit 4.)</p>
 </section>
 
+<!-- MEMORY: how memory is organised — word & address (also revisited in Ch 4) -->
+<section class="slide heroslide" data-ch="Ch 1 · A word and its address">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 class="herotitle">How memory is organised: the <span class="em-t">word</span> — 32-bit vs 64-bit</h2>
+  <div class="animwrap"><svg viewBox="0 0 1160 560" preserveAspectRatio="xMidYMid meet">
+    <!-- 32-bit memory (static) -->
+    <text x="205" y="40" text-anchor="middle" fill="var(--teal)" font-size="21" font-weight="700">32-BIT COMPUTER</text>
+    <rect x="60" y="54" width="290" height="300" rx="10" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/>
+    <g font-size="19">
+      <rect x="80" y="86" width="250" height="52" class="reg"/><text x="100" y="118" fill="var(--muted)">0</text><text x="312" y="118" text-anchor="end" class="reg-val">word · 4 B</text>
+      <rect x="80" y="146" width="250" height="52" class="reg"/><text x="100" y="178" fill="var(--muted)">4</text><text x="312" y="178" text-anchor="end" class="reg-val">word · 4 B</text>
+      <rect x="80" y="206" width="250" height="52" class="reg"/><text x="100" y="238" fill="var(--muted)">8</text><text x="312" y="238" text-anchor="end" class="reg-val">word · 4 B</text>
+      <rect x="80" y="266" width="250" height="52" class="reg"/><text x="100" y="298" fill="var(--muted)">12</text><text x="312" y="298" text-anchor="end" class="reg-val">word · 4 B</text>
+    </g>
+    <!-- STEP 1 caption: 32-bit -->
+    <g class="frag"><rect x="20" y="505" width="1120" height="42" fill="var(--bg)"/><text x="40" y="534" font-size="24" fill="var(--text)">① A word = the bits the CPU handles at once. A <tspan fill="var(--teal)">32-bit</tspan> word = 4 bytes, each with a unique address: 0, 4, 8, 12 …</text></g>
+    <!-- 64-bit memory (revealed) -->
+    <g class="frag"><text x="540" y="40" text-anchor="middle" fill="var(--purple)" font-size="21" font-weight="700">64-BIT COMPUTER</text>
+      <rect x="395" y="54" width="290" height="300" rx="10" fill="var(--surface)" stroke="var(--purple)" stroke-width="2"/>
+      <g font-size="19">
+        <rect x="415" y="86" width="250" height="52" class="reg"/><text x="435" y="118" fill="var(--muted)">0</text><text x="647" y="118" text-anchor="end" class="reg-val" style="fill:var(--purple)">word · 8 B</text>
+        <rect x="415" y="146" width="250" height="52" class="reg"/><text x="435" y="178" fill="var(--muted)">8</text><text x="647" y="178" text-anchor="end" class="reg-val" style="fill:var(--purple)">word · 8 B</text>
+        <rect x="415" y="206" width="250" height="52" class="reg"/><text x="435" y="238" fill="var(--muted)">16</text><text x="647" y="238" text-anchor="end" class="reg-val" style="fill:var(--purple)">word · 8 B</text>
+        <rect x="415" y="266" width="250" height="52" class="reg"/><text x="435" y="298" fill="var(--muted)">24</text><text x="647" y="298" text-anchor="end" class="reg-val" style="fill:var(--purple)">word · 8 B</text>
+      </g>
+      <rect x="20" y="505" width="1120" height="42" fill="var(--bg)"/><text x="40" y="534" font-size="24" fill="var(--text)">② A <tspan fill="var(--purple)">64-bit</tspan> word = 8 bytes, so word addresses step 0, 8, 16, 24 …</text></g>
+    <!-- processor + register (static) -->
+    <rect x="760" y="120" width="360" height="230" rx="12" fill="none" stroke="var(--orange)" stroke-width="2"/>
+    <text x="940" y="150" text-anchor="middle" fill="var(--orange)" font-size="20" font-weight="700">PROCESSOR</text>
+    <rect x="800" y="210" width="280" height="80" rx="10" class="reg"/><text x="826" y="258" fill="var(--muted)" font-size="20">R0</text>
+    <!-- STEP 3: copy a whole word into a register -->
+    <g class="frag">
+      <rect x="80" y="206" width="250" height="52" rx="4" fill="none" stroke="var(--green)" stroke-width="3.5"/>
+      <g class="packet" style="offset-path:path('M 330 232 C 520 470, 800 430, 936 250')"><rect x="-70" y="-18" width="140" height="36" rx="7"/><text x="0" y="6" text-anchor="middle">word @ 8</text></g>
+      <rect x="20" y="505" width="1120" height="42" fill="var(--bg)"/><text x="40" y="534" font-size="24" fill="var(--text)">③ To use a value, the processor copies the <tspan fill="var(--green)">whole word</tspan> from its address into a register (R0).</text></g>
+  </svg></div>
+</section>
+
+<!-- MEMORY: bit / byte / word definitions (also revisited in Ch 4) -->
+<section class="slide memslide" data-ch="Ch 1 · Commit to memory">
+  <div class="mhead"><div class="micon">🧠</div>
+    <div><div class="mtitle">Get this into your memory</div>
+    <div class="msub">Bit, byte, word — the definitions the exam expects.</div></div></div>
+  <div class="memcard">
+    <ul>
+      <li><span class="term">Bit</span> — the smallest unit of information: a single <b>0 or 1</b>.</li>
+      <li><span class="term">Byte</span> — a group of <b>8 bits</b> (holds one character).</li>
+      <li><span class="term">Word</span> — a group of <b>n bits</b> that the processor stores, retrieves and operates on as a <b>single unit</b>.</li>
+      <li><span class="term">Word length</span> — the number of bits in a word; typically <b>16, 32 or 64</b> bits.</li>
+    </ul>
+  </div>
+</section>
+
 <!-- MEMORY slide: memory unit exam answer -->
 <section class="slide memslide" data-ch="Ch 1 · Commit to memory">
   <div class="mhead"><div class="micon">🧠</div>
@@ -482,68 +596,12 @@
   </svg></div>
 </section>
 
-<!-- Output + Control -->
+<!-- Output unit -->
 <section class="slide" data-ch="Ch 1 · Output unit">
   <div class="badge b-sup"><span class="dot"></span>Supporting</div>
   <h2>Output — results back to the world</h2>
   <p class="frag big">The counterpart of input: sends processed results out as a display, print, or sound.</p>
   <p class="frag" style="margin-top:18px">A touchscreen does both — so we often just say <span class="em-t">I/O unit</span>.</p>
-</section>
-
-<section class="slide" data-ch="Ch 1 · Control unit">
-  <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2>Control — the conductor of the orchestra</h2>
-  <p class="frag big">It reads the instruction sitting in the <span class="em-t">IR</span>, decodes it, and drives every
-     other unit at exactly the right instant. To do that it sends out <b>two kinds of signal</b>:</p>
-  <div class="row" style="margin-top:18px">
-    <div class="card tint-yellow frag"><h3>① Clock (timing) signals</h3>
-      <p>The steady <em>beat</em> — <b>WHEN</b> each step may happen. Every unit acts on the tick and then waits.</p></div>
-    <div class="card tint-purple frag"><h3>② Control signals</h3>
-      <p><b>WHAT</b> to do on that tick — "latch this register", "put that value on the bus", "tell the ALU to add".</p></div>
-  </div>
-  <p class="frag" style="margin-top:16px"><b>Processor = ALU + Control + registers.</b> Its circuitry is spread through
-     the machine, not sitting in one spot.</p>
-  <p class="frag em-y" style="margin-top:16px">But what keeps all those signals in step? A heartbeat. →</p>
-</section>
-
-<!-- Control in depth: the clock / heartbeat (Extended but essential) -->
-<section class="slide" data-ch="Ch 1 · The clock — the heartbeat">
-  <div class="badge b-ext"><span class="dot"></span>Extended</div>
-  <h2 style="margin-bottom:6px">What Control really runs on: the clock</h2>
-  <svg viewBox="0 0 1160 320" width="100%" height="300">
-    <!-- clock-distribution wires (Control → every unit) -->
-    <g stroke="var(--yellow)" stroke-width="2" stroke-dasharray="6 6" fill="none">
-      <path d="M 490 150 L 240 63"/><path d="M 690 150 L 920 63"/>
-      <path d="M 490 190 L 240 259"/><path d="M 690 190 L 920 259"/>
-      <path d="M 580 212 L 580 238"/>
-    </g>
-    <!-- CONTROL — the clock source -->
-    <rect x="470" y="120" width="220" height="92" rx="10" fill="var(--card)" stroke="var(--yellow)" stroke-width="3"/>
-    <text x="580" y="150" text-anchor="middle" fill="var(--yellow)" font-size="22" font-weight="700">CONTROL</text>
-    <path d="M 500 190 L 500 176 L 520 176 L 520 190 L 540 190 L 540 176 L 560 176 L 560 190 L 580 190 L 580 176 L 600 176 L 600 190 L 620 190 L 620 176 L 640 176 L 640 190 L 660 190"
-      fill="none" stroke="var(--yellow)" stroke-width="2"/>
-    <!-- units that OBEY the beat (each flashes when the pulse arrives) -->
-    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
-      <rect x="70" y="32" width="170" height="62" rx="10" class="reg" style="stroke:var(--teal)"/><text x="155" y="70" text-anchor="middle" fill="var(--teal)" font-size="19" font-weight="700">MEMORY</text></g>
-    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
-      <rect x="920" y="32" width="170" height="62" rx="10" class="reg" style="stroke:var(--teal)"/><text x="1005" y="70" text-anchor="middle" fill="var(--teal)" font-size="19" font-weight="700">REGISTERS</text></g>
-    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
-      <rect x="70" y="228" width="170" height="62" rx="10" class="reg" style="stroke:var(--green)"/><text x="155" y="266" text-anchor="middle" fill="var(--green)" font-size="19" font-weight="700">INPUT</text></g>
-    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
-      <rect x="920" y="228" width="170" height="62" rx="10" class="reg" style="stroke:var(--orange)"/><text x="1005" y="266" text-anchor="middle" fill="var(--orange)" font-size="19" font-weight="700">OUTPUT</text></g>
-    <g><animate attributeName="opacity" values="0.5;0.5;1;0.6" keyTimes="0;0.55;0.85;1" dur="1s" repeatCount="indefinite"/>
-      <rect x="490" y="240" width="180" height="62" rx="10" class="reg" style="stroke:var(--accent)"/><text x="580" y="278" text-anchor="middle" fill="var(--accent)" font-size="19" font-weight="700">ALU</text></g>
-    <!-- clock pulses travelling out to each unit, one per beat -->
-    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 490 150 L 240 63"/></circle>
-    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 690 150 L 920 63"/></circle>
-    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 490 190 L 240 259"/></circle>
-    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 690 190 L 920 259"/></circle>
-    <circle r="7" fill="var(--yellow)"><animateMotion dur="1s" repeatCount="indefinite" path="M 580 212 L 580 238"/></circle>
-    <text x="580" y="316" text-anchor="middle" fill="var(--muted)" font-size="17">one clock signal fans out — every unit obeys the same beat</text>
-  </svg>
-  <p class="frag big">① The Control unit generates a steady <span class="em-y">clock</span> — a square-wave pulse, the computer's heartbeat — and sends it to <em>every</em> unit.</p>
-  <p class="frag big">② On each <span class="em-y">tick</span>, every unit does exactly one step in lock-step — latch a register, open a bus, set the ALU's operation.</p>
-  <p class="frag big">③ Ticks per second = the <span class="em-a">clock rate</span> (hertz). <b>3 GHz = 3,000,000,000 ticks/second</b> → faster clock, faster machine — same architecture, better organisation.</p>
 </section>
 
 <!-- MEMORY slide: five units exam answer -->
