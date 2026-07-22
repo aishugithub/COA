@@ -8,9 +8,9 @@
   :root{
     --bg:#0D1117; --surface:#161B22; --card:#1C2333;
     --accent:#58A6FF; --accentGlow:#1F6FEB;
-    --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF;
-    --red:#F85149; --orange:#F0883E; --teal:#39D0D8;
-    --text:#E6EDF3; --muted:#8B949E; --border:#30363D;
+    --green:#56D364; --yellow:#F2C94C; --purple:#D2A8FF;
+    --red:#FF7B72; --orange:#F0883E; --teal:#56D4DD;
+    --text:#F5F8FC; --muted:#E6EDF3; --border:#5A6472;
   }
   *{box-sizing:border-box; margin:0; padding:0}
   html,body{height:100%; background:var(--bg); color:var(--text);
@@ -113,6 +113,11 @@
     to{offset-distance:100%; opacity:1} }
   .packet rect{fill:var(--yellow)}
   .packet text{fill:#0D1117; font-size:19px; font-weight:800}
+
+  /* SMIL packets on step-through slides: only the CURRENT step's packet is shown,
+     so a 30-step animation never piles every packet on screen at once. */
+  .pkt{opacity:0}
+  .frag.cur .pkt{opacity:1}
 
   /* generic pulse used for "arrival" highlights */
   .frag.on .arrive{animation:arrive .6s ease .95s both}
@@ -397,26 +402,43 @@
 
 <!-- Memory unit -->
 <!-- MEMORY TIER 1: registers & cache (fast, on/near the processor) -->
-<section class="slide" data-ch="Ch 1 · Memory — registers &amp; cache">
+<section class="slide" data-ch="Ch 1 · Memory — feeding the ALU">
   <div class="badge b-core"><span class="dot"></span>Core</div>
   <div class="kicker">The Memory Unit</div>
-  <h2 style="margin-bottom:4px">The fast tier: <span class="em-t">registers</span> &amp; <span class="em-p">cache</span> — right on the processor</h2>
-  <svg viewBox="0 0 1160 205" width="100%" height="200">
-    <rect x="30" y="22" width="250" height="158" rx="12" fill="none" stroke="var(--purple)" stroke-width="2.5"/>
-    <text x="155" y="45" text-anchor="middle" fill="var(--purple)" font-size="17" font-weight="700">PROCESSOR</text>
-    <rect x="60" y="60" width="190" height="42" rx="8" class="reg" style="stroke:var(--teal)"/><text x="155" y="87" text-anchor="middle" fill="var(--teal)" font-size="18" font-weight="700">REGISTERS</text>
-    <rect x="60" y="112" width="190" height="42" rx="8" class="reg" style="stroke:var(--accent)"/><text x="155" y="139" text-anchor="middle" fill="var(--accent)" font-size="18" font-weight="700">ALU</text>
-    <rect x="320" y="55" width="150" height="94" rx="10" class="reg" style="stroke:var(--purple);stroke-width:3"/><text x="395" y="98" text-anchor="middle" fill="var(--purple)" font-size="19" font-weight="700">CACHE</text><text x="395" y="124" text-anchor="middle" fill="var(--muted)" font-size="15">tiny · SRAM</text>
-    <g opacity="0.3"><rect x="510" y="55" width="220" height="94" rx="10" class="reg"/><text x="620" y="98" text-anchor="middle" fill="var(--text)" font-size="17">MAIN MEMORY</text><text x="620" y="123" text-anchor="middle" fill="var(--muted)" font-size="14">RAM</text></g>
-    <g opacity="0.3"><rect x="770" y="55" width="250" height="94" rx="10" class="reg"/><text x="895" y="98" text-anchor="middle" fill="var(--text)" font-size="17">SECONDARY</text><text x="895" y="123" text-anchor="middle" fill="var(--muted)" font-size="14">SSD · HDD</text></g>
-    <line x1="280" y1="102" x2="320" y2="102" stroke="var(--border)" stroke-width="3"/><line x1="470" y1="102" x2="510" y2="102" stroke="var(--border)" stroke-width="3"/><line x1="730" y1="102" x2="770" y2="102" stroke="var(--border)" stroke-width="3"/>
-    <circle r="10" fill="var(--yellow)"><animateMotion dur="0.8s" repeatCount="indefinite" path="M 320 100 L 258 82"/></circle>
-    <text x="660" y="192" fill="var(--green)" font-size="18">⚡ register ≈ one clock tick · cache hit ≈ almost as fast</text>
-  </svg>
-  <div class="row" style="margin-top:10px">
-    <div class="card tint-teal frag"><h3>Registers — the very fastest</h3><p>A few tiny cells <b>inside the processor</b>. The ALU reads and writes them directly, in about <b>one clock tick</b> — which is exactly why operands are loaded into registers before any calculation.</p></div>
-    <div class="card tint-purple frag"><h3>Cache — fast SRAM hugging the CPU</h3><p>Small and costly, it keeps the data used most <em>right now</em>. A cache <b>hit</b> feeds the processor almost as fast as a register, sparing a slow trip out to main memory.</p></div>
-  </div>
+  <h2 style="margin-bottom:2px">Feeding the ALU: registers &amp; <span class="em-a">main memory</span></h2>
+  <div class="animwrap"><svg viewBox="0 0 1160 272" preserveAspectRatio="xMidYMid meet">
+    <!-- PROCESSOR (always visible) -->
+    <rect x="30" y="18" width="250" height="172" rx="12" fill="none" stroke="var(--purple)" stroke-width="2.5"/>
+    <text x="155" y="44" text-anchor="middle" fill="var(--purple)" font-size="18" font-weight="700">PROCESSOR</text>
+    <rect x="60" y="58" width="190" height="50" rx="8" class="reg" style="stroke:var(--teal)"/><text x="155" y="89" text-anchor="middle" fill="var(--teal)" font-size="18" font-weight="700">REGISTERS</text>
+    <rect x="60" y="120" width="190" height="50" rx="8" class="reg" style="stroke:var(--accent)"/><text x="155" y="151" text-anchor="middle" fill="var(--accent)" font-size="18" font-weight="700">ALU</text>
+
+    <!-- STAGE 1: registers <-> ALU, fast -->
+    <g class="frag">
+      <line x1="155" y1="108" x2="155" y2="120" stroke="var(--teal)" stroke-width="3"/>
+      <g class="packet" style="offset-path:path('M 155 110 L 155 118')"><rect x="-22" y="-13" width="44" height="26" rx="6"/><text x="0" y="5" text-anchor="middle">val</text></g>
+      <rect x="20" y="228" width="1120" height="42" fill="var(--bg)"/><text x="35" y="256" font-size="23" fill="var(--text)">① The ALU reads &amp; writes the <tspan fill="var(--teal)">registers</tspan> directly — about <tspan fill="var(--green)">one clock tick</tspan>, the fastest there is.</text></g>
+
+    <!-- STAGE 2: main memory shows up; direct trip, slow -->
+    <g class="frag">
+      <rect x="510" y="58" width="220" height="100" rx="10" class="reg" style="stroke:var(--accent);stroke-width:3"/><text x="620" y="100" text-anchor="middle" fill="var(--accent)" font-size="19" font-weight="700">MAIN MEMORY</text><text x="620" y="126" text-anchor="middle" fill="var(--muted)" font-size="15">DRAM · big · far away</text>
+      <line x1="280" y1="108" x2="510" y2="108" stroke="var(--red)" stroke-width="3" stroke-dasharray="9 6"/>
+      <g class="packet" style="offset-path:path('M 510 108 L 286 108')"><rect x="-30" y="-13" width="60" height="26" rx="6"/><text x="0" y="5" text-anchor="middle">data</text></g>
+      <rect x="20" y="228" width="1120" height="42" fill="var(--bg)"/><text x="35" y="256" font-size="23" fill="var(--text)">② But the operands really live in <tspan fill="var(--accent)">main memory</tspan> — and that trip over the bus is <tspan fill="var(--red)">slow: many clock cycles</tspan>.</text></g>
+
+    <!-- STAGE 3: cache introduced, in between -->
+    <g class="frag">
+      <rect x="320" y="58" width="150" height="100" rx="10" class="reg" style="stroke:var(--purple);stroke-width:3"/><text x="395" y="100" text-anchor="middle" fill="var(--purple)" font-size="19" font-weight="700">CACHE</text><text x="395" y="126" text-anchor="middle" fill="var(--muted)" font-size="15">fast SRAM</text>
+      <line x1="280" y1="108" x2="320" y2="108" stroke="var(--purple)" stroke-width="3"/><line x1="470" y1="108" x2="510" y2="108" stroke="var(--border)" stroke-width="3"/>
+      <g class="packet" style="offset-path:path('M 320 108 L 286 108')"><rect x="-24" y="-13" width="48" height="26" rx="6"/><text x="0" y="5" text-anchor="middle">hit</text></g>
+      <rect x="20" y="228" width="1120" height="42" fill="var(--bg)"/><text x="35" y="256" font-size="23" fill="var(--text)">③ Too slow — so we add a <tspan fill="var(--purple)">cache</tspan> in between: faster SRAM, close to the CPU (a hit ≈ register speed).</text></g>
+
+    <!-- STAGE 4: secondary shows up -->
+    <g class="frag">
+      <rect x="770" y="58" width="250" height="100" rx="10" class="reg" style="stroke:var(--orange);stroke-width:2.5"/><text x="895" y="100" text-anchor="middle" fill="var(--orange)" font-size="18" font-weight="700">SECONDARY</text><text x="895" y="126" text-anchor="middle" fill="var(--muted)" font-size="14">SSD · HDD · flash</text>
+      <line x1="730" y1="108" x2="770" y2="108" stroke="var(--border)" stroke-width="3"/>
+      <rect x="20" y="228" width="1120" height="42" fill="var(--bg)"/><text x="35" y="256" font-size="23" fill="var(--text)">④ And beneath it all, <tspan fill="var(--orange)">secondary storage</tspan> — huge, cheap, non-volatile, but the slowest of all.</text></g>
+  </svg></div>
 </section>
 
 <!-- MEMORY TIER 2: main memory (RAM) -->
@@ -672,50 +694,92 @@
   <div class="qmark">?</div>
   <div class="qlabel">Think about it</div>
   <div class="q">A program is just <span class="em-y">numbers sitting in memory</span>.
-     How does a lifeless list of numbers ever start <span class="em-p">executing</span>?</div>
-  <div class="qans frag">Because one special register — the <b>Program Counter</b> — always holds the address of the
-     <b>next</b> number to treat as an instruction. Follow it, and the list comes alive.</div>
+     How does a lifeless list of numbers ever start <span class="em-p">executing</span> — and get its life?</div>
+  <div class="qans frag">Let's build the answer step by step: first see exactly <b>how the program sits in memory</b>,
+     then find out <b>who chooses which instruction runs next</b>.</div>
 </section>
 
 <!-- ── Stored-program concept (ANIMATION) ── -->
 <section class="slide" data-ch="Ch 2 · Stored program">
   <div class="badge b-core"><span class="dot"></span>Core</div>
   <h2>The stored-program idea</h2>
-  <svg viewBox="0 0 1160 430" width="100%" height="430">
+  <div class="animwrap"><svg viewBox="0 0 1160 460" preserveAspectRatio="xMidYMid meet">
     <!-- Memory -->
-    <text x="150" y="40" class="reg-lbl" text-anchor="middle" style="fill:var(--teal)">MEMORY</text>
-    <rect x="40" y="60" width="220" height="330" rx="10" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/>
-    <g font-size="22">
-      <rect x="60" y="80"  width="180" height="46" class="reg"/>
-      <text x="150" y="110" text-anchor="middle" class="reg-val">Load  R2, N</text>
-      <rect x="60" y="134" width="180" height="46" class="reg"/><text x="150" y="164" text-anchor="middle" class="reg-val">Add   R2, R3</text>
-      <rect x="60" y="188" width="180" height="46" class="reg"/><text x="150" y="218" text-anchor="middle" class="reg-val">Store R2, SUM</text>
-      <rect x="60" y="300" width="180" height="46" class="reg"/><text x="150" y="330" text-anchor="middle" class="reg-lbl">data …</text>
+    <text x="270" y="34" text-anchor="middle" fill="var(--teal)" font-size="24" font-weight="800">MEMORY</text>
+    <rect x="40" y="46" width="470" height="404" rx="12" fill="var(--surface)" stroke="var(--teal)" stroke-width="2.5"/>
+    <text x="85" y="82" fill="var(--muted)" font-size="17">address</text>
+    <text x="330" y="82" text-anchor="middle" fill="var(--muted)" font-size="17">instruction</text>
+    <g>
+      <text x="85" y="137" fill="var(--muted)" font-size="24">100</text>
+      <rect x="150" y="100" width="340" height="56" rx="7" class="reg"/><text x="320" y="137" text-anchor="middle" class="reg-val" font-size="27">Load  R2, A</text>
+      <text x="85" y="209" fill="var(--muted)" font-size="24">104</text>
+      <rect x="150" y="172" width="340" height="56" rx="7" class="reg"/><text x="320" y="209" text-anchor="middle" class="reg-val" font-size="27">Load  R3, B</text>
+      <text x="85" y="281" fill="var(--muted)" font-size="24">108</text>
+      <rect x="150" y="244" width="340" height="56" rx="7" class="reg"/><text x="320" y="281" text-anchor="middle" class="reg-val" font-size="27">Add R4, R2, R3</text>
+      <text x="85" y="353" fill="var(--muted)" font-size="24">112</text>
+      <rect x="150" y="316" width="340" height="56" rx="7" class="reg"/><text x="320" y="353" text-anchor="middle" class="reg-val" font-size="27">Store R4, C</text>
+      <text x="85" y="425" fill="var(--muted)" font-size="24">200</text>
+      <rect x="150" y="388" width="340" height="56" rx="7" class="reg"/><text x="320" y="425" text-anchor="middle" class="reg-lbl" font-size="24">A=5 · B=3 · C=?</text>
     </g>
     <!-- visible flight track (matches the packet's offset-path) -->
-    <path class="track frag" d="M 150 103 C 420 40, 660 90, 905 200"/>
+    <path class="track frag" d="M 320 128 C 520 70, 700 120, 880 250"/>
     <!-- Processor -->
-    <text x="930" y="40" class="reg-lbl" text-anchor="middle" style="fill:var(--purple)">PROCESSOR</text>
-    <rect id="cpu5" x="720" y="60" width="400" height="330" rx="12" fill="var(--card)" stroke="var(--purple)" stroke-width="2"/>
-    <text x="920" y="150" text-anchor="middle" fill="var(--muted)" font-size="26">fetch · decode · execute</text>
-    <text x="920" y="330" text-anchor="middle" fill="var(--purple)" font-size="24" class="frag">…now obey it, then fetch the next</text>
+    <text x="885" y="40" text-anchor="middle" fill="var(--purple)" font-size="24" font-weight="800">PROCESSOR</text>
+    <rect id="cpu5" x="650" y="60" width="470" height="392" rx="14" fill="var(--card)" stroke="var(--purple)" stroke-width="2.5"/>
+    <text x="885" y="210" text-anchor="middle" fill="var(--muted)" font-size="32">fetch · decode · execute</text>
+    <text x="885" y="382" text-anchor="middle" fill="var(--purple)" font-size="28" class="frag">…now obey it, then fetch the next</text>
     <!-- instruction card gliding out of memory into the processor -->
     <g class="frag">
-      <g class="liftpkt" style="offset-path:path('M 150 103 C 420 40, 660 90, 905 200')">
-        <rect x="-98" y="-24" width="196" height="48" rx="9"/>
-        <text x="0" y="7" text-anchor="middle">Load R2, N</text>
+      <g class="liftpkt" style="offset-path:path('M 320 128 C 520 70, 700 120, 880 250')">
+        <rect x="-108" y="-27" width="216" height="54" rx="10"/>
+        <text x="0" y="8" text-anchor="middle" font-size="26">Load R2, A</text>
       </g>
     </g>
+  </svg></div>
+  <p class="frag" style="margin-top:4px; font-size:24px; line-height:1.35">The whole program is stored in <span class="em-t">memory</span>, each instruction at its own
+     <span class="em-a">address</span> (100, 104, 108 …). The processor fetches them <em>one at a time</em> —
+     but with so many instructions, <b>which one does it take next, and who decides?</b></p>
+  <p class="frag" style="margin-top:6px; font-size:17px; color:var(--muted); line-height:1.3">Symbolic <b>assembly language</b> for a processor with general-purpose registers — the
+     <b>load/store</b> convention used in the textbook (Hamacher): only <b>Load</b> and <b>Store</b> touch memory; arithmetic is register-to-register. Same <b>C = A + B</b> program throughout the module.</p>
+</section>
+
+<!-- ── The Program Counter — who decides which instruction is next ── -->
+<section class="slide" data-ch="Ch 2 · The Program Counter">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">Who picks the next instruction? The <span class="em-p">Program Counter</span></h2>
+  <svg viewBox="0 0 1160 320" width="100%" height="320">
+    <!-- Memory with the program -->
+    <text x="230" y="30" text-anchor="middle" fill="var(--teal)" font-size="20" font-weight="700">MEMORY</text>
+    <rect x="80" y="42" width="300" height="256" rx="10" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/>
+    <g font-size="21">
+      <text x="104" y="94" fill="var(--muted)" font-size="18">100</text>
+      <rect x="160" y="66" width="200" height="46" class="reg" style="stroke:var(--purple);stroke-width:3"/><text x="260" y="96" text-anchor="middle" class="reg-val">Load  R2, A</text>
+      <text x="104" y="152" fill="var(--muted)" font-size="18">104</text>
+      <rect x="160" y="124" width="200" height="46" class="reg"/><text x="260" y="154" text-anchor="middle" class="reg-val">Load  R3, B</text>
+      <text x="104" y="210" fill="var(--muted)" font-size="18">108</text>
+      <rect x="160" y="182" width="200" height="46" class="reg"/><text x="260" y="212" text-anchor="middle" class="reg-val" font-size="19">Add R4, R2, R3</text>
+      <text x="104" y="268" fill="var(--muted)" font-size="18">112</text>
+      <rect x="160" y="240" width="200" height="46" class="reg"/><text x="260" y="270" text-anchor="middle" class="reg-val">Store R4, C</text>
+    </g>
+    <!-- PC register -->
+    <rect x="640" y="140" width="270" height="104" rx="12" class="reg" style="stroke:var(--purple);stroke-width:3"/>
+    <text x="775" y="188" text-anchor="middle" fill="var(--purple)" font-size="30" font-weight="800">PC = 100</text>
+    <text x="775" y="222" text-anchor="middle" fill="var(--muted)" font-size="18">Program Counter</text>
+    <!-- arrow PC -> instruction at 100 -->
+    <path d="M 638 168 C 500 140, 445 112, 366 92" stroke="var(--purple)" stroke-width="3" fill="none" marker-end="url(#pcar)"/>
+    <text x="486" y="126" fill="var(--purple)" font-size="17">holds the address of the next instruction</text>
+    <defs><marker id="pcar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker></defs>
   </svg>
-  <p class="frag big" style="margin-top:6px">To do <em>any</em> task, its program is first placed in
-     <span class="em-t">memory</span>. The processor then <em>fetches instructions one at a time</em> —
-     the card you see leaving its cell is a single instruction on its way to be obeyed.</p>
+  <p class="frag big">Out of all those instructions, one special register decides — the <span class="em-p">Program Counter (PC)</span>.
+     It always holds the <b>address of the next instruction</b> to fetch.</p>
+  <p class="frag big">The processor reads whatever the PC points to, runs it, then the PC advances to the next address —
+     so the lifeless list finally runs itself, <em>in order</em>.</p>
 </section>
 
 <!-- ── Registers inside the processor (ANIMATION reveal) ── -->
 <section class="slide" data-ch="Ch 2 · Processor registers">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:10px">The registers that run the show</h2>
+  <h2 style="margin-bottom:10px">The PC isn't alone — the <span class="em-p">special-purpose registers</span> that run the show</h2>
   <svg viewBox="0 0 1160 440" width="100%" height="440">
     <rect x="15" y="8" width="1130" height="428" rx="16" fill="none" stroke="var(--purple)" stroke-width="2"/>
     <text x="580" y="8" dy="22" text-anchor="middle" fill="var(--purple)" font-size="22" font-weight="700"
@@ -734,11 +798,6 @@
       <text x="500" y="110" font-size="26" fill="var(--text)">Instruction Register</text>
       <text x="429" y="158" font-size="21" fill="var(--muted)">Holds the instruction that is</text>
       <text x="429" y="186" font-size="21" fill="var(--muted)"><tspan fill="var(--text)" font-weight="700">CURRENTLY</tspan> being executed.</text></g>
-    <!-- GPR -->
-    <g class="frag"><rect x="770" y="56" width="350" height="158" rx="12" class="reg" style="stroke:var(--teal)"/>
-      <text x="794" y="110" font-size="30" font-weight="800" fill="var(--teal)">R0…Rn-1</text>
-      <text x="794" y="150" font-size="24" fill="var(--text)">General-Purpose Registers</text>
-      <text x="794" y="186" font-size="21" fill="var(--muted)">Fast store for operands taken from memory.</text></g>
     <!-- MAR -->
     <g class="frag"><rect x="220" y="238" width="350" height="158" rx="12" class="reg" style="stroke:var(--accent)"/>
       <text x="244" y="294" font-size="38" font-weight="800" fill="var(--accent)">MAR</text>
@@ -755,6 +814,12 @@
     <g class="frag"><text x="960" y="300" font-size="22" fill="var(--teal)" font-weight="700">MAR + MDR</text>
       <text x="960" y="330" font-size="20" fill="var(--muted)">are the processor's</text>
       <text x="960" y="356" font-size="20" fill="var(--muted)">gateway to memory.</text></g>
+    <!-- GPR — general-purpose, revealed LAST (not a special-purpose register) -->
+    <g class="frag"><rect x="770" y="56" width="350" height="158" rx="12" class="reg" style="stroke:var(--teal)"/>
+      <text x="794" y="104" font-size="30" font-weight="800" fill="var(--teal)">R0…Rn-1</text>
+      <text x="794" y="144" font-size="24" fill="var(--text)">General-Purpose Registers</text>
+      <text x="794" y="180" font-size="21" fill="var(--muted)">Not special-purpose — a fast store</text>
+      <text x="794" y="206" font-size="21" fill="var(--muted)">for operands taken from memory.</text></g>
   </svg>
 </section>
 
@@ -773,61 +838,184 @@
   </div>
 </section>
 
-<!-- ── HERO ANIMATION: Load R2, LOC datapath ── -->
-<section class="slide heroslide" data-ch="Ch 2 · The instruction cycle">
-  <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 class="herotitle">Watch one instruction run: <span class="em-a">Load R2, LOC</span></h2>
-  <div class="animwrap"><svg viewBox="0 0 1160 492" preserveAspectRatio="xMidYMid meet">
-    <!-- MEMORY -->
-    <text x="150" y="34" text-anchor="middle" fill="var(--teal)" font-size="22" font-weight="700">MEMORY</text>
-    <rect x="50" y="48" width="210" height="380" rx="10" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/>
-    <g font-size="19">
-      <rect id="m100" x="66" y="66" width="178" height="42" class="reg"/>
-      <text x="78" y="92" fill="var(--accent)" font-weight="700">100</text><text x="238" y="92" text-anchor="end" class="reg-val" font-size="15">Load R2,LOC</text>
-      <rect x="66" y="112" width="178" height="42" class="reg"/>
-      <text x="86" y="138" fill="var(--muted)">104</text><text x="205" y="138" text-anchor="end" class="reg-lbl">…next…</text>
-      <rect id="mloc" x="66" y="340" width="178" height="42" class="reg"/>
-      <text x="86" y="366" fill="var(--muted)">LOC</text><text x="205" y="366" text-anchor="end" class="reg-val">25</text>
-    </g>
-    <!-- PROCESSOR -->
-    <text x="820" y="34" text-anchor="middle" fill="var(--purple)" font-size="22" font-weight="700">PROCESSOR</text>
-    <rect x="470" y="48" width="670" height="380" rx="12" fill="var(--card)" stroke="var(--purple)" stroke-width="2"/>
-    <rect id="pc"  x="500" y="80"  width="170" height="60" rx="8" class="reg"/><text x="585" y="108" text-anchor="middle" class="reg-lbl">PC</text><text id="pcval" x="585" y="132" text-anchor="middle" class="reg-val">100</text>
-    <rect id="ir"  x="500" y="170" width="170" height="60" rx="8" class="reg"/><text x="585" y="198" text-anchor="middle" class="reg-lbl">IR</text><text id="irval" x="585" y="222" text-anchor="middle" class="reg-val"></text>
-    <rect id="mar" x="720" y="80"  width="170" height="60" rx="8" class="reg"/><text x="805" y="108" text-anchor="middle" class="reg-lbl">MAR</text><text id="marval" x="805" y="132" text-anchor="middle" class="reg-val"></text>
-    <rect id="mdr" x="720" y="170" width="170" height="60" rx="8" class="reg"/><text x="805" y="198" text-anchor="middle" class="reg-lbl">MDR</text><text id="mdrval" x="805" y="222" text-anchor="middle" class="reg-val"></text>
-    <rect id="r2"  x="940" y="300" width="170" height="70" rx="8" class="reg"/><text x="1025" y="332" text-anchor="middle" class="reg-lbl">R2</text><text id="r2val" x="1025" y="358" text-anchor="middle" class="reg-val"></text>
-    <text x="805" y="300" text-anchor="middle" fill="var(--muted)" font-size="18">address bus ↔ data bus</text>
-
-    <!-- packets + captions: one reveal step each (caption travels with its packet) -->
-    <g class="frag"><g class="packet" style="offset-path:path('M 585 110 L 805 110')"><rect x="-46" y="-19" width="92" height="38" rx="7"/><text x="0" y="6" text-anchor="middle">100</text></g>
-      <rect x="30" y="446" width="1100" height="42" fill="var(--bg)"/><text x="50" y="475" font-size="25" fill="var(--text)">① PC → MAR — the instruction's address (100) goes to the gateway.</text></g>
-    <g class="frag"><g class="packet" style="offset-path:path('M 720 110 L 260 92')"><rect x="-46" y="-19" width="92" height="38" rx="7"/><text x="0" y="6" text-anchor="middle">addr</text></g>
-      <rect x="30" y="446" width="1100" height="42" fill="var(--bg)"/><text x="50" y="475" font-size="25" fill="var(--text)">② MAR → memory on the <tspan fill="var(--yellow)">address bus</tspan>; a Read is issued.</text></g>
-    <g class="frag"><g class="packet" style="offset-path:path('M 244 92 L 805 200')"><rect x="-72" y="-19" width="144" height="38" rx="7"/><text x="0" y="6" text-anchor="middle">Load R2,LOC</text></g>
-      <rect x="30" y="446" width="1100" height="42" fill="var(--bg)"/><text x="50" y="475" font-size="25" fill="var(--text)">③ Memory returns the instruction on the <tspan fill="var(--yellow)">data bus</tspan> into MDR.</text></g>
-    <g class="frag"><g class="packet" style="offset-path:path('M 805 200 L 585 200')"><rect x="-72" y="-19" width="144" height="38" rx="7"/><text x="0" y="6" text-anchor="middle">Load R2,LOC</text></g>
-      <rect x="30" y="446" width="1100" height="42" fill="var(--bg)"/><text x="50" y="475" font-size="25" fill="var(--text)">④ MDR → IR — the processor now holds it. PC bumps to 104.</text></g>
-    <g class="frag"><g class="packet" style="offset-path:path('M 720 110 L 260 361')"><rect x="-46" y="-19" width="92" height="38" rx="7"/><text x="0" y="6" text-anchor="middle">LOC</text></g>
-      <rect x="30" y="446" width="1100" height="42" fill="var(--bg)"/><text x="50" y="475" font-size="25" fill="var(--text)">⑤ Decode: "read LOC". LOC's address → MAR → memory.</text></g>
-    <g class="frag"><g class="packet" style="offset-path:path('M 244 361 L 805 200')"><rect x="-30" y="-19" width="60" height="38" rx="7"/><text x="0" y="6" text-anchor="middle">25</text></g>
-      <rect x="30" y="446" width="1100" height="42" fill="var(--bg)"/><text x="50" y="475" font-size="25" fill="var(--text)">⑥ Memory returns the value <tspan fill="var(--teal)">25</tspan> into MDR…</text></g>
-    <g class="frag"><g class="packet" style="offset-path:path('M 805 230 L 1025 335')"><rect x="-30" y="-19" width="60" height="38" rx="7"/><text x="0" y="6" text-anchor="middle">25</text></g>
-      <rect x="30" y="446" width="1100" height="42" fill="var(--bg)"/><text x="50" y="475" font-size="25" fill="var(--text)">⑦ …and MDR → <tspan fill="var(--teal)">R2</tspan>. Done — R2 now holds 25.</text></g>
-  </svg></div>
-</section>
-
-<!-- ── RTN notation ── -->
+<!-- ── RTN notation — taught BEFORE we read/run the program ── -->
 <section class="slide" data-ch="Ch 2 · RTN">
   <div class="badge b-sup"><span class="dot"></span>Supporting</div>
-  <h2>A shorthand for all that motion: RTN</h2>
-  <p class="frag big" style="margin-top:-4px; margin-bottom:6px"><b>RTN</b> stands for <span class="em-t">Register Transfer Notation</span> — a symbolic way to write what moves between registers and memory.</p>
-  <div class="keybox frag" style="margin:10px 0">R2 <span class="k">←</span> [LOC]</div>
-  <p class="frag" style="margin-top:22px"><span class="em-t">[ LOC ]</span> means "the <b>contents</b> of LOC".
+  <h2>First, a shorthand for what instructions do: RTN</h2>
+  <p class="frag big" style="margin-top:-4px; margin-bottom:6px"><b>RTN</b> stands for <span class="em-t">Register Transfer Notation</span> — a symbolic way to write what an instruction moves between registers and memory.</p>
+  <div class="keybox frag" style="margin:10px 0">R2 <span class="k">←</span> [A]</div>
+  <p class="frag" style="margin-top:22px"><span class="em-t">[ A ]</span> means "the <b>contents</b> of address A".
      The <span class="em-p">←</span> means "is copied into".</p>
-  <p class="frag" style="margin-top:14px">So the whole seven-step animation collapses to one honest line:
-     <span class="em-y">"copy what's in LOC into R2."</span></p>
+  <p class="frag" style="margin-top:14px"><b>Example —</b> suppose location <b>A</b> holds the value <span class="em-t">5</span>.
+     Then <b>Load R2, A</b> (<span class="em-t">R2 ← [A]</span>) copies <span class="em-t">5</span> into R2:
+     afterwards R2 = <span class="em-t">5</span>, and A itself still holds <span class="em-t">5</span>.</p>
   <p class="frag muted" style="margin-top:14px">Rule: the <b>source</b> is unchanged; the <b>destination</b> is overwritten.</p>
+</section>
+
+<!-- ── The whole program described in RTN, before we run it ── -->
+<section class="slide" data-ch="Ch 2 · The program in RTN">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:12px">Our program, line by line — in <span class="em-t">RTN</span></h2>
+  <table style="width:100%; font-size:26px">
+    <tr><th>Addr</th><th>Instruction</th><th>RTN</th><th>What it does</th></tr>
+    <tr class="frag"><td>100</td><td>Load&nbsp; R2, A</td><td><span class="em-t">R2 ← [A]</span></td><td>bring the first number (5) in from memory</td></tr>
+    <tr class="frag"><td>104</td><td>Load&nbsp; R3, B</td><td><span class="em-t">R3 ← [B]</span></td><td>bring the second number (3) in</td></tr>
+    <tr class="frag"><td>108</td><td>Add&nbsp;&nbsp; R4, R2, R3</td><td><span class="em-t">R4 ← [R2] + [R3]</span></td><td>add them → 8</td></tr>
+    <tr class="frag"><td>112</td><td>Store R4, C</td><td><span class="em-t">M[C] ← [R4]</span></td><td>write the result back to C (= 8)</td></tr>
+  </table>
+  <p class="frag big" style="margin-top:20px">Four lines of RTN describe the whole program. Now let's <em>watch all four</em>
+     actually run inside the processor, one step at a time.</p>
+</section>
+
+<!-- ── HERO ANIMATION: Load R2, A datapath ── -->
+<section class="slide heroslide" data-ch="Ch 2 · The whole program runs">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 class="herotitle">Watch the whole program run: <span class="em-a">C = A + B</span></h2>
+  <div class="animwrap"><svg viewBox="0 0 1160 520" preserveAspectRatio="xMidYMid meet">
+    <!-- ════ MEMORY ════ -->
+    <text x="185" y="40" text-anchor="middle" fill="var(--teal)" font-size="19" font-weight="700">MEMORY</text>
+    <rect x="30" y="50" width="310" height="400" rx="10" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/>
+    <rect x="44" y="66"  width="282" height="36" rx="6" class="reg"/><text x="58" y="90"  fill="var(--accent)" font-size="14" font-weight="700">100</text><text x="318" y="90"  text-anchor="end" class="reg-val" font-size="15">Load R2, A</text>
+    <rect x="44" y="106" width="282" height="36" rx="6" class="reg"/><text x="58" y="130" fill="var(--accent)" font-size="14" font-weight="700">104</text><text x="318" y="130" text-anchor="end" class="reg-val" font-size="15">Load R3, B</text>
+    <rect x="44" y="146" width="282" height="36" rx="6" class="reg"/><text x="58" y="170" fill="var(--accent)" font-size="14" font-weight="700">108</text><text x="318" y="170" text-anchor="end" class="reg-val" font-size="15">Add R4, R2, R3</text>
+    <rect x="44" y="186" width="282" height="36" rx="6" class="reg"/><text x="58" y="210" fill="var(--accent)" font-size="14" font-weight="700">112</text><text x="318" y="210" text-anchor="end" class="reg-val" font-size="15">Store R4, C</text>
+    <rect x="44" y="226" width="282" height="36" rx="6" class="reg"/><text x="58" y="250" fill="var(--red)" font-size="14" font-weight="700">116</text><text x="318" y="250" text-anchor="end" class="reg-val" style="fill:var(--red)" font-size="15">Halt</text>
+    <text x="185" y="284" text-anchor="middle" fill="var(--muted)" font-size="18">⋮</text>
+    <rect x="44" y="294" width="282" height="36" rx="6" class="reg"/><text x="58" y="318" fill="var(--teal)" font-size="14" font-weight="700">200</text><text x="150" y="318" fill="var(--muted)" font-size="13">(A)</text><text x="318" y="318" text-anchor="end" class="reg-val" font-size="16">5</text>
+    <rect x="44" y="334" width="282" height="36" rx="6" class="reg"/><text x="58" y="358" fill="var(--teal)" font-size="14" font-weight="700">204</text><text x="150" y="358" fill="var(--muted)" font-size="13">(B)</text><text x="318" y="358" text-anchor="end" class="reg-val" font-size="16">3</text>
+    <rect x="44" y="374" width="282" height="36" rx="6" class="reg"/><text x="58" y="398" fill="var(--teal)" font-size="14" font-weight="700">208</text><text x="150" y="398" fill="var(--muted)" font-size="13">(C)</text><text x="318" y="398" text-anchor="end" class="reg-val" font-size="16">?</text>
+    <text x="185" y="432" text-anchor="middle" fill="var(--muted)" font-size="14">A = 200 · B = 204 · C = 208</text>
+
+    <!-- ════ PROCESSOR ════ -->
+    <text x="755" y="40" text-anchor="middle" fill="var(--purple)" font-size="19" font-weight="700">PROCESSOR</text>
+    <rect x="380" y="50" width="750" height="400" rx="12" fill="var(--card)" stroke="var(--purple)" stroke-width="2"/>
+    <!-- names ABOVE every box, so a travelling packet can never hide them -->
+    <text x="460" y="88" text-anchor="middle" class="reg-lbl" font-size="19">PC</text>
+    <rect x="400" y="96" width="120" height="52" rx="8" class="reg"/><text x="460" y="131" text-anchor="middle" class="reg-val" font-size="20">100</text>
+    <text x="640" y="88" text-anchor="middle" class="reg-lbl" font-size="19">MAR</text>
+    <rect x="580" y="96" width="120" height="52" rx="8" class="reg"/>
+    <text x="905" y="88" text-anchor="middle" class="reg-lbl" font-size="19">R2</text>
+    <rect x="850" y="96" width="110" height="52" rx="8" class="reg"/>
+    <text x="1045" y="88" text-anchor="middle" class="reg-lbl" font-size="19">R3</text>
+    <rect x="990" y="96" width="110" height="52" rx="8" class="reg"/>
+    <text x="510" y="186" text-anchor="middle" class="reg-lbl" font-size="19">IR</text>
+    <rect x="400" y="194" width="220" height="52" rx="8" class="reg"/>
+    <text x="730" y="186" text-anchor="middle" class="reg-lbl" font-size="19">MDR</text>
+    <rect x="660" y="194" width="140" height="52" rx="8" class="reg"/>
+    <rect x="880" y="200" width="180" height="76" rx="10" class="reg" style="stroke:var(--accent)"/><text x="970" y="246" text-anchor="middle" fill="var(--accent)" font-size="20" font-weight="700">ALU</text>
+    <text x="970" y="318" text-anchor="middle" class="reg-lbl" font-size="19">R4</text>
+    <rect x="915" y="326" width="110" height="52" rx="8" class="reg"/>
+
+    <!-- ═════════ INSTRUCTION 1 — Load R2, A ═════════ -->
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 460 122 L 640 122"/><rect x="-36" y="-16" width="72" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">100</text></g>
+      <rect x="580" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--yellow)" stroke-width="2.5"/><text x="640" y="131" text-anchor="middle" class="reg-val" font-size="20">100</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R2, A</tspan> · ① PC → MAR (100) — fetch begins.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 580 122 L 332 84"/><rect x="-36" y="-16" width="72" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">100</text></g>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R2, A</tspan> · ② MAR → memory on the address bus; <tspan font-weight="700">Read</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 326 84 L 730 220"/><rect x="-62" y="-16" width="124" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">Load R2, A</text></g>
+      <rect x="660" y="194" width="140" height="52" rx="8" fill="var(--card)" stroke="var(--yellow)" stroke-width="2.5"/><text x="730" y="228" text-anchor="middle" class="reg-val" font-size="14">Load R2,A</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R2, A</tspan> · ③ the instruction comes back on the data bus into <tspan font-weight="700">MDR</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 730 220 L 510 220"/><rect x="-62" y="-16" width="124" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">Load R2, A</text></g>
+      <rect x="400" y="194" width="220" height="52" rx="8" fill="var(--card)" stroke="var(--purple)" stroke-width="2.5"/><text x="510" y="228" text-anchor="middle" class="reg-val" font-size="17">Load R2, A</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R2, A</tspan> · ④ <tspan font-weight="700">MDR → IR</tspan> — now decoded. Fetch done.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 510 220 L 640 122"/><rect x="-34" y="-16" width="68" height="32" rx="6" fill="var(--accent)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">200</text></g>
+      <rect x="580" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="2.5"/><text x="640" y="131" text-anchor="middle" class="reg-val" font-size="20">200</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R2, A</tspan> · ⑤ execute: the operand address <tspan font-weight="700">A = 200</tspan> (hard-coded in the instruction) → <tspan font-weight="700">MAR</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 580 122 L 332 312"/><rect x="-34" y="-16" width="68" height="32" rx="6" fill="var(--accent)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">200</text></g>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R2, A</tspan> · ⑥ MAR → memory; a <tspan font-weight="700">second Read</tspan>, this time for the operand.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 326 312 L 730 220"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">5</text></g>
+      <rect x="660" y="194" width="140" height="52" rx="8" fill="var(--card)" stroke="var(--teal)" stroke-width="2.5"/><text x="730" y="228" text-anchor="middle" class="reg-val" font-size="20">5</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R2, A</tspan> · ⑦ the value at 200 — <tspan fill="var(--teal)">5</tspan> — returns into <tspan font-weight="700">MDR</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 730 220 L 905 122"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">5</text></g>
+      <rect x="850" y="96" width="110" height="52" rx="8" fill="var(--card)" stroke="var(--teal)" stroke-width="3"/><text x="905" y="131" text-anchor="middle" class="reg-val" style="fill:var(--teal)" font-size="20">5</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R2, A</tspan> · ⑧ <tspan font-weight="700">MDR → R2</tspan>. R2 = <tspan fill="var(--teal)">5</tspan>.</text></g>
+    <g class="frag">
+      <rect x="400" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--green)" stroke-width="3"/><text x="460" y="131" text-anchor="middle" class="reg-val" style="fill:var(--green)" font-size="20">104</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R2, A</tspan> · ⑨ <tspan fill="var(--green)">PC ← [PC] + 4 = 104</tspan>. Instruction 1 complete.</text></g>
+
+    <!-- ═════════ INSTRUCTION 2 — Load R3, B ═════════ -->
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 460 122 L 640 122"/><rect x="-36" y="-16" width="72" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">104</text></g>
+      <rect x="580" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--yellow)" stroke-width="2.5"/><text x="640" y="131" text-anchor="middle" class="reg-val" font-size="20">104</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R3, B</tspan> · ① PC → MAR (104) — same fetch, new address.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 580 122 L 332 124"/><rect x="-36" y="-16" width="72" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">104</text></g>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R3, B</tspan> · ② MAR → memory; <tspan font-weight="700">Read</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 326 124 L 730 220"/><rect x="-62" y="-16" width="124" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">Load R3, B</text></g>
+      <rect x="660" y="194" width="140" height="52" rx="8" fill="var(--card)" stroke="var(--yellow)" stroke-width="2.5"/><text x="730" y="228" text-anchor="middle" class="reg-val" font-size="14">Load R3,B</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R3, B</tspan> · ③ instruction → <tspan font-weight="700">MDR</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 730 220 L 510 220"/><rect x="-62" y="-16" width="124" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">Load R3, B</text></g>
+      <rect x="400" y="194" width="220" height="52" rx="8" fill="var(--card)" stroke="var(--purple)" stroke-width="2.5"/><text x="510" y="228" text-anchor="middle" class="reg-val" font-size="17">Load R3, B</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R3, B</tspan> · ④ <tspan font-weight="700">MDR → IR</tspan>, decoded.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 510 220 L 640 122"/><rect x="-34" y="-16" width="68" height="32" rx="6" fill="var(--accent)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">204</text></g>
+      <rect x="580" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--accent)" stroke-width="2.5"/><text x="640" y="131" text-anchor="middle" class="reg-val" font-size="20">204</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R3, B</tspan> · ⑤ operand address <tspan font-weight="700">B = 204</tspan> → <tspan font-weight="700">MAR</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 580 122 L 332 352"/><rect x="-34" y="-16" width="68" height="32" rx="6" fill="var(--accent)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">204</text></g>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R3, B</tspan> · ⑥ second Read, for the operand.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 326 352 L 730 220"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">3</text></g>
+      <rect x="660" y="194" width="140" height="52" rx="8" fill="var(--card)" stroke="var(--teal)" stroke-width="2.5"/><text x="730" y="228" text-anchor="middle" class="reg-val" font-size="20">3</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R3, B</tspan> · ⑦ value <tspan fill="var(--teal)">3</tspan> → <tspan font-weight="700">MDR</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 730 220 L 1045 122"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">3</text></g>
+      <rect x="990" y="96" width="110" height="52" rx="8" fill="var(--card)" stroke="var(--teal)" stroke-width="3"/><text x="1045" y="131" text-anchor="middle" class="reg-val" style="fill:var(--teal)" font-size="20">3</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R3, B</tspan> · ⑧ <tspan font-weight="700">MDR → R3</tspan>. R3 = <tspan fill="var(--teal)">3</tspan>.</text></g>
+    <g class="frag">
+      <rect x="400" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--green)" stroke-width="3"/><text x="460" y="131" text-anchor="middle" class="reg-val" style="fill:var(--green)" font-size="20">108</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--accent)" font-weight="700">Load R3, B</tspan> · ⑨ <tspan fill="var(--green)">PC ← 108</tspan>. Both operands are now in registers.</text></g>
+
+    <!-- ═════════ INSTRUCTION 3 — Add R4, R2, R3 ═════════ -->
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 460 122 L 640 122"/><rect x="-36" y="-16" width="72" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">108</text></g>
+      <rect x="580" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--yellow)" stroke-width="2.5"/><text x="640" y="131" text-anchor="middle" class="reg-val" font-size="20">108</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--green)" font-weight="700">Add R4, R2, R3</tspan> · ① PC → MAR (108).</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 580 122 L 332 164"/><rect x="-36" y="-16" width="72" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">108</text></g>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--green)" font-weight="700">Add R4, R2, R3</tspan> · ② MAR → memory; <tspan font-weight="700">Read</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 326 164 L 730 220"/><rect x="-70" y="-16" width="140" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="13" font-weight="800">Add R4,R2,R3</text></g>
+      <rect x="660" y="194" width="140" height="52" rx="8" fill="var(--card)" stroke="var(--yellow)" stroke-width="2.5"/><text x="730" y="228" text-anchor="middle" class="reg-val" font-size="13">Add R4,R2,R3</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--green)" font-weight="700">Add R4, R2, R3</tspan> · ③ instruction → <tspan font-weight="700">MDR</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 730 220 L 510 220"/><rect x="-70" y="-16" width="140" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="13" font-weight="800">Add R4,R2,R3</text></g>
+      <rect x="400" y="194" width="220" height="52" rx="8" fill="var(--card)" stroke="var(--purple)" stroke-width="2.5"/><text x="510" y="228" text-anchor="middle" class="reg-val" font-size="17">Add R4, R2, R3</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--green)" font-weight="700">Add R4, R2, R3</tspan> · ④ <tspan font-weight="700">MDR → IR</tspan>, decoded.</text></g>
+    <g class="frag">
+      <g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 905 148 L 950 200"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">5</text></g>
+      <g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 1045 148 L 990 200"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">3</text></g>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--green)" font-weight="700">Add R4, R2, R3</tspan> · ⑤ execute — <tspan font-weight="700">no memory access at all!</tspan> R2 (5) and R3 (3) go straight to the <tspan font-weight="700">ALU</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 970 276 L 970 326"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--green)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">8</text></g>
+      <rect x="915" y="326" width="110" height="52" rx="8" fill="var(--card)" stroke="var(--green)" stroke-width="3"/><text x="970" y="361" text-anchor="middle" class="reg-val" style="fill:var(--green)" font-size="20">8</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--green)" font-weight="700">Add R4, R2, R3</tspan> · ⑥ the ALU adds and drops the sum into <tspan font-weight="700">R4 = <tspan fill="var(--green)">8</tspan></tspan>.</text></g>
+    <g class="frag">
+      <rect x="400" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--green)" stroke-width="3"/><text x="460" y="131" text-anchor="middle" class="reg-val" style="fill:var(--green)" font-size="20">112</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--green)" font-weight="700">Add R4, R2, R3</tspan> · ⑦ <tspan fill="var(--green)">PC ← 112</tspan>. Notice: this instruction never touched memory in its execute phase.</text></g>
+
+    <!-- ═════════ INSTRUCTION 4 — Store R4, C ═════════ -->
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 460 122 L 640 122"/><rect x="-36" y="-16" width="72" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">112</text></g>
+      <rect x="580" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--yellow)" stroke-width="2.5"/><text x="640" y="131" text-anchor="middle" class="reg-val" font-size="20">112</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--orange)" font-weight="700">Store R4, C</tspan> · ① PC → MAR (112).</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 580 122 L 332 204"/><rect x="-36" y="-16" width="72" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">112</text></g>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--orange)" font-weight="700">Store R4, C</tspan> · ② MAR → memory; <tspan font-weight="700">Read</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 326 204 L 730 220"/><rect x="-64" y="-16" width="128" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">Store R4, C</text></g>
+      <rect x="660" y="194" width="140" height="52" rx="8" fill="var(--card)" stroke="var(--yellow)" stroke-width="2.5"/><text x="730" y="228" text-anchor="middle" class="reg-val" font-size="14">Store R4,C</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--orange)" font-weight="700">Store R4, C</tspan> · ③ instruction → <tspan font-weight="700">MDR</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 730 220 L 510 220"/><rect x="-64" y="-16" width="128" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">Store R4, C</text></g>
+      <rect x="400" y="194" width="220" height="52" rx="8" fill="var(--card)" stroke="var(--purple)" stroke-width="2.5"/><text x="510" y="228" text-anchor="middle" class="reg-val" font-size="17">Store R4, C</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--orange)" font-weight="700">Store R4, C</tspan> · ④ <tspan font-weight="700">MDR → IR</tspan>, decoded.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 510 220 L 640 122"/><rect x="-34" y="-16" width="68" height="32" rx="6" fill="var(--orange)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">208</text></g>
+      <rect x="580" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--orange)" stroke-width="2.5"/><text x="640" y="131" text-anchor="middle" class="reg-val" font-size="20">208</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--orange)" font-weight="700">Store R4, C</tspan> · ⑤ the <tspan font-style="italic">destination</tspan> address <tspan font-weight="700">C = 208</tspan> → <tspan font-weight="700">MAR</tspan>.</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 970 352 L 730 220"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--green)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">8</text></g>
+      <rect x="660" y="194" width="140" height="52" rx="8" fill="var(--card)" stroke="var(--green)" stroke-width="2.5"/><text x="730" y="228" text-anchor="middle" class="reg-val" style="fill:var(--green)" font-size="20">8</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--orange)" font-weight="700">Store R4, C</tspan> · ⑥ this time the <tspan font-weight="700">data</tspan> goes out too: <tspan font-weight="700">R4 → MDR</tspan> (8).</text></g>
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 660 220 L 332 392"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--green)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">8</text></g>
+      <rect x="44" y="374" width="282" height="36" rx="6" fill="var(--surface)" stroke="var(--green)" stroke-width="3"/><text x="58" y="398" fill="var(--teal)" font-size="14" font-weight="700">208</text><text x="150" y="398" fill="var(--muted)" font-size="13">(C)</text><text x="318" y="398" text-anchor="end" class="reg-val" style="fill:var(--green)" font-size="16">8</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--orange)" font-weight="700">Store R4, C</tspan> · ⑦ a <tspan font-weight="700">Write</tspan>! MDR → memory at 208. <tspan fill="var(--green)">C = 8</tspan>.</text></g>
+    <g class="frag">
+      <rect x="400" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--green)" stroke-width="3"/><text x="460" y="131" text-anchor="middle" class="reg-val" style="fill:var(--green)" font-size="20">116</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--orange)" font-weight="700">Store R4, C</tspan> · ⑧ <tspan fill="var(--green)">PC ← 116</tspan> — and the instruction waiting there is <tspan fill="var(--red)" font-weight="700">Halt</tspan>.</text></g>
+    <!-- ═════════ HALT — the program stops ═════════ -->
+    <g class="frag"><g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 326 244 L 730 220"/><rect x="-30" y="-16" width="60" height="32" rx="6" fill="var(--red)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">Halt</text></g>
+      <rect x="580" y="96" width="120" height="52" rx="8" fill="var(--card)" stroke="var(--red)" stroke-width="2.5"/><text x="640" y="131" text-anchor="middle" class="reg-val" font-size="20">116</text>
+      <rect x="400" y="194" width="220" height="52" rx="8" fill="var(--card)" stroke="var(--red)" stroke-width="2.5"/><text x="510" y="228" text-anchor="middle" class="reg-val" style="fill:var(--red)" font-size="17">Halt</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--red)" font-weight="700">Halt</tspan> · ① the processor fetches the instruction at 116 into <tspan font-weight="700">IR</tspan> — same fetch as always.</text></g>
+    <g class="frag">
+      <rect x="420" y="300" width="240" height="60" rx="10" fill="var(--card)" stroke="var(--red)" stroke-width="3"/><text x="540" y="340" text-anchor="middle" fill="var(--red)" font-size="28" font-weight="800">HALTED</text>
+      <rect x="20" y="470" width="1120" height="44" fill="var(--bg)"/><text x="35" y="500" font-size="21" fill="var(--text)"><tspan fill="var(--red)" font-weight="700">Halt</tspan> · ② the control unit stops fetching — the machine comes to rest. Program over: <tspan fill="var(--green)" font-weight="700">C = A + B = 8</tspan>.</text></g>
+  </svg></div>
 </section>
 
 <!-- ── MEMORY slide: instruction cycle exam answer ── -->
@@ -838,24 +1026,12 @@
   <div class="memcard">
     <h3>Every instruction runs in two phases:</h3>
     <ul>
-      <li><span class="term">Phase 1 — Fetch &amp; Decode</span> — PC → MAR → memory; the instruction is read into MDR, then IR, and the PC is incremented; the control unit then <b>decodes</b> the IR to work out the operation.</li>
-      <li><span class="term">Phase 2 — Execute</span> — operands are fetched, the ALU acts, and the result is stored.</li>
+      <li><span class="term">Phase 1 — Fetch &amp; Decode</span> — PC → MAR → memory; the instruction is read into MDR, then into IR; the control unit then <b>decodes</b> the IR to work out the operation.</li>
+      <li><span class="term">Phase 2 — Execute</span> — the operand's address is sent to <b>MAR</b>, the operand is read into <b>MDR</b>, the ALU acts, and the result is stored. Finally the <b>PC is incremented</b> to point at the next instruction.</li>
     </ul>
     <p style="margin-top:12px; font-size:24px; color:var(--muted)">Fetch and decode together make up the first phase — so what some books split into <em>three steps</em> (fetch · decode · execute) is really <b>two phases</b>: get-and-understand, then do.</p>
-    <p style="margin-top:16px"><b>RTN:</b> <span class="em-t">R2 ← [LOC]</span> — contents of LOC copied into R2; source unchanged.</p>
+    <p style="margin-top:16px"><b>RTN:</b> <span class="em-t">R2 ← [A]</span> — contents of A copied into R2; source unchanged.</p>
   </div>
-</section>
-
-<!-- ── LMC simulator (embedded, with credit) ── -->
-<section class="slide heroslide" data-ch="Ch 2 · Live · Little Man Computer">
-  <div class="badge b-sup"><span class="dot"></span>Supporting</div>
-  <h2 class="herotitle">See a stored program actually run — the Little Man Computer</h2>
-  <div class="animwrap">
-    <iframe src="https://peterhigginson.co.uk/lmc/" title="Little Man Computer simulator" allowfullscreen></iframe>
-  </div>
-  <p class="credit">Simulator &copy; 2014–24 Peter&nbsp;L.&nbsp;Higginson —
-    <a href="https://peterhigginson.co.uk/lmc/" target="_blank" rel="noopener">peterhigginson.co.uk/lmc</a>
-    · used with credit. <span class="muted">(If the frame is blank, open the link in a new tab.)</span></p>
 </section>
 
 <!-- ── Key insight ── -->
@@ -872,17 +1048,6 @@
   <h1>Bus Structures</h1>
   <p class="hook frag">Five units must swap data constantly. Do we run a private wire between every pair —
      or one shared highway they take turns on?</p>
-</section>
-
-<section class="slide qslide" data-ch="Ch 3 · The big question">
-  <div class="qmark">?</div>
-  <div class="qlabel">Think about it</div>
-  <div class="q">The five functional units are only the start — a real machine also has several memory modules
-     and many I/O devices (keyboard, disk, GPU, USB, network…), so the number of parts that must talk
-     easily reaches <span class="em-y">20</span>. Private wires between every pair of just 5 units already need
-     <span class="em-y">10 links</span>; for 20 parts that jumps to <span class="em-y">190</span>. How do real computers escape this explosion?</div>
-  <div class="qans frag">They share <b>one set of wires — a bus</b>. Every unit taps the same lines and takes turns.
-     Cheap and simple; the cost is that only one transfer happens at a time.</div>
 </section>
 
 <!-- what a bus is (animation) -->
@@ -946,26 +1111,90 @@
   </div>
 </section>
 
-<!-- two bus + multiple bus -->
-<section class="slide" data-ch="Ch 3 · Two &amp; multiple bus">
+<!-- two-bus (dual) — animated -->
+<section class="slide" data-ch="Ch 3 · Two-bus (dual)">
   <div class="badge b-sup"><span class="dot"></span>Supporting</div>
-  <h2 style="margin-bottom:14px">More buses = more traffic at once</h2>
-  <div class="row">
-    <div class="card tint-yellow frag"><h3>Two-bus (double)</h3><p>One bus fetches <b>instructions</b>, another moves <b>data</b> — so both can happen together. Beats the single-bus bottleneck.</p></div>
-    <div class="card tint-purple frag"><h3>Multiple-bus</h3><p>A fast <b>processor–cache</b> bus, a system bus, and a slower <b>expansion</b> bus for peripherals — each matched to its speed.</p></div>
+  <h2 style="margin-bottom:2px">Two buses — instructions and data move <span class="em-g">at the same time</span></h2>
+  <div class="animwrap"><svg viewBox="0 0 1160 360" preserveAspectRatio="xMidYMid meet">
+    <rect x="60" y="70" width="230" height="220" rx="12" class="reg" style="stroke:var(--purple);stroke-width:2.5"/>
+    <text x="175" y="188" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)" font-size="22">PROCESSOR</text>
+    <rect x="830" y="55" width="290" height="90" rx="10" class="reg" style="stroke:var(--accent);stroke-width:2.5"/><text x="975" y="107" text-anchor="middle" fill="var(--accent)" font-size="19" font-weight="700">INSTRUCTIONS</text>
+    <rect x="830" y="215" width="290" height="90" rx="10" class="reg" style="stroke:var(--teal);stroke-width:2.5"/><text x="975" y="267" text-anchor="middle" fill="var(--teal)" font-size="19" font-weight="700">DATA</text>
+    <!-- instruction bus (top) -->
+    <line x1="290" y1="100" x2="830" y2="100" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"/>
+    <text x="560" y="86" text-anchor="middle" fill="var(--accent)" font-size="18" font-weight="700">INSTRUCTION BUS</text>
+    <!-- data bus (bottom) -->
+    <line x1="290" y1="260" x2="830" y2="260" stroke="var(--teal)" stroke-width="7" stroke-linecap="round"/>
+    <text x="560" y="292" text-anchor="middle" fill="var(--teal)" font-size="18" font-weight="700">DATA BUS</text>
+    <!-- packets loop together, showing simultaneous traffic -->
+    <g><animateMotion dur="1.7s" repeatCount="indefinite" path="M 830 100 L 296 100"/><rect x="-34" y="-15" width="68" height="30" rx="6" fill="var(--accent)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">instr</text></g>
+    <g><animateMotion dur="1.7s" repeatCount="indefinite" path="M 830 260 L 296 260"/><rect x="-34" y="-15" width="68" height="30" rx="6" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="15" font-weight="800">data</text></g>
+    <text x="560" y="345" text-anchor="middle" fill="var(--green)" font-size="20" font-weight="700">Both move at once — a fetch and a data transfer overlap. No waiting.</text>
+  </svg></div>
+  <div class="row" style="margin-top:4px">
+    <div class="card tint-yellow frag"><h3>Two-bus (dual) organisation</h3><p>One bus carries <b>instructions</b>, a second carries <b>data</b>, so a fetch and a data move can happen <b>together</b> — easing the single-bus bottleneck at the cost of extra wiring.</p></div>
   </div>
-  <p class="frag" style="margin-top:26px">More buses buy <span class="em-g">parallelism</span> at the cost of more
-     <span class="em-r">wiring and control</span>. Real machines pick a balance.</p>
 </section>
 
-<!-- bus types -->
+<!-- multiple bus + system bus — animated -->
+<section class="slide" data-ch="Ch 3 · Multiple bus &amp; the system bus">
+  <div class="badge b-sup"><span class="dot"></span>Supporting</div>
+  <h2 style="margin-bottom:2px">Multiple buses — each matched to its speed</h2>
+  <div class="animwrap"><svg viewBox="0 0 1160 350" preserveAspectRatio="xMidYMid meet">
+    <rect x="40" y="80" width="140" height="90" rx="10" class="reg" style="stroke:var(--purple);stroke-width:2.5"/><text x="110" y="131" text-anchor="middle" fill="var(--purple)" font-size="17" font-weight="700">PROCESSOR</text>
+    <rect x="240" y="80" width="120" height="90" rx="10" class="reg" style="stroke:var(--purple);stroke-width:2.5"/><text x="300" y="131" text-anchor="middle" fill="var(--purple)" font-size="17" font-weight="700">CACHE</text>
+    <rect x="440" y="80" width="190" height="90" rx="10" class="reg" style="stroke:var(--accent);stroke-width:2.5"/><text x="535" y="131" text-anchor="middle" fill="var(--accent)" font-size="17" font-weight="700">MAIN MEMORY</text>
+    <rect x="440" y="220" width="190" height="64" rx="10" class="reg" style="stroke:var(--yellow);stroke-width:2.5"/><text x="535" y="249" text-anchor="middle" fill="var(--yellow)" font-size="15" font-weight="700">BRIDGE</text><text x="535" y="270" text-anchor="middle" fill="var(--muted)" font-size="13">bus controller</text>
+    <rect x="720" y="220" width="130" height="64" rx="10" class="reg" style="stroke:var(--green);stroke-width:2"/><text x="785" y="257" text-anchor="middle" fill="var(--green)" font-size="15" font-weight="700">DISK</text>
+    <rect x="900" y="220" width="180" height="64" rx="10" class="reg" style="stroke:var(--orange);stroke-width:2"/><text x="990" y="257" text-anchor="middle" fill="var(--orange)" font-size="15" font-weight="700">USB · NETWORK</text>
+    <!-- processor bus (fast) -->
+    <line x1="180" y1="125" x2="240" y2="125" stroke="var(--purple)" stroke-width="7" stroke-linecap="round"/>
+    <text x="210" y="66" text-anchor="middle" fill="var(--purple)" font-size="13" font-weight="700">processor bus</text>
+    <!-- SYSTEM BUS (backbone: cache/processor <-> main memory <-> bridge) -->
+    <line x1="360" y1="125" x2="440" y2="125" stroke="var(--accent)" stroke-width="9" stroke-linecap="round"/>
+    <line x1="535" y1="170" x2="535" y2="220" stroke="var(--accent)" stroke-width="7"/>
+    <text x="400" y="58" text-anchor="middle" fill="var(--accent)" font-size="16" font-weight="800">SYSTEM BUS</text>
+    <!-- expansion / I-O bus (slow) -->
+    <line x1="530" y1="313" x2="1080" y2="313" stroke="var(--orange)" stroke-width="7" stroke-linecap="round"/>
+    <line x1="535" y1="284" x2="535" y2="313" stroke="var(--orange)" stroke-width="5"/>
+    <line x1="785" y1="284" x2="785" y2="313" stroke="var(--orange)" stroke-width="4"/>
+    <line x1="990" y1="284" x2="990" y2="313" stroke="var(--orange)" stroke-width="4"/>
+    <text x="810" y="340" text-anchor="middle" fill="var(--orange)" font-size="15" font-weight="700">expansion / I-O bus (slower)</text>
+    <!-- packets, each at its bus's speed -->
+    <g><animateMotion dur="0.9s" repeatCount="indefinite" path="M 240 125 L 185 125"/><rect x="-16" y="-11" width="32" height="22" rx="5" fill="var(--purple)"/></g>
+    <g><animateMotion dur="1.7s" repeatCount="indefinite" path="M 440 125 L 365 125"/><rect x="-22" y="-12" width="44" height="24" rx="5" fill="var(--accent)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="13" font-weight="800">word</text></g>
+    <g><animateMotion dur="3s" repeatCount="indefinite" path="M 990 313 L 540 313"/><rect x="-18" y="-11" width="36" height="22" rx="5" fill="var(--orange)"/></g>
+  </svg></div>
+  <div class="row" style="margin-top:2px">
+    <div class="card tint-teal frag"><h3>What is the <span class="em-a">system bus</span>?</h3><p>The <b>system bus</b> is the machine's main highway — it ties the <b>processor (through its cache)</b> to <b>main memory</b> and, via a <b>bridge</b>, to everything else. It bundles <b>address + data + control</b> lines together.</p></div>
+    <div class="card tint-purple frag"><h3>Why several buses?</h3><p>Each bus runs at the speed of what it joins: a very fast <b>processor–cache</b> bus, the <b>system bus</b> to memory, and a slower <b>expansion bus</b> for peripherals. More parallelism, more wiring.</p></div>
+  </div>
+</section>
+
+<!-- bus types — animated (three line-groups pictured) -->
 <section class="slide" data-ch="Ch 3 · Data / Address / Control">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:14px">Every bus carries three kinds of line</h2>
-  <div class="row">
-    <div class="card tint-teal frag"><h3>Address bus</h3><p><b>Where?</b> Carries the address of the location to access. Width sets how much memory is reachable (k lines → 2<sup>k</sup>).</p></div>
-    <div class="card tint-green frag"><h3>Data bus</h3><p><b>What?</b> Carries the actual data/instruction word being transferred, both ways.</p></div>
-    <div class="card tint-yellow frag"><h3>Control bus</h3><p><b>When / which way?</b> Read/Write, timing and status signals that coordinate the transfer.</p></div>
+  <h2 style="margin-bottom:2px">Every bus is really <span class="em-y">three groups of lines</span></h2>
+  <div class="animwrap"><svg viewBox="0 0 1160 300" preserveAspectRatio="xMidYMid meet">
+    <rect x="40" y="70" width="190" height="170" rx="12" class="reg" style="stroke:var(--purple);stroke-width:2.5"/><text x="135" y="162" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)" font-size="21">PROCESSOR</text>
+    <rect x="930" y="70" width="190" height="170" rx="12" class="reg" style="stroke:var(--teal);stroke-width:2.5"/><text x="1025" y="162" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)" font-size="21">MEMORY</text>
+    <!-- address bus (one-way, processor -> memory) -->
+    <line x1="230" y1="105" x2="930" y2="105" stroke="var(--teal)" stroke-width="6"/>
+    <text x="580" y="93" text-anchor="middle" fill="var(--teal)" font-size="17" font-weight="700">ADDRESS BUS — WHERE? (one-way →)</text>
+    <g><animateMotion dur="2.2s" repeatCount="indefinite" path="M 236 105 L 924 105"/><rect x="-28" y="-13" width="56" height="26" rx="5" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">100</text></g>
+    <!-- data bus (both ways) -->
+    <line x1="230" y1="160" x2="930" y2="160" stroke="var(--green)" stroke-width="6"/>
+    <text x="580" y="148" text-anchor="middle" fill="var(--green)" font-size="17" font-weight="700">DATA BUS — WHAT? (both ways ↔)</text>
+    <g><animateMotion dur="2.2s" repeatCount="indefinite" path="M 924 160 L 236 160"/><rect x="-28" y="-13" width="56" height="26" rx="5" fill="var(--green)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">data</text></g>
+    <!-- control bus -->
+    <line x1="230" y1="215" x2="930" y2="215" stroke="var(--yellow)" stroke-width="6"/>
+    <text x="580" y="203" text-anchor="middle" fill="var(--yellow)" font-size="17" font-weight="700">CONTROL BUS — WHEN / which way?</text>
+    <g><animateMotion dur="2.2s" repeatCount="indefinite" path="M 236 215 L 924 215"/><rect x="-32" y="-13" width="64" height="26" rx="5" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">Read</text></g>
+  </svg></div>
+  <div class="row" style="margin-top:2px">
+    <div class="card tint-teal frag"><h3>Address bus</h3><p><b>Where?</b> Carries the address to access; k lines → 2<sup>k</sup> locations. Usually <b>one-way</b> (processor → memory).</p></div>
+    <div class="card tint-green frag"><h3>Data bus</h3><p><b>What?</b> Carries the data / instruction word — <b>both ways</b>.</p></div>
+    <div class="card tint-yellow frag"><h3>Control bus</h3><p><b>When / which way?</b> Read/Write, timing and status signals.</p></div>
   </div>
 </section>
 
@@ -1064,18 +1293,32 @@
   <div class="badge b-core"><span class="dot"></span>Core</div>
   <h2 style="margin-bottom:6px">Byte-addressable memory</h2>
   <div class="animwrap"><svg viewBox="0 0 1160 400" preserveAspectRatio="xMidYMid meet">
-    <text x="80" y="60" fill="var(--muted)" font-size="22">Each byte gets its own address: 0, 1, 2, 3, …</text>
-    <g font-size="24">
-      <g class="frag"><rect x="80"  y="90" width="120" height="90" class="reg"/><text x="140" y="145" text-anchor="middle" class="reg-val">byte</text><text x="140" y="210" text-anchor="middle" fill="var(--muted)">0</text></g>
-      <g class="frag"><rect x="205" y="90" width="120" height="90" class="reg"/><text x="265" y="145" text-anchor="middle" class="reg-val">byte</text><text x="265" y="210" text-anchor="middle" fill="var(--muted)">1</text></g>
-      <g class="frag"><rect x="330" y="90" width="120" height="90" class="reg"/><text x="390" y="145" text-anchor="middle" class="reg-val">byte</text><text x="390" y="210" text-anchor="middle" fill="var(--muted)">2</text></g>
-      <g class="frag"><rect x="455" y="90" width="120" height="90" class="reg"/><text x="515" y="145" text-anchor="middle" class="reg-val">byte</text><text x="515" y="210" text-anchor="middle" fill="var(--muted)">3</text></g>
-    </g>
-    <g class="frag"><rect x="80" y="90" width="495" height="90" rx="8" fill="none" stroke="var(--green)" stroke-width="4"/>
-      <text x="327" y="270" text-anchor="middle" fill="var(--green)" font-size="24">one 32-bit WORD at address 0</text></g>
-    <g class="frag"><text x="700" y="140" fill="var(--text)" font-size="26">Successive words sit at</text>
-      <text x="700" y="180" fill="var(--teal)" font-size="30" font-weight="700">0, 4, 8, 12, …</text>
-      <text x="700" y="230" fill="var(--muted)" font-size="22">(4 bytes apart, for a 32-bit word)</text></g>
+    <text x="64" y="48" fill="var(--muted)" font-size="21">Every <tspan font-weight="700">byte</tspan> has its own address: 0, 1, 2, 3, 4, 5 …  — and a 32-bit <tspan font-weight="700">word</tspan> is any four of them in a row.</text>
+    <!-- ── word at address 0 ── -->
+    <g class="frag" font-size="24">
+      <rect x="70"  y="80" width="112" height="62" rx="6" class="reg"/><text x="126" y="119" text-anchor="middle" class="reg-val">0</text>
+      <rect x="190" y="80" width="112" height="62" rx="6" class="reg"/><text x="246" y="119" text-anchor="middle" class="reg-val">1</text>
+      <rect x="310" y="80" width="112" height="62" rx="6" class="reg"/><text x="366" y="119" text-anchor="middle" class="reg-val">2</text>
+      <rect x="430" y="80" width="112" height="62" rx="6" class="reg"/><text x="486" y="119" text-anchor="middle" class="reg-val">3</text></g>
+    <g class="frag"><rect x="64" y="74" width="484" height="74" rx="8" fill="none" stroke="var(--green)" stroke-width="4"/>
+      <text x="580" y="120" fill="var(--green)" font-size="23" font-weight="700">= one 32-bit word at address 0</text></g>
+    <!-- ── word at address 4 ── -->
+    <g class="frag" font-size="24">
+      <rect x="70"  y="172" width="112" height="62" rx="6" class="reg"/><text x="126" y="211" text-anchor="middle" class="reg-val">4</text>
+      <rect x="190" y="172" width="112" height="62" rx="6" class="reg"/><text x="246" y="211" text-anchor="middle" class="reg-val">5</text>
+      <rect x="310" y="172" width="112" height="62" rx="6" class="reg"/><text x="366" y="211" text-anchor="middle" class="reg-val">6</text>
+      <rect x="430" y="172" width="112" height="62" rx="6" class="reg"/><text x="486" y="211" text-anchor="middle" class="reg-val">7</text>
+      <rect x="64" y="166" width="484" height="74" rx="8" fill="none" stroke="var(--green)" stroke-width="4"/>
+      <text x="580" y="212" fill="var(--green)" font-size="23" font-weight="700">= the next word, at address 4</text></g>
+    <!-- ── word at address 8 ── -->
+    <g class="frag" font-size="24">
+      <rect x="70"  y="264" width="112" height="62" rx="6" class="reg"/><text x="126" y="303" text-anchor="middle" class="reg-val">8</text>
+      <rect x="190" y="264" width="112" height="62" rx="6" class="reg"/><text x="246" y="303" text-anchor="middle" class="reg-val">9</text>
+      <rect x="310" y="264" width="112" height="62" rx="6" class="reg"/><text x="366" y="303" text-anchor="middle" class="reg-val">10</text>
+      <rect x="430" y="264" width="112" height="62" rx="6" class="reg"/><text x="486" y="303" text-anchor="middle" class="reg-val">11</text>
+      <rect x="64" y="258" width="484" height="74" rx="8" fill="none" stroke="var(--green)" stroke-width="4"/>
+      <text x="580" y="304" fill="var(--green)" font-size="23" font-weight="700">= the next word, at address 8</text></g>
+    <g class="frag"><text x="580" y="360" fill="var(--teal)" font-size="26" font-weight="700">So words sit at 0, 4, 8, 12 … — four bytes apart.</text></g>
   </svg></div>
 </section>
 
@@ -1103,7 +1346,7 @@
         <rect x="884" y="160" width="90" height="80" class="reg"/><text x="929" y="208" text-anchor="middle" class="reg-val">34</text><text x="929" y="262" text-anchor="middle" fill="var(--muted)" font-size="20">2</text>
         <rect x="976" y="160" width="90" height="80" class="reg"/><text x="1021" y="208" text-anchor="middle" class="reg-val">12</text><text x="1021" y="262" text-anchor="middle" fill="var(--muted)" font-size="20">3</text>
       </g></g>
-    <g class="frag"><text x="580" y="350" text-anchor="middle" fill="var(--muted)" font-size="21">Same word, same address 0 — only the byte <em>order</em> differs. Intel x86 is little-endian.</text></g>
+    <g class="frag"><text x="580" y="350" text-anchor="middle" fill="var(--muted)" font-size="21">Same word, same address 0 — only the byte <tspan font-style="italic">order</tspan> differs. Intel x86 is little-endian.</text></g>
   </svg></div>
 </section>
 
@@ -1147,35 +1390,55 @@
      From those two verbs, every program is built.</p>
 </section>
 
-<!-- READ animation -->
+<!-- READ animation — over the three bus lines -->
 <section class="slide" data-ch="Ch 5 · Read operation">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:6px">Read — copy <em>from</em> memory (original unchanged)</h2>
+  <h2 style="margin-bottom:2px">Read — copy <em>from</em> memory, over the three buses</h2>
   <div class="animwrap"><svg viewBox="0 0 1160 400" preserveAspectRatio="xMidYMid meet">
-    <rect x="60" y="120" width="230" height="160" rx="12" class="reg" style="stroke:var(--purple)"/><text x="175" y="200" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">PROCESSOR</text>
-    <rect x="870" y="120" width="230" height="160" rx="12" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/><text x="985" y="115" text-anchor="middle" fill="var(--teal)" font-size="20" font-weight="700">MEMORY</text>
-    <rect x="905" y="175" width="160" height="60" rx="8" class="reg"/><text x="985" y="200" text-anchor="middle" fill="var(--muted)" font-size="18">LOC</text><text x="985" y="225" text-anchor="middle" class="reg-val">25</text>
-    <g class="frag"><g class="packet" style="offset-path:path('M 290 165 L 905 165')"><rect x="-46" y="-17" width="92" height="34" rx="6"/><text x="0" y="6" text-anchor="middle">addr+Read</text></g></g>
-    <g class="frag"><g class="packet" style="offset-path:path('M 905 235 L 290 235')"><rect x="-30" y="-17" width="60" height="34" rx="6"/><text x="0" y="6" text-anchor="middle">25</text></g>
-      <text x="580" y="300" text-anchor="middle" fill="var(--muted)" font-size="20">a <em>copy</em> of the contents comes back — LOC still holds 25</text></g>
+    <rect x="50" y="95" width="220" height="210" rx="12" class="reg" style="stroke:var(--purple);stroke-width:2.5"/><text x="160" y="205" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)" font-size="21">PROCESSOR</text>
+    <rect x="890" y="95" width="220" height="210" rx="12" fill="var(--surface)" stroke="var(--teal)" stroke-width="2.5"/><text x="1000" y="130" text-anchor="middle" fill="var(--teal)" font-size="20" font-weight="700">MEMORY</text>
+    <rect x="915" y="180" width="170" height="60" rx="8" class="reg"/><text x="1000" y="205" text-anchor="middle" fill="var(--muted)" font-size="17">LOC</text><text x="1000" y="228" text-anchor="middle" class="reg-val">25</text>
+    <!-- three bus lines -->
+    <line x1="270" y1="150" x2="890" y2="150" stroke="var(--teal)" stroke-width="6"/><text x="580" y="139" text-anchor="middle" fill="var(--teal)" font-size="16" font-weight="700">ADDRESS BUS  →</text>
+    <line x1="270" y1="210" x2="890" y2="210" stroke="var(--green)" stroke-width="6"/><text x="580" y="199" text-anchor="middle" fill="var(--green)" font-size="16" font-weight="700">DATA BUS  ↔</text>
+    <line x1="270" y1="270" x2="890" y2="270" stroke="var(--yellow)" stroke-width="6"/><text x="580" y="259" text-anchor="middle" fill="var(--yellow)" font-size="16" font-weight="700">CONTROL BUS  →</text>
+    <!-- ① address AND control go out together -->
+    <g class="frag">
+      <g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 276 150 L 884 150"/><rect x="-30" y="-16" width="60" height="32" rx="6" fill="var(--teal)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="16" font-weight="800">LOC</text></g>
+      <g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 276 270 L 884 270"/><rect x="-36" y="-16" width="72" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="16" font-weight="800">Read</text></g>
+      <rect x="20" y="352" width="1120" height="42" fill="var(--bg)"/><text x="35" y="380" font-size="22" fill="var(--text)">① <tspan font-weight="700">Together:</tspan> the address <tspan fill="var(--teal)">LOC</tspan> goes out on the address bus <tspan font-weight="700">and</tspan> <tspan fill="var(--yellow)">Read</tspan> is asserted on the control bus.</text></g>
+    <!-- ② only then does the data come back -->
+    <g class="frag">
+      <g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 884 210 L 276 210"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--green)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="16" font-weight="800">25</text></g>
+      <rect x="20" y="352" width="1120" height="42" fill="var(--bg)"/><text x="35" y="380" font-size="22" fill="var(--text)">② Only <tspan font-style="italic">then</tspan> — after the memory access time — does the copy <tspan fill="var(--green)">25</tspan> come back on the data bus. LOC still holds 25.</text></g>
   </svg></div>
-  <p class="frag big" style="margin-top:2px">Processor sends the address + a Read signal; memory returns a <em>copy</em>. RTN: <span class="em-t">DR ← [LOC]</span>.</p>
+  <p class="frag" style="margin-top:2px; font-size:22px">Read = address (where) + Read (control); memory answers with a <em>copy</em> on the data bus. RTN: <span class="em-t">DR ← [LOC]</span>.</p>
 </section>
 
-<!-- WRITE animation -->
+<!-- WRITE animation — over the three bus lines -->
 <section class="slide" data-ch="Ch 5 · Write operation">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:6px">Write — copy <em>to</em> memory (old value overwritten)</h2>
+  <h2 style="margin-bottom:2px">Write — copy <em>to</em> memory, over the three buses</h2>
   <div class="animwrap"><svg viewBox="0 0 1160 400" preserveAspectRatio="xMidYMid meet">
-    <rect x="60" y="120" width="230" height="160" rx="12" class="reg" style="stroke:var(--purple)"/><text x="175" y="200" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">PROCESSOR</text>
-    <rect x="870" y="120" width="230" height="160" rx="12" fill="var(--surface)" stroke="var(--teal)" stroke-width="2"/><text x="985" y="115" text-anchor="middle" fill="var(--teal)" font-size="20" font-weight="700">MEMORY</text>
-    <rect id="wcell" x="905" y="175" width="160" height="60" rx="8" class="reg"/><text x="985" y="200" text-anchor="middle" fill="var(--muted)" font-size="18">LOC</text>
-    <text id="wold" x="985" y="225" text-anchor="middle" class="reg-val">25</text>
-    <g class="frag"><g class="packet" style="offset-path:path('M 290 165 L 905 165')"><rect x="-52" y="-17" width="104" height="34" rx="6"/><text x="0" y="6" text-anchor="middle">addr+Write</text></g></g>
-    <g class="frag"><g class="packet" style="offset-path:path('M 290 235 L 900 205')"><rect x="-30" y="-17" width="60" height="34" rx="6"/><text x="0" y="6" text-anchor="middle">99</text></g>
-      <text x="580" y="300" text-anchor="middle" fill="var(--muted)" font-size="20">the new value <em>overwrites</em> the old — 25 is gone forever</text></g>
+    <rect x="50" y="95" width="220" height="210" rx="12" class="reg" style="stroke:var(--purple);stroke-width:2.5"/><text x="160" y="205" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)" font-size="21">PROCESSOR</text>
+    <rect x="890" y="95" width="220" height="210" rx="12" fill="var(--surface)" stroke="var(--teal)" stroke-width="2.5"/><text x="1000" y="130" text-anchor="middle" fill="var(--teal)" font-size="20" font-weight="700">MEMORY</text>
+    <rect x="915" y="180" width="170" height="60" rx="8" class="reg"/><text x="1000" y="205" text-anchor="middle" fill="var(--muted)" font-size="17">LOC</text><text x="1000" y="228" text-anchor="middle" class="reg-val">25</text>
+    <!-- three bus lines (all outbound for a write) -->
+    <line x1="270" y1="150" x2="890" y2="150" stroke="var(--teal)" stroke-width="6"/><text x="580" y="139" text-anchor="middle" fill="var(--teal)" font-size="16" font-weight="700">ADDRESS BUS  →</text>
+    <line x1="270" y1="210" x2="890" y2="210" stroke="var(--green)" stroke-width="6"/><text x="580" y="199" text-anchor="middle" fill="var(--green)" font-size="16" font-weight="700">DATA BUS  →</text>
+    <line x1="270" y1="270" x2="890" y2="270" stroke="var(--yellow)" stroke-width="6"/><text x="580" y="259" text-anchor="middle" fill="var(--yellow)" font-size="16" font-weight="700">CONTROL BUS  →</text>
+    <!-- ① address + data + control ALL go out together -->
+    <g class="frag">
+      <g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 276 150 L 884 150"/><rect x="-30" y="-16" width="60" height="32" rx="6" fill="var(--teal)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="16" font-weight="800">LOC</text></g>
+      <g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 276 210 L 884 210"/><rect x="-26" y="-16" width="52" height="32" rx="6" fill="var(--green)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="16" font-weight="800">99</text></g>
+      <g class="pkt"><animateMotion dur="1.5s" repeatCount="indefinite" path="M 276 270 L 884 270"/><rect x="-38" y="-16" width="76" height="32" rx="6" fill="var(--yellow)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="16" font-weight="800">Write</text></g>
+      <rect x="20" y="352" width="1120" height="42" fill="var(--bg)"/><text x="35" y="380" font-size="22" fill="var(--text)">① <tspan font-weight="700">All three at once:</tspan> the address <tspan fill="var(--teal)">LOC</tspan>, the data <tspan fill="var(--green)">99</tspan>, and the <tspan fill="var(--yellow)">Write</tspan> signal — nothing has to come back.</text></g>
+    <!-- ② memory stores it -->
+    <g class="frag">
+      <rect x="915" y="180" width="170" height="60" rx="8" fill="var(--surface)" stroke="var(--green)" stroke-width="3"/><text x="1000" y="205" text-anchor="middle" fill="var(--muted)" font-size="17">LOC</text><text x="1000" y="228" text-anchor="middle" class="reg-val" style="fill:var(--green)">99</text>
+      <rect x="20" y="352" width="1120" height="42" fill="var(--bg)"/><text x="35" y="380" font-size="22" fill="var(--text)">② Memory stores it — <tspan fill="var(--green)">99</tspan> <tspan font-weight="700">overwrites 25</tspan>, which is gone for good. That's the difference from a Read.</text></g>
   </svg></div>
-  <p class="frag big" style="margin-top:2px">Processor sends address + data + a Write signal; memory stores it. RTN: <span class="em-t">M[LOC] ← R1</span>.</p>
+  <p class="frag" style="margin-top:2px; font-size:22px">Write = address + data + Write; the old value is gone for good. RTN: <span class="em-t">M[LOC] ← R1</span>.</p>
 </section>
 
 <!-- MEMORY slide read/write -->
@@ -1194,49 +1457,149 @@
 <!-- RTN + assembly -->
 <section class="slide" data-ch="Ch 5 · Describing vs writing">
   <div class="badge b-sup"><span class="dot"></span>Supporting</div>
+  <div class="kicker">Memory operations done — now: <span class="em-y">instructions</span></div>
   <h2 style="margin-bottom:14px">Two languages for one action</h2>
   <div class="row">
-    <div class="card tint-teal frag"><h3>RTN — to describe</h3><p><span class="em-t">R2 ← [LOC]</span><br>Symbolic; <code>[ ]</code> = contents, <code>←</code> = copied into. For explaining hardware.</p></div>
-    <div class="card tint-purple frag"><h3>Assembly — to program</h3><p><span class="em-p">Load R2, LOC</span><br>Mnemonics a human writes; the <b>assembler</b> turns it into the binary object program.</p></div>
+    <div class="card tint-teal frag"><h3>RTN — to describe</h3><p><span class="em-t">R2 ← [A]</span><br>Symbolic; <code>[ ]</code> = contents, <code>←</code> = copied into. For explaining hardware.</p></div>
+    <div class="card tint-purple frag"><h3>Assembly — to program</h3><p><span class="em-p">Load R2, A</span><br>Mnemonics a human writes; the <b>assembler</b> turns it into the binary object program.</p></div>
   </div>
-  <p class="frag" style="margin-top:24px">Format: <span class="muted">Label: &nbsp;Operation &nbsp;Operand(s) &nbsp;// comment</span></p>
+  <p class="frag" style="margin-top:22px">We can <b>read</b> and <b>write</b> memory, and we can describe it two ways. So now the real question:
+     <span class="em-a">what exactly is an instruction made of?</span></p>
 </section>
 
 <!-- instruction address count -->
-<section class="slide" data-ch="Ch 5 · How many addresses?">
+<!-- anatomy of an instruction: opcode + operand, and the ways to classify -->
+<section class="slide" data-ch="Ch 5 · Opcode &amp; operand">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Every instruction = <span class="em-a">opcode</span> + <span class="em-t">operand(s)</span></h2>
+  <svg viewBox="0 0 1160 250" width="100%" height="196">
+    <text x="220" y="30" text-anchor="middle" fill="var(--accent)" font-size="18" font-weight="700">OPCODE — what to do</text>
+    <text x="620" y="30" text-anchor="middle" fill="var(--teal)" font-size="18" font-weight="700">OPERAND(S) — what to do it on</text>
+    <!-- example 1 -->
+    <rect x="110" y="44" width="200" height="60" rx="8" fill="#58A6FF22" stroke="var(--accent)" stroke-width="3"/>
+    <text x="210" y="84" text-anchor="middle" fill="var(--accent)" font-size="26" font-weight="800">Load</text>
+    <rect x="350" y="44" width="150" height="60" rx="8" fill="#56D4DD22" stroke="var(--teal)" stroke-width="3"/>
+    <text x="425" y="84" text-anchor="middle" fill="var(--teal)" font-size="26" font-weight="800">R2</text>
+    <text x="516" y="84" fill="var(--text)" font-size="26" font-weight="800">,</text>
+    <rect x="535" y="44" width="150" height="60" rx="8" fill="#56D4DD22" stroke="var(--teal)" stroke-width="3"/>
+    <text x="610" y="84" text-anchor="middle" fill="var(--teal)" font-size="26" font-weight="800">A</text>
+    <text x="425" y="126" text-anchor="middle" fill="var(--muted)" font-size="16">destination register</text>
+    <text x="610" y="126" text-anchor="middle" fill="var(--muted)" font-size="16">source address</text>
+    <!-- example 2 -->
+    <rect x="110" y="146" width="200" height="60" rx="8" fill="#58A6FF22" stroke="var(--accent)" stroke-width="3"/>
+    <text x="210" y="186" text-anchor="middle" fill="var(--accent)" font-size="26" font-weight="800">Add</text>
+    <rect x="350" y="146" width="150" height="60" rx="8" fill="#56D4DD22" stroke="var(--teal)" stroke-width="3"/>
+    <text x="425" y="186" text-anchor="middle" fill="var(--teal)" font-size="26" font-weight="800">R4</text>
+    <text x="516" y="186" fill="var(--text)" font-size="26" font-weight="800">,</text>
+    <rect x="535" y="146" width="150" height="60" rx="8" fill="#56D4DD22" stroke="var(--teal)" stroke-width="3"/>
+    <text x="610" y="186" text-anchor="middle" fill="var(--teal)" font-size="26" font-weight="800">R2</text>
+    <text x="701" y="186" fill="var(--text)" font-size="26" font-weight="800">,</text>
+    <rect x="720" y="146" width="150" height="60" rx="8" fill="#56D4DD22" stroke="var(--teal)" stroke-width="3"/>
+    <text x="795" y="186" text-anchor="middle" fill="var(--teal)" font-size="26" font-weight="800">R3</text>
+    <text x="610" y="228" text-anchor="middle" fill="var(--muted)" font-size="16">destination · source · source — three operands this time</text>
+    <text x="920" y="84" fill="var(--muted)" font-size="16">An operand may be a register,</text>
+    <text x="920" y="106" fill="var(--muted)" font-size="16">a memory address or a constant</text>
+    <text x="920" y="128" fill="var(--yellow)" font-size="16">— or be implied, and not written.</text>
+  </svg>
+  <p class="frag" style="margin-top:6px; font-size:23px">And we can <b>classify instructions</b> in three ways:</p>
+  <div class="row" style="margin-top:6px">
+    <div class="card tint-green frag"><h3>① By function</h3>
+      <p style="line-height:1.55">data transfer — Load, Store, Move<br>
+      arithmetic &amp; logic — Add, Sub, AND<br>
+      control transfer — Branch, Jump, Call<br>
+      input / output — In, Out<br>
+      machine control — Halt</p></div>
+    <div class="card tint-teal frag"><h3>② By format</h3>
+      <p style="line-height:1.55">memory-reference<br>
+      register-reference<br>
+      input–output</p>
+      <p style="margin-top:8px; font-size:19px">Based on <b>where the operand lives</b>.</p></div>
+    <div class="card tint-yellow frag"><h3>③ By number of operands</h3>
+      <p style="line-height:1.55">3-address<br>
+      2-address<br>
+      1-address<br>
+      0-address</p>
+      <p style="margin-top:8px; font-size:19px">This also reveals how the <b>CPU is organised</b>.</p></div>
+  </div>
+</section>
+
+<!-- the same job written four ways -->
+<section class="slide" data-ch="Ch 5 · How many operands?">
   <div class="badge b-sup"><span class="dot"></span>Supporting</div>
-  <h2 style="margin-bottom:12px">Instructions differ by how many operands they name</h2>
-  <table class="frag">
-    <tr><th>Type</th><th>Example</th><th>Meaning</th></tr>
-    <tr><td>3-address</td><td>Add R1, R2, R3</td><td>R1 ← [R2]+[R3]</td></tr>
-    <tr><td>2-address</td><td>Add R1, R2</td><td>R1 ← [R1]+[R2]</td></tr>
-    <tr><td>1-address</td><td>Add R2</td><td>AC ← [AC]+[R2]</td></tr>
-    <tr><td>0-address</td><td>Add</td><td>stack: pop, pop, push sum</td></tr>
+  <h2 style="margin-bottom:8px">The same job four ways: <span class="em-a">C = A + B</span></h2>
+  <table style="width:100%; font-size:20px">
+    <tr><th>Type</th><th>Machine it suits</th><th>Program for C = A + B</th><th>What is <em>implied</em></th></tr>
+    <tr class="frag"><td><b>3-address</b></td><td>general-register<br><span class="muted">(or memory-to-memory)</span></td>
+      <td style="font-family:Consolas,monospace; text-align:left; padding-left:28px">Add C, A, B</td><td>nothing — all three named</td></tr>
+    <tr class="frag"><td><b>2-address</b></td><td>general-register<br><span class="muted">(classic CISC)</span></td>
+      <td style="font-family:Consolas,monospace; text-align:left; padding-left:28px">Move C, A<br>Add&nbsp; C, B</td><td>destination doubles as a source</td></tr>
+    <tr class="frag"><td><b>1-address</b></td><td><b>accumulator</b> machine<br><span class="muted">one working register, AC</span></td>
+      <td style="font-family:Consolas,monospace; text-align:left; padding-left:28px">Load&nbsp; A<br>Add&nbsp;&nbsp; B<br>Store C</td><td>the <b>AC</b> — <span class="em-t">AC ← [AC] + [B]</span></td></tr>
+    <tr class="frag"><td><b>0-address</b></td><td><b>stack</b> machine<br><span class="muted">no arithmetic registers</span></td>
+      <td style="font-family:Consolas,monospace; text-align:left; padding-left:28px">Push A<br>Push B<br>Add<br>Pop&nbsp; C</td><td>the <b>top two stack entries</b><br><span class="muted">Add pops 2, pushes the sum</span></td></tr>
   </table>
-  <p class="frag" style="margin-top:20px">Fewer addresses → shorter instructions but more of them. A classic design trade-off.</p>
+  <p class="frag" style="margin-top:14px; font-size:21px">Fewer addresses → shorter instructions, but you need <b>more</b> of them — watch the program grow down the table.
+     <span class="muted">Careful: the address <em>count</em> is the instruction format; accumulator / general-register / stack is the CPU organisation. They go together, but they are two different ideas.</span></p>
 </section>
 
 <!-- instruction formats (Mano parity) -->
 <section class="slide" data-ch="Ch 5 · Instruction formats">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:14px">Three basic instruction formats</h2>
+  <h2 style="margin-bottom:8px">Three basic instruction formats — sorting the instructions we already know</h2>
   <div class="row">
-    <div class="card tint-green frag"><h3>Memory-reference</h3><p>Opcode + an <b>address</b> (and an indirect bit I). Acts on a memory operand — e.g. ADD, LDA, STA.</p></div>
-    <div class="card tint-teal frag"><h3>Register-reference</h3><p>Opcode operates <b>within the processor</b> — clear, complement, shift, increment AC. No memory address.</p></div>
-    <div class="card tint-yellow frag"><h3>Input–Output</h3><p>Opcode controls an <b>I/O device</b> — input, output, test flags, interrupt enable.</p></div>
+    <div class="card tint-green frag"><h3>Memory-reference</h3>
+      <p>Opcode + a <b>memory address</b>. Acts on a memory operand.</p>
+      <p style="margin-top:8px; font-size:18px; color:var(--muted)">ones you've already used:</p>
+      <p style="font-family:Consolas,monospace; color:var(--green); font-size:21px">Load R2, A · Store R4, C</p>
+      <p style="margin-top:6px; font-size:18px; color:var(--muted)">textbook (Morris Mano):</p>
+      <p style="font-family:Consolas,monospace; color:var(--green); font-size:21px">LDA 200 · STA 200 · ADD 200</p></div>
+    <div class="card tint-teal frag"><h3>Register-reference</h3>
+      <p>Works <b>inside the processor</b> — no memory address at all.</p>
+      <p style="margin-top:8px; font-size:18px; color:var(--muted)">ones you've already used:</p>
+      <p style="font-family:Consolas,monospace; color:var(--teal); font-size:21px">Add R4, R2, R3 · Increment R1 · Halt</p>
+      <p style="margin-top:6px; font-size:18px; color:var(--muted)">textbook (Morris Mano):</p>
+      <p style="font-family:Consolas,monospace; color:var(--teal); font-size:21px">CLA · CMA · INC · HLT</p></div>
+    <div class="card tint-yellow frag"><h3>Input–Output</h3>
+      <p>Controls an <b>I/O device</b> — no memory address.</p>
+      <p style="margin-top:8px; font-size:18px; color:var(--muted)">the "display the answer" step of our very first role-play lives here.</p>
+      <p style="margin-top:6px; font-size:18px; color:var(--muted)">textbook (Morris Mano):</p>
+      <p style="font-family:Consolas,monospace; color:var(--yellow); font-size:21px">INP · OUT · SKI · ION</p>
+      <p style="margin-top:4px; font-size:17px; color:var(--muted)">input · output · skip-if-flag · interrupt on</p></div>
   </div>
-  <p class="frag" style="margin-top:22px">An instruction = <span class="em-a">opcode</span> (what) + <span class="em-a">operand/address</span> (on what).</p>
+  <p class="frag" style="margin-top:12px; font-size:22px"><b>Why two different sets of names?</b> Assembly language is <span class="em-y">machine-specific</span> — the same idea is
+     <code>Load</code> in our textbook, <code>LDA</code> in the Morris Mano textbook, <code>MOV</code> on x86, <code>LDR</code> on ARM. We teach with a
+     <b>generic mnemonic</b> so the concept is clear; for a real chip you open its <b>manual</b> (the instruction-set reference) and translate.</p>
 </section>
 
 <!-- RISC vs CISC + question -->
 <section class="slide" data-ch="Ch 5 · RISC vs CISC">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:14px">Two design philosophies</h2>
+  <div class="kicker">You now know what instructions are made of — so…</div>
+  <h2 style="margin-bottom:6px">Now <em>you</em> design the machine: would you allow <span class="em-o">Add A, B</span>?</h2>
   <div class="row">
-    <div class="card tint-purple frag"><h3>RISC</h3><p>Every instruction fits in <b>one word</b>. <b>Load/Store</b> only touch memory; all maths is register-to-register. Simple, fast, pipeline-friendly.</p></div>
-    <div class="card tint-orange frag"><h3>CISC</h3><p>Variable-length, multi-word instructions. Arithmetic can act <b>directly on memory</b> (e.g. Add B, A). Fewer, richer instructions.</p></div>
+    <div class="card tint-orange frag"><h3>Choice 1 — allow it (CISC)</h3>
+      <p style="line-height:1.5"><span style="font-family:Consolas,monospace">Add A, B</span> — arithmetic straight on memory.</p>
+      <p style="margin-top:8px; line-height:1.5">✔ Shorter programs — one instruction does it all.<br>
+      ✘ That one instruction must fetch 2 operands, add, and store — it takes a <b>variable, unpredictable</b> number of cycles.<br>
+      ✘ Hard to pipeline or speed up.</p></div>
+    <div class="card tint-purple frag"><h3>Choice 2 — forbid it (RISC)</h3>
+      <p style="line-height:1.5">Force the programmer to load first:<br>
+      <span style="font-family:Consolas,monospace">Load R2, A<br>Load R3, B<br>Add R4, R2, R3</span></p>
+      <p style="margin-top:8px; line-height:1.5">✔ Every instruction is <b>one word</b> and takes a <b>predictable</b> time.<br>
+      ✔ Only Load/Store touch memory → simple, fast, easy to <b>pipeline</b>.</p></div>
   </div>
-  <p class="frag" style="margin-top:22px">Modern chips are RISC at heart — ARM in your phone, RISC-V rising.</p>
+  <p class="frag" style="margin-top:12px; font-size:22px"><b>The pay-off:</b> uniform, predictable instructions can be overlapped in a pipeline and clocked faster.
+     That is why <span class="em-p">modern processors are RISC-based</span> — the ARM chip in your phone runs billions of these simple
+     instructions a second on a small battery. <span class="muted">(Pipelining is Unit 3.)</span></p>
+  <p class="frag" style="margin-top:10px; font-size:23px">So on a <b>RISC (load/store)</b> machine, is each of these legal?</p>
+  <table class="frag" style="width:100%; font-size:23px; margin-top:6px">
+    <tr><th style="text-align:left; padding-left:24px">Instruction</th><th>RISC?</th><th style="text-align:left; padding-left:24px">Why</th></tr>
+    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Load&nbsp; R2, A</td><td style="color:var(--green); font-weight:800">✓ allowed</td><td style="text-align:left; padding-left:24px">Load may touch memory</td></tr>
+    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Store R4, C</td><td style="color:var(--green); font-weight:800">✓ allowed</td><td style="text-align:left; padding-left:24px">Store may touch memory</td></tr>
+    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Add R4, R2, R3</td><td style="color:var(--green); font-weight:800">✓ allowed</td><td style="text-align:left; padding-left:24px">register-to-register arithmetic</td></tr>
+    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Add R2, A</td><td style="color:var(--red); font-weight:800">✗ not allowed</td><td style="text-align:left; padding-left:24px">arithmetic on a memory operand</td></tr>
+    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Increment C</td><td style="color:var(--red); font-weight:800">✗ not allowed</td><td style="text-align:left; padding-left:24px">operates directly on memory</td></tr>
+  </table>
 </section>
 
 <section class="slide qslide" data-ch="Ch 5 · The big question">
@@ -1299,69 +1662,63 @@
     <g class="frag"><text x="900" y="150" fill="var(--yellow)" font-size="26" font-weight="700">PC ← PC + 4</text><text x="900" y="190" fill="var(--muted)" font-size="20">after every fetch</text></g>
     <defs><marker id="ah2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker></defs>
   </svg></div>
-  <p class="frag big" style="margin-top:2px">Each fetch auto-increments the PC by the word length, so instructions run in address order.</p>
+  <p class="frag" style="margin-top:2px; font-size:26px">Each fetch auto-increments the PC by the word length, so instructions run in address order. This is called
+     <span class="em-a">straight-line sequencing</span>.</p>
+  <p class="frag" style="margin-top:10px; font-size:24px">And that is one of only <b>two</b> kinds of instruction sequencing:
+     <span class="em-a">straight-line</span> (the PC just steps on) and <span class="em-y">branching</span> (a new address is loaded into the PC) — next.</p>
 </section>
 
-<!-- branching animation -->
+<!-- branching — a simple comparison so the branch is obvious -->
 <section class="slide" data-ch="Ch 6 · Branching">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:6px">Branch = load a <em>new</em> address into the PC</h2>
-  <div class="animwrap"><svg viewBox="0 0 1160 420" preserveAspectRatio="xMidYMid meet">
-    <g font-size="22">
-      <rect x="120" y="60"  width="380" height="52" class="reg"/><text x="150" y="94" fill="var(--muted)">100</text><text x="480" y="94" text-anchor="end" class="reg-val">…loop body…</text>
-      <rect x="120" y="116" width="380" height="52" class="reg"/><text x="150" y="150" fill="var(--muted)">104</text><text x="480" y="150" text-anchor="end" class="reg-val">Decrement R1</text>
-      <rect x="120" y="172" width="380" height="52" class="reg"/><text x="150" y="206" fill="var(--muted)">108</text><text x="480" y="206" text-anchor="end" class="reg-val">Branch&gt;0 100</text>
-      <rect x="120" y="228" width="380" height="52" class="reg"/><text x="150" y="262" fill="var(--muted)">112</text><text x="480" y="262" text-anchor="end" class="reg-val">Store result</text>
+  <h2 style="margin-bottom:2px">Branching — a <span class="em-a">comparison</span>: put the larger of A and B into MAX</h2>
+  <div class="animwrap"><svg viewBox="0 0 1160 400" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="bt" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker>
+      <marker id="bf" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker>
+    </defs>
+    <text x="300" y="34" text-anchor="middle" fill="var(--teal)" font-size="19" font-weight="700">PROGRAM</text>
+    <g font-family="Consolas,monospace">
+      <rect x="100" y="48" width="400" height="48" rx="6" class="reg"/><text x="118" y="79" fill="var(--muted)" font-size="16">100</text><text x="180" y="79" class="reg-val" font-size="19">Load     R1, A</text>
+      <rect x="100" y="106" width="400" height="48" rx="6" class="reg"/><text x="118" y="137" fill="var(--muted)" font-size="16">104</text><text x="180" y="137" class="reg-val" font-size="19">Compare  R1, B</text>
+      <rect x="100" y="164" width="400" height="48" rx="6" class="reg" style="stroke:var(--yellow);stroke-width:3"/><text x="118" y="195" fill="var(--muted)" font-size="16">108</text><text x="180" y="195" font-size="19" font-weight="700" style="fill:var(--yellow)">Branch&gt;0 116</text>
+      <rect x="100" y="222" width="400" height="48" rx="6" class="reg"/><text x="118" y="253" fill="var(--muted)" font-size="16">112</text><text x="180" y="253" class="reg-val" font-size="19">Load     R1, B</text>
+      <rect x="100" y="280" width="400" height="48" rx="6" class="reg"/><text x="118" y="311" fill="var(--muted)" font-size="16">116</text><text x="180" y="311" class="reg-val" font-size="19">Store    R1, MAX</text>
     </g>
-    <!-- jump arrow -->
-    <g class="frag"><path d="M 540 198 C 720 198, 720 86, 520 86" stroke="var(--yellow)" stroke-width="4" fill="none" marker-end="url(#ah3)"/>
-      <text x="760" y="150" fill="var(--yellow)" font-size="24" font-weight="700">PC ← 100</text>
-      <text x="760" y="185" fill="var(--muted)" font-size="20">if R1 &gt; 0, jump back</text></g>
-    <g class="frag"><path d="M 540 254 L 660 254" stroke="var(--green)" stroke-width="4" fill="none" marker-end="url(#ah4)"/>
-      <text x="690" y="260" fill="var(--green)" font-size="22">else fall through — loop ends</text></g>
-    <defs><marker id="ah3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker>
-      <marker id="ah4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker></defs>
+    <!-- branch TAKEN : 108 jumps to 116, skipping 112 -->
+    <path d="M 506 182 C 630 182, 630 304, 506 304" stroke="var(--yellow)" stroke-width="3.5" fill="none" marker-end="url(#bt)"/>
+    <text x="642" y="238" fill="var(--yellow)" font-size="16" font-weight="700">taken → PC ← 116</text>
+    <text x="642" y="259" fill="var(--muted)" font-size="14">112 is skipped</text>
+    <!-- branch NOT taken : 108 simply steps to 112 -->
+    <path d="M 506 200 C 556 200, 556 246, 506 246" stroke="var(--green)" stroke-width="3.5" fill="none" marker-end="url(#bf)"/>
+    <text x="530" y="352" fill="var(--green)" font-size="16" font-weight="700">not taken → PC just steps to 112</text>
+    <!-- case 1 -->
+    <g class="frag">
+      <rect x="700" y="44" width="430" height="140" rx="10" class="reg" style="stroke:var(--yellow);stroke-width:2.5"/>
+      <text x="722" y="76" fill="var(--yellow)" font-size="19" font-weight="800">Case 1 :  A = 5,  B = 3</text>
+      <text x="722" y="106" fill="var(--text)" font-size="17">R1 = 5   ·   is 5 &gt; 3 ?  YES</text>
+      <text x="722" y="134" fill="var(--yellow)" font-size="17">branch TAKEN — jump to 116, skip 112</text>
+      <text x="722" y="166" fill="var(--green)" font-size="18" font-weight="800">MAX = 5</text></g>
+    <!-- case 2 -->
+    <g class="frag">
+      <rect x="700" y="204" width="430" height="164" rx="10" class="reg" style="stroke:var(--green);stroke-width:2.5"/>
+      <text x="722" y="236" fill="var(--green)" font-size="19" font-weight="800">Case 2 :  A = 3,  B = 5</text>
+      <text x="722" y="266" fill="var(--text)" font-size="17">R1 = 3   ·   is 3 &gt; 5 ?  NO</text>
+      <text x="722" y="294" fill="var(--green)" font-size="17">NOT taken — PC steps on to 112</text>
+      <text x="722" y="322" fill="var(--text)" font-size="17">112 loads B, so R1 = 5</text>
+      <text x="722" y="352" fill="var(--green)" font-size="18" font-weight="800">MAX = 5</text></g>
   </svg></div>
-  <p class="frag big" style="margin-top:2px"><b>Conditional</b> branch jumps only if a condition holds (e.g. R1&gt;0); otherwise the PC just steps on.</p>
+  <p class="frag" style="margin-top:2px; font-size:24px">A <b>conditional branch</b> either loads a new address into the PC — or it does not, and the PC simply steps on.
+     That single choice is all that branching is.</p>
 </section>
 
 <section class="slide qslide" data-ch="Ch 6 · The big question">
   <div class="qmark">?</div>
   <div class="qlabel">Target &amp; offset</div>
-  <div class="q">A branch at address 108 jumps to 100. Instead of storing "100", many machines store
-     the <span class="em-y">offset −8</span>. Why is that smarter?</div>
+  <div class="q">Our <span class="em-p">Branch&gt;0 116</span> sits at address 108. Instead of storing the target "116",
+     many machines store the <span class="em-y">offset +4</span> (counted from the next instruction, 112). Why is that smarter?</div>
   <div class="qans frag">The offset is small and <b>position-independent</b> — the same code runs wherever it's loaded in memory.
-     Effective address = PC + offset. Target = where you land; offset = the distance.</div>
-</section>
-
-<!-- add n numbers loop -->
-<section class="slide" data-ch="Ch 6 · A loop that adds n numbers">
-  <div class="badge b-sup"><span class="dot"></span>Supporting</div>
-  <h2 style="margin-bottom:12px">Putting it together: add n numbers</h2>
-  <div class="row">
-    <div class="card frag" style="flex:1.2"><h3>The idea</h3>
-      <p>Use <span class="em-t">R1</span> as a counter set to n. Add one number each pass, decrement R1,
-         and <b>branch back while R1 &gt; 0</b>. When R1 hits 0, the loop falls through.</p></div>
-    <div class="card tint-purple frag"><h3>Skeleton</h3>
-      <p style="font-size:22px; line-height:1.6">
-        &nbsp;LOOP: Add R2,(R3)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Add R3, #4<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Decrement R1<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Branch&gt;0 LOOP</p></div>
-  </div>
-  <p class="frag" style="margin-top:20px">Straight-line sequencing does the work; one branch turns it into a <span class="em-y">loop</span>.</p>
-</section>
-
-<!-- LMC live -->
-<section class="slide heroslide" data-ch="Ch 6 · Live · run a program yourself">
-  <div class="badge b-sup"><span class="dot"></span>Supporting</div>
-  <h2 class="herotitle">Now watch sequencing for real — Little Man Computer</h2>
-  <div class="animwrap">
-    <iframe src="https://peterhigginson.co.uk/lmc/" title="Little Man Computer simulator" allowfullscreen></iframe>
-  </div>
-  <p class="credit">Type a program, press RUN, watch the PC drive the fetch–execute cycle. Simulator &copy; 2014–24
-    Peter&nbsp;L.&nbsp;Higginson — <a href="https://peterhigginson.co.uk/lmc/" target="_blank" rel="noopener">peterhigginson.co.uk/lmc</a>
-    <span class="muted">(if blank, open in a new tab).</span></p>
+     Effective address = PC + offset (PC already points to the next instruction). Target = where you land; offset = the distance.</div>
 </section>
 
 <!-- MEMORY slide -->
@@ -1384,70 +1741,6 @@
   <div class="keybox frag"><span class="k">The PC is the story-teller.</span><br>
     Increment it and the program marches; overwrite it and the program loops, chooses, decides.
     All of control flow is just editing one register.</div>
-</section>
-
-<!-- ════════════════ CH 7 · CAPSTONE ════════════════ -->
-<section class="slide divider" data-ch="Capstone · Run a Program by Hand">
-  <div class="kicker">Unit 1 Capstone · CO1 · all six chapters at once</div>
-  <div class="chnum">★</div>
-  <h1>Run a Program by Hand</h1>
-  <p class="hook frag">Everything you learned in one exercise: a tiny program computes
-     <em>C = A + B</em> — and we trace it, register by register, to the last byte.</p>
-</section>
-
-<!-- program listing -->
-<section class="slide" data-ch="Capstone · The program">
-  <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:12px">The program &amp; the data, in memory</h2>
-  <div class="row">
-    <div class="card tint-purple frag"><h3>Program (from 100)</h3>
-      <p style="font-size:23px; line-height:1.7">
-        100: Load&nbsp; R2, A<br>
-        104: Add&nbsp;&nbsp; R2, B<br>
-        108: Store R2, C<br>
-        112: Halt</p></div>
-    <div class="card tint-teal frag"><h3>Data</h3>
-      <p style="font-size:23px; line-height:1.7">
-        A (addr 200) = <span class="em-t">7</span><br>
-        B (addr 204) = <span class="em-t">5</span><br>
-        C (addr 208) = ?</p></div>
-  </div>
-  <p class="frag" style="margin-top:20px">Before we run it: what will end up in C? <span class="muted">Hold that prediction.</span></p>
-</section>
-
-<!-- trace table fills row by row -->
-<section class="slide" data-ch="Capstone · Trace it">
-  <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:10px">Trace the machine state, step by step</h2>
-  <table style="width:100%; font-size:25px">
-    <tr><th>PC</th><th>Fetched instruction</th><th>Action (RTN)</th><th>R2</th><th>C @208</th></tr>
-    <tr class="frag"><td>100</td><td>Load R2, A</td><td>R2 ← [200]</td><td class="reg-val">7</td><td>?</td></tr>
-    <tr class="frag"><td>104</td><td>Add R2, B</td><td>R2 ← [R2]+[204]</td><td class="reg-val">12</td><td>?</td></tr>
-    <tr class="frag"><td>108</td><td>Store R2, C</td><td>[208] ← [R2]</td><td class="reg-val">12</td><td class="reg-val">12</td></tr>
-    <tr class="frag"><td>112</td><td>Halt</td><td>stop</td><td class="reg-val">12</td><td class="reg-val">12</td></tr>
-  </table>
-  <p class="frag big" style="margin-top:22px">Notice the <span class="em-p">PC</span> stepping 100→104→108→112, the <span class="em-t">fetch</span>
-     into IR, the ALU adding, and the final <span class="em-g">write</span> to memory — every idea from Unit 1, together.</p>
-</section>
-
-<section class="slide qslide" data-ch="Capstone · The big question">
-  <div class="qmark">?</div>
-  <div class="qlabel">Did you predict it?</div>
-  <div class="q">We changed <em>two</em> memory locations while running this: which ones — and does A still hold 7?</div>
-  <div class="qans frag">Only <b>C (208)</b> was written (12); the PC changed inside the processor, not memory.
-     <b>A still holds 7</b> — Load only <em>copies</em>. Read never destroys its source.</div>
-</section>
-
-<!-- your turn LMC -->
-<section class="slide heroslide" data-ch="Capstone · Your turn">
-  <div class="badge b-sup"><span class="dot"></span>Supporting</div>
-  <h2 class="herotitle">Your turn — type this program into the LMC and run it</h2>
-  <div class="animwrap">
-    <iframe src="https://peterhigginson.co.uk/lmc/" title="Little Man Computer simulator" allowfullscreen></iframe>
-  </div>
-  <p class="credit">Challenge: load two numbers, add them, output the result — then single-step and watch the PC.
-    Simulator &copy; 2014–24 Peter&nbsp;L.&nbsp;Higginson —
-    <a href="https://peterhigginson.co.uk/lmc/" target="_blank" rel="noopener">peterhigginson.co.uk/lmc</a></p>
 </section>
 
 <!-- unit map -->
@@ -1486,7 +1779,7 @@ function frags(s){return [...s.querySelectorAll('.frag')];}
 function render(){
   slides.forEach((s,i)=>s.classList.toggle('active',i===si));
   const s=slides[si], f=frags(s);
-  f.forEach((el,i)=>el.classList.toggle('on',i<fi));
+  f.forEach((el,i)=>{el.classList.toggle('on',i<fi); el.classList.toggle('cur',i===fi-1);});
   bar.style.width=((si)/(slides.length-1))*100+'%';
   counter.textContent=`slide ${si+1} / ${slides.length}`;
   chlabel.textContent=s.dataset.ch||'';
