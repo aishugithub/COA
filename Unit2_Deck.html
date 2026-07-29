@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>COA · Unit 2 · Processing Units</title>
+<style>
+  /* ── Palette (Foothold standard) ── */
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#56D364; --yellow:#F2C94C; --purple:#D2A8FF;
+    --red:#FF7B72; --orange:#F0883E; --teal:#56D4DD;
+    --text:#F5F8FC; --muted:#E6EDF3; --border:#5A6472;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%; background:var(--bg); color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden}
+
+  .slide{display:none; position:absolute; inset:0; padding:64px 92px 88px;
+    flex-direction:column; justify-content:center}
+  .slide.active{display:flex}
+  .kicker{font-size:24px; font-weight:700; letter-spacing:3px; color:var(--accent);
+    text-transform:uppercase; margin-bottom:16px}
+  h1{font-size:70px; line-height:1.1}
+  h2{font-size:52px; line-height:1.15; margin-bottom:28px}
+  p, li{font-size:33px; line-height:1.45}
+  .muted{color:var(--muted)}
+  .big{font-size:44px; line-height:1.4}
+  /* Foothold — the scaffolding line that opens a slide: why are we here,
+     and what earlier idea are we standing on. Always visible (not a .frag),
+     so the professor reads it before revealing any content. */
+  .foothold{font-size:24px; color:var(--muted); font-style:italic; line-height:1.35;
+    margin:2px 0 18px; padding-left:18px; border-left:4px solid var(--accentGlow); max-width:1180px}
+  .foothold b{color:var(--accent); font-style:normal; font-weight:700}
+  .foothold .lbl{color:var(--accentGlow); font-style:normal; font-weight:800;
+    text-transform:uppercase; letter-spacing:1px; font-size:20px}
+  .em-y{color:var(--yellow)} .em-p{color:var(--purple)} .em-t{color:var(--teal)}
+  .em-g{color:var(--green)} .em-a{color:var(--accent)} .em-o{color:var(--orange)}
+
+  /* ── Stepwise reveal ── */
+  .frag{opacity:0; transform:translateY(16px); transition:opacity .5s, transform .5s}
+  .frag.on{opacity:1; transform:none}
+
+  /* ── Cards ── */
+  .row{display:flex; gap:24px; margin-top:12px}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:24px 28px; flex:1}
+  .card h3{font-size:30px; margin-bottom:8px}
+  .card p{font-size:25px; color:var(--muted)}
+  .tint-green{border-color:var(--green); background:#3FB95014}
+  .tint-red{border-color:var(--red); background:#F8514914}
+  .tint-yellow{border-color:var(--yellow); background:#D2992214}
+  .tint-purple{border-color:var(--purple); background:#BC8CFF14}
+  .tint-teal{border-color:var(--teal); background:#39D0D814}
+
+  /* ── Chapter divider ── */
+  .divider{align-items:flex-start}
+  .divider .chnum{font-size:120px; font-weight:800; color:var(--accentGlow); line-height:1}
+  .divider h1{margin:8px 0 26px}
+  .divider .hook{font-size:38px; color:var(--yellow); font-style:italic; max-width:1150px}
+
+  /* ── Importance badge (top-right) ── */
+  .badge{position:absolute; top:34px; right:40px; display:flex; align-items:center;
+    gap:10px; padding:11px 20px; border-radius:999px; font-size:22px; font-weight:700;
+    letter-spacing:1px; text-transform:uppercase}
+  .badge .dot{width:14px; height:14px; border-radius:50%}
+  .b-core{background:#BC8CFF1C; border:1.5px solid var(--purple); color:var(--purple)}
+  .b-core .dot{background:var(--purple)}
+  .b-sup{background:#D299221C; border:1.5px solid var(--yellow); color:var(--yellow)}
+  .b-sup .dot{background:var(--yellow)}
+  .b-ext{background:#58A6FF1C; border:1.5px solid var(--accent); color:var(--accent)}
+  .b-ext .dot{background:var(--accent)}
+
+  /* ── Concept-hook question slide ── */
+  .qslide .qmark{position:absolute; top:40px; left:60px; font-size:230px; font-weight:800;
+    color:#BC8CFF14; line-height:1; user-select:none}
+  .qslide .qlabel{font-size:24px; font-weight:700; letter-spacing:3px; color:var(--purple);
+    text-transform:uppercase; margin-bottom:22px}
+  .qslide .q{font-size:56px; line-height:1.25; max-width:1150px; font-weight:600}
+  .qslide .qans{margin-top:40px; font-size:36px; color:var(--green); max-width:1120px;
+    padding:26px 34px; border-left:5px solid var(--green); background:#3FB95012;
+    border-radius:0 14px 14px 0}
+
+  /* ── Memory ("commit to exam memory") slide ── */
+  .memslide .mhead{display:flex; align-items:center; gap:22px; margin-bottom:30px}
+  .memslide .micon{font-size:64px}
+  .memslide .mtitle{font-size:30px; font-weight:800; letter-spacing:2px;
+    text-transform:uppercase; color:var(--green)}
+  .memslide .msub{font-size:23px; color:var(--muted); margin-top:4px}
+  .memcard{background:#3FB9500F; border:2px solid var(--green); border-radius:20px;
+    padding:34px 44px; max-width:1200px}
+  .memcard h3{font-size:38px; margin-bottom:18px; color:var(--text)}
+  .memcard p, .memcard li{font-size:30px; line-height:1.5}
+  .memcard ul{padding-left:34px; margin-top:6px}
+  .memcard .term{color:var(--teal); font-weight:700}
+
+  /* ── Key-insight slide ── */
+  .keyslide{align-items:center; text-align:center}
+  .keyslide .kicon{font-size:70px; margin-bottom:24px}
+  .keybox{background:#BC8CFF14; border:2px solid var(--purple); border-radius:24px;
+    padding:54px 66px; font-size:50px; line-height:1.4; max-width:1250px}
+  .keybox .k{color:var(--purple); font-weight:800}
+
+  /* ── Tables ── */
+  table{border-collapse:collapse; margin-top:14px}
+  th,td{border:1px solid var(--border); padding:12px 28px; font-size:26px; text-align:center}
+  th{background:var(--surface); color:var(--accent)}
+
+  /* ── SVG diagram helpers ── */
+  svg text{font-family:'Segoe UI',system-ui,sans-serif}
+  .reg{fill:var(--card); stroke:var(--border); stroke-width:2}
+  .reg-lbl{fill:var(--text); font-size:23px; font-weight:700}
+  .reg-val{fill:var(--teal); font-size:22px; font-weight:700}
+  .glow{stroke:var(--purple); stroke-width:3.5; filter:drop-shadow(0 0 10px #BC8CFF)}
+  .lit{fill:#3FB95026; stroke:var(--green); stroke-width:3}
+
+  /* ── Data-packet animation (travels a bus path when its step reveals) ── */
+  .packet{opacity:0; offset-distance:0%; offset-rotate:0deg}
+  .frag.on .packet{opacity:1; animation:flow 1.35s cubic-bezier(.45,0,.2,1) forwards}
+  @keyframes flow{ from{offset-distance:0%} 6%{opacity:1} 94%{opacity:1}
+    to{offset-distance:100%; opacity:1} }
+  .packet rect{fill:var(--yellow)}
+  .packet text{fill:#0D1117; font-size:19px; font-weight:800}
+
+  /* SMIL packets on step-through slides: only the CURRENT step's packet is shown,
+     so a 30-step animation never piles every packet on screen at once. */
+  .pkt{opacity:0}
+  .frag.cur .pkt{opacity:1}
+
+  /* generic pulse used for "arrival" highlights */
+  .frag.on .arrive{animation:arrive .6s ease .95s both}
+  @keyframes arrive{ 0%{fill:var(--card)} 50%{fill:#3FB95040} 100%{fill:var(--card)} }
+
+  /* stored-program: an instruction card gliding from memory into the CPU */
+  .liftpkt{opacity:0; offset-distance:0%; offset-rotate:0deg}
+  .frag.on .liftpkt{opacity:1; animation:flow 1.9s cubic-bezier(.45,0,.2,1) .2s forwards}
+  .liftpkt rect{fill:var(--accent); stroke:#fff; stroke-width:1.5; filter:drop-shadow(0 0 12px #58A6FF)}
+  .liftpkt text{fill:#0D1117; font-size:22px; font-weight:800}
+  .track{stroke:var(--accent); stroke-width:2.5; stroke-dasharray:8 8; fill:none; opacity:.5}
+  .frag.on .emptycell{animation:emptyc .8s ease forwards}
+  @keyframes emptyc{to{opacity:.25}}
+
+  /* ── Hero animation slide: SVG fills the stage, captions swap one at a time ── */
+  .heroslide{padding:44px 64px 34px}
+  .heroslide .herotitle{font-size:44px; margin-bottom:6px}
+  .animwrap{flex:1; min-height:0; display:flex; align-items:center; justify-content:center}
+  .animwrap svg{width:100%; height:100%; max-height:100%}
+  .capbar{position:relative; height:96px; margin-top:4px}
+  .capbar .cap{position:absolute; inset:0; display:flex; align-items:center;
+    font-size:35px; line-height:1.25; background:var(--bg)}
+
+  /* ── Embedded simulator ── */
+  .animwrap iframe{width:100%; height:100%; border:2px solid var(--border);
+    border-radius:14px; background:#fff}
+  .credit{margin-top:12px; font-size:22px; color:var(--muted)}
+  .credit a{color:var(--accent); text-decoration:none}
+
+  /* interrupt bolt flash */
+  .frag.on .bolt{animation:bolt 1s ease infinite}
+  @keyframes bolt{0%,100%{opacity:.25} 50%{opacity:1}}
+
+  /* ══ Ch1 / Ch2 enrichment animations ══
+     All are CSS-driven off `.frag.on`, so stepping backward and forward
+     re-arms them (the deck engine re-adds the class on every render). */
+
+  /* a data value gliding along a wire — element carries an inline
+     `offset-path:path('…')`; it moves from 0%→100% of that path.       */
+  .dpk{opacity:0; offset-distance:0%; offset-rotate:0deg}
+  .frag.on .dpk{opacity:1; animation:flow 1.5s cubic-bezier(.45,0,.2,1) .1s forwards}
+  .dpk rect{fill:var(--yellow)}
+  .dpk text{fill:#0D1117; font-size:20px; font-weight:800}
+  .dpk.teal rect{fill:var(--teal)} .dpk.grn rect{fill:var(--green)}
+  .dpk.pur rect{fill:var(--purple); filter:drop-shadow(0 0 8px #D2A8FF)}
+  .dpk.pur text{fill:#0D1117}
+
+  /* a value settling into a destination register, slightly after the packet arrives */
+  .setval{opacity:0}
+  .frag.on .setval{animation:setval .55s ease 1.35s both}
+  @keyframes setval{from{opacity:0; transform:translateY(-7px)} to{opacity:1; transform:none}}
+
+  /* clock-edge blip that pulses while its step is on screen */
+  .frag.on .tick{animation:tick 1.3s ease infinite}
+  @keyframes tick{0%,100%{opacity:.25} 50%{opacity:1}}
+
+  /* a driver that switches ON: outline turns green and glows */
+  .frag.on .enable{animation:enable .5s ease .2s both}
+  @keyframes enable{from{stroke:var(--border)} to{stroke:var(--green); filter:drop-shadow(0 0 9px var(--green))}}
+  /* a driver stuck in high-impedance: dimmed + dashed = electrically absent */
+  .hiz{opacity:.3}
+  .hiz rect, .hiz line, .hiz path{stroke-dasharray:6 6}
+
+  /* two drivers fighting for one wire — a red overlay pulses on the bus */
+  .clash{fill:var(--red)}
+  .frag.on .clash{animation:clash .5s ease 4}
+  @keyframes clash{0%,100%{opacity:0} 50%{opacity:.8}}
+
+  /* a bit cell that changes (add→subtract complements B): quick flip + recolour */
+  .frag.on .flip{animation:flip .6s ease .2s both}
+  @keyframes flip{0%{transform:scale(1)} 45%{transform:scale(1,.05)} 100%{transform:scale(1)}}
+
+  /* whole bit-row sliding one place for a shift; distance set per-use inline var */
+  .frag.on .slideR{animation:slideR .9s cubic-bezier(.5,0,.2,1) .3s both}
+  @keyframes slideR{from{transform:translateX(0)} to{transform:translateX(72px)}}
+  .frag.on .slideL{animation:slideL .9s cubic-bezier(.5,0,.2,1) .3s both}
+  @keyframes slideL{from{transform:translateX(0)} to{transform:translateX(-72px)}}
+
+  /* a freshly-inserted / duplicated bit fading up at the vacated end */
+  .frag.on .fadein{animation:fadein .5s ease 1.05s both}
+  @keyframes fadein{from{opacity:0; transform:scale(.5)} to{opacity:1; transform:scale(1)}}
+
+  /* a bit being forced to 0 (mask) or 1 (set): recolour with a pop */
+  .frag.on .toZero{animation:toZero .6s ease both}
+  @keyframes toZero{0%{fill:var(--card)} 100%{fill:#FF7B7233}}
+  .frag.on .toOne{animation:toOne .6s ease both}
+  @keyframes toOne{0%{fill:var(--card)} 100%{fill:#56D36433}}
+
+  /* ── Chrome ── */
+  #bar{position:fixed; top:0; left:0; height:6px; background:var(--green);
+    width:0; transition:width .3s; z-index:5}
+  #counter{position:fixed; bottom:20px; right:32px; font-size:21px; color:var(--muted)}
+  #chlabel{position:fixed; bottom:20px; left:32px; font-size:21px; color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+<div id="chlabel"></div>
+<div id="counter"></div>
+
+<!-- ════════════════ TITLE ════════════════ -->
+<section class="slide divider" data-ch="Unit 2">
+  <div class="kicker">CSE23CT201 · Computer Organization &amp; Architecture · CO2</div>
+  <div class="chnum">2</div>
+  <h1>Processing Units</h1>
+  <p class="hook frag">Unit 1 showed <em>what</em> a computer is. Now we climb inside the processor and watch a single
+     line of assembly turn into real hardware steps — bit by bit, clock by clock.</p>
+</section>
+
+<!-- ════════════════ CH 1 · DIVIDER ════════════════ -->
+<section class="slide divider" data-ch="Ch 1 · Register Transfers & Microoperations">
+  <div class="kicker">Chapter 1 of 5 · CO2 · Mano §4 / Hamacher §5.1</div>
+  <div class="chnum">1</div>
+  <h1>Register Transfers &amp; Microoperations</h1>
+  <p class="hook frag">In Unit 1, <b>Load</b> moved a word to a register. But <em>how</em> does one bit actually
+     cross from one register to another? We start at the smallest step of all.</p>
+</section>
+
+<!-- scaffold: where we stand -->
+<section class="slide" data-ch="Ch 1 · Where we stand">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:10px">From boxes to the <span class="em-a">steps inside them</span></h2>
+  <p class="foothold"><span class="lbl">Where this fits ·</span> Unit 1 named the CPU's parts. This chapter opens them up and asks how one instruction is actually carried out <em>inside</em>.</p>
+  <div class="row">
+    <div class="card tint-teal frag"><h3>Unit 1 gave us</h3><p>Five units, a bus, registers (PC, IR, MAR, MDR), and instructions like <b>Load</b>, <b>Add</b>, <b>Store</b>.</p></div>
+    <div class="card tint-purple frag"><h3>Unit 2 asks</h3><p>What tiny hardware steps carry out <em>each</em> of those instructions — and what raises the signals that drive them?</p></div>
+  </div>
+  <p class="frag big em-y" style="margin-top:22px">The smallest such step has a name: the <b>microoperation</b>.</p>
+</section>
+
+<!-- microoperation definition -->
+<section class="slide" data-ch="Ch 1 · The microoperation">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px">The <span class="em-a">microoperation</span> — one elementary step</h2>
+  <p class="foothold"><span class="lbl">Why now ·</span> We keep saying “a step.” Before building anything with steps, let's pin down the <b>smallest</b> step there is, and name it.</p>
+  <p class="frag big">An operation on data held in registers, done in <b>one clock pulse</b>.</p>
+  <div class="row" style="margin-top:10px">
+    <div class="card tint-green frag"><h3>Examples</h3><p><b>load, clear, count, shift, add</b> — each a single elementary act on register contents.</p></div>
+    <div class="card tint-teal frag"><h3>The whole machine</h3><p>Every instruction you met in Unit 1 is really a short <em>sequence</em> of these microoperations.</p></div>
+  </div>
+  <p class="frag" style="margin-top:18px">A digital system is defined by the <span class="em-t">registers</span> it has and the <span class="em-y">microoperations</span> performed on them.</p>
+</section>
+
+<!-- RTL notation -->
+<section class="slide" data-ch="Ch 1 · Register Transfer Language">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px">Register Transfer Notation, <span class="em-a">revisited</span></h2>
+  <p class="foothold"><span class="lbl">Recall ·</span> Back in Unit 1 we already wrote transfers like <b>R2 ← [A]</b> — but used the notation loosely. Now we revisit it properly, symbol by symbol.</p>
+  <p class="frag" style="font-size:26px">The whole notation is just four symbols — read each row with its own example:</p>
+  <table class="frag" style="margin-top:12px; font-size:26px">
+    <tr><th>Symbol</th><th>Meaning</th><th>Example</th></tr>
+    <tr><td>Letters</td><td>a register</td><td>MAR, R2</td></tr>
+    <tr><td>( )</td><td>part of a register</td><td>R2(0–7), R2(L)</td></tr>
+    <tr><td>←</td><td>transfer; <b>source unchanged</b>, destination overwritten</td><td>R2 ← R1</td></tr>
+    <tr><td>,</td><td>two transfers in the <b>same</b> clock</td><td>R2 ← R1, R4 ← R3</td></tr>
+  </table>
+</section>
+
+<!-- control function + timing (ANIMATED: packet crosses only when P fires) -->
+<section class="slide" data-ch="Ch 1 · Register Transfer">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">Register Transfer — <span class="em-y">only on a control signal</span></h2>
+  <p class="foothold"><span class="lbl">The gap ·</span> The notation says <em>what</em> moves. It never says <em>when</em>. A real register transfer must wait for a signal that says “now.”</p>
+  <p class="frag big"><span class="em-p">P : R2 ← R1</span> &nbsp;— the transfer happens only if control signal <b>P = 1</b>.</p>
+  <div class="animwrap"><svg viewBox="0 0 1100 270" preserveAspectRatio="xMidYMid meet">
+    <!-- source register always holds its value -->
+    <rect x="90" y="92" width="160" height="74" class="reg"/>
+    <text x="170" y="124" text-anchor="middle" class="reg-lbl">R1</text>
+    <text x="170" y="152" text-anchor="middle" class="reg-val">1011</text>
+
+    <!-- reveal 1: the wire path and the (still-empty) destination -->
+    <g class="frag">
+      <path d="M 250 129 L 470 129" stroke="var(--purple)" stroke-width="4" marker-end="url(#u2c1p)"/>
+      <text x="330" y="114" fill="var(--muted)" font-size="20">n parallel lines</text>
+      <text x="250" y="205" fill="var(--muted)" font-size="16">n = the register's width in bits = the machine's word size — e.g. 32 in a 32-bit CPU</text>
+      <rect x="480" y="92" width="160" height="74" class="reg" style="stroke:var(--teal)"/>
+      <text x="560" y="124" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">R2</text>
+    </g>
+
+    <!-- reveal 2: P=1 → a data packet glides across and R2 latches the value -->
+    <g class="frag">
+      <path d="M 560 255 L 560 170" stroke="var(--yellow)" stroke-width="4" marker-end="url(#u2c1p2)"/>
+      <text class="tick" x="452" y="252" fill="var(--yellow)" font-size="24" font-weight="800">P = 1 · clock edge</text>
+      <g class="dpk pur" style="offset-path:path('M 250 129 L 470 129')">
+        <rect x="-26" y="-16" width="52" height="32" rx="5"/>
+        <text x="0" y="7" text-anchor="middle">1011</text>
+      </g>
+      <text class="setval reg-val" x="560" y="152" text-anchor="middle">1011</text>
+    </g>
+    <defs>
+      <marker id="u2c1p" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker>
+      <marker id="u2c1p2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker>
+    </defs>
+  </svg></div>
+  <p class="frag" style="font-size:25px">If <b>P = 0</b> the wires still carry R1's value — but R2's load line stays shut, so <b>nothing moves</b>. Control turns a permanent connection into a timed transfer.</p>
+</section>
+
+<!-- bus via multiplexers (ANIMATED: change the select, a different value rides the bus) -->
+<section class="slide" data-ch="Ch 1 · Bus transfer — multiplexers">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">The <span class="em-a">common bus</span> — built from multiplexers</h2>
+  <p class="foothold"><span class="lbl">What we want ·</span> A single shared path any register can send to — instead of a private wire between every pair. Goal first: one bus, many sources. The multiplexer is our first way to build it.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 330" preserveAspectRatio="xMidYMid meet">
+    <!-- four source registers, each holding a distinct value -->
+    <g font-size="20">
+      <rect x="60" y="55" width="120" height="46" class="reg"/><text x="96" y="84" text-anchor="middle" class="reg-lbl">R1</text><text x="152" y="84" text-anchor="middle" class="reg-val">1111</text>
+      <rect x="60" y="115" width="120" height="46" class="reg"/><text x="96" y="144" text-anchor="middle" class="reg-lbl">R2</text><text x="152" y="144" text-anchor="middle" class="reg-val">0101</text>
+      <rect x="60" y="175" width="120" height="46" class="reg"/><text x="96" y="204" text-anchor="middle" class="reg-lbl">R3</text><text x="152" y="204" text-anchor="middle" class="reg-val">1010</text>
+      <rect x="60" y="235" width="120" height="46" class="reg"/><text x="96" y="264" text-anchor="middle" class="reg-lbl">R4</text><text x="152" y="264" text-anchor="middle" class="reg-val">0011</text>
+    </g>
+
+    <!-- reveal 1: the MUX, its four inputs, the bus and destination R1 -->
+    <g class="frag">
+      <path d="M 180 78 L 360 150" stroke="var(--border)" stroke-width="2"/>
+      <path d="M 180 138 L 360 165" stroke="var(--border)" stroke-width="2"/>
+      <path d="M 180 198 L 360 180" stroke="var(--border)" stroke-width="2"/>
+      <path d="M 180 258 L 360 195" stroke="var(--border)" stroke-width="2"/>
+      <polygon points="360,120 440,150 440,200 360,230" class="reg" style="fill:#BC8CFF1C; stroke:var(--purple)"/>
+      <text x="400" y="180" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">MUX</text>
+      <path d="M 440 175 L 690 175" stroke="var(--accent)" stroke-width="5" marker-end="url(#u2c1b)"/>
+      <text x="560" y="160" fill="var(--accent)" font-size="22" font-weight="700">common bus</text>
+      <rect x="700" y="150" width="130" height="50" class="reg" style="stroke:var(--teal)"/>
+      <text x="742" y="182" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">R7</text>
+    </g>
+
+    <!-- reveal 2: S1S0 = 01 → B drives the bus -->
+    <g class="frag">
+      <rect x="200" y="112" width="120" height="52" rx="6" fill="none" stroke="var(--green)" stroke-width="3"/>
+      <text x="150" y="300" fill="var(--green)" font-size="22" font-weight="800">S1S0 = 01 → R7 ← R2</text>
+      <g class="dpk grn" style="offset-path:path('M 180 138 L 400 175 L 690 175')">
+        <rect x="-26" y="-16" width="52" height="32" rx="5"/><text x="0" y="7" text-anchor="middle">0101</text>
+      </g>
+      <text class="setval reg-val" x="795" y="182" text-anchor="middle">0101</text>
+    </g>
+
+    <!-- reveal 3: flip the select to 11 → D now drives the bus, R1 updates -->
+    <g class="frag">
+      <rect x="200" y="232" width="120" height="52" rx="6" fill="none" stroke="var(--yellow)" stroke-width="3"/>
+      <text x="600" y="300" fill="var(--yellow)" font-size="22" font-weight="800">S1S0 = 11 → R7 ← R4</text>
+      <g class="dpk" style="offset-path:path('M 180 258 L 400 175 L 690 175')">
+        <rect x="-26" y="-16" width="52" height="32" rx="5"/><text x="0" y="7" text-anchor="middle">0011</text>
+      </g>
+      <rect x="700" y="150" width="130" height="50" class="reg" style="stroke:var(--teal)"/>
+      <text x="742" y="182" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">R7</text>
+      <text class="setval reg-val" x="795" y="182" text-anchor="middle">0011</text>
+    </g>
+    <defs><marker id="u2c1b" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:24px">The select lines alone decide <em>which</em> register reaches the bus — flip S1S0 and a different value rides across.
+     For k registers of n bits: <b>n multiplexers, each k×1</b>.</p>
+</section>
+
+<!-- bus via tri-state (ANIMATED: enable one, others go Hi-Z; then show contention) -->
+<section class="slide" data-ch="Ch 1 · Bus transfer — tri-state">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">The <span class="em-a">common bus</span> — built from tri-state buffers</h2>
+  <p class="foothold"><span class="lbl">Same goal, cheaper ·</span> We want that one shared bus again — but multiplexers cost gates for every source. A leaner route: give each register a three-state buffer onto the line.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
+    <!-- three registers, each behind a tri-state buffer feeding one shared bus -->
+    <rect x="60" y="42" width="110" height="42" class="reg"/><text x="115" y="70" text-anchor="middle" class="reg-lbl">R1</text>
+    <polygon points="200,44 200,82 250,63" fill="none" stroke="var(--border)" stroke-width="2.5"/>
+    <line x1="170" y1="63" x2="200" y2="63" stroke="var(--border)" stroke-width="2"/>
+    <line x1="250" y1="63" x2="614" y2="63" stroke="var(--border)" stroke-width="2"/>
+    <text x="225" y="105" text-anchor="middle" fill="var(--muted)" font-size="17">E1</text>
+
+    <rect x="60" y="129" width="110" height="42" class="reg"/><text x="115" y="157" text-anchor="middle" class="reg-lbl">R2</text>
+    <text x="150" y="157" text-anchor="middle" class="reg-val" font-size="17">0110</text>
+    <polygon points="200,131 200,169 250,150" fill="none" stroke="var(--border)" stroke-width="2.5"/>
+    <line x1="170" y1="150" x2="200" y2="150" stroke="var(--border)" stroke-width="2"/>
+    <line x1="250" y1="150" x2="614" y2="150" stroke="var(--border)" stroke-width="2"/>
+    <text x="225" y="192" text-anchor="middle" fill="var(--muted)" font-size="17">E2</text>
+
+    <rect x="60" y="216" width="110" height="42" class="reg"/><text x="115" y="244" text-anchor="middle" class="reg-lbl">R3</text>
+    <polygon points="200,218 200,256 250,237" fill="none" stroke="var(--border)" stroke-width="2.5"/>
+    <line x1="170" y1="237" x2="200" y2="237" stroke="var(--border)" stroke-width="2"/>
+    <line x1="250" y1="237" x2="614" y2="237" stroke="var(--border)" stroke-width="2"/>
+    <text x="225" y="280" text-anchor="middle" fill="var(--muted)" font-size="17">E3</text>
+
+    <!-- the shared bus (vertical spine) + destination -->
+    <rect x="610" y="55" width="8" height="190" fill="var(--accent)"/>
+    <text x="640" y="46" fill="var(--accent)" font-size="20" font-weight="700">common bus line</text>
+    <rect x="700" y="128" width="130" height="46" class="reg" style="stroke:var(--teal)"/>
+    <text x="742" y="157" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">R7</text>
+    <line x1="618" y1="151" x2="700" y2="151" stroke="var(--accent)" stroke-width="4"/>
+
+    <!-- reveal 1: enable ONLY B; mute A and C to show their Hi-Z (absent) outputs -->
+    <g class="frag">
+      <rect x="52" y="34" width="220" height="80" fill="var(--bg)" opacity=".6"/>
+      <rect x="52" y="208" width="220" height="80" fill="var(--bg)" opacity=".6"/>
+      <polygon class="enable" points="200,131 200,169 250,150" fill="#56D36422" stroke="var(--green)" stroke-width="3"/>
+      <text x="225" y="192" text-anchor="middle" fill="var(--green)" font-size="18" font-weight="800">E2 = 1</text>
+      <text x="300" y="30" fill="var(--muted)" font-size="18">R1, R3 outputs = Hi-Z (open circuit)</text>
+      <g class="dpk grn" style="offset-path:path('M 255 150 L 610 150 L 700 151')">
+        <rect x="-24" y="-15" width="48" height="30" rx="5"/><text x="0" y="6" text-anchor="middle">0110</text>
+      </g>
+      <text class="setval reg-val" x="795" y="157" text-anchor="middle">0110</text>
+    </g>
+
+    <!-- reveal 2: enable two at once → bus contention flashes red -->
+    <g class="frag">
+      <polygon points="200,44 200,82 250,63" fill="#FF7B7222" stroke="var(--red)" stroke-width="3"/>
+      <polygon points="200,218 200,256 250,237" fill="#FF7B7222" stroke="var(--red)" stroke-width="3"/>
+      <rect class="clash" x="606" y="55" width="16" height="190"/>
+      <text x="640" y="270" fill="var(--red)" font-size="22" font-weight="800">E1 = E3 = 1 → bus contention!</text>
+    </g>
+  </svg></div>
+  <p class="frag big em-y" style="margin-top:6px">A buffer's third state — <b>high-impedance</b> — lets many outputs share one wire while all but one stay electrically <em>absent</em>.</p>
+  <p class="frag" style="font-size:24px">Enable two at once and they <span class="em-o">fight for the same line</span> — bus contention, an invalid value. A decoder guarantees exactly one enable is high.</p>
+</section>
+
+<!-- memory transfers -->
+<section class="slide" data-ch="Ch 1 · Memory transfers">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px">Memory transfers: <span class="em-a">Read</span> and <span class="em-a">Write</span></h2>
+  <p class="foothold"><span class="lbl">One step further ·</span> Registers can now reach each other over the bus. But programs and data live in main memory — so the CPU must be able to reach across to it too.</p>
+  <p class="frag big">Address in <span class="em-p">MAR</span>, data in <span class="em-t">MDR</span> — <b>all data to and from memory passes through MDR</b>.</p>
+  <div class="row" style="margin-top:10px">
+    <div class="card tint-green frag"><h3>Read — fetch a word</h3><p><span class="em-p">MDR ← M[MAR]</span><br>put the address in MAR, raise Read; memory copies that word into MDR.</p></div>
+    <div class="card tint-yellow frag"><h3>Write — store a word</h3><p><span class="em-p">MDR ← R1, &nbsp;M[MAR] ← MDR</span><br>the data first moves R1 → MDR, <em>then</em> MDR is written to the addressed word.</p></div>
+  </div>
+  <p class="frag" style="margin-top:16px; font-size:24px">R1 never reaches memory directly — it must go <b>through MDR</b>. (Mano names these AR / DR.) This is the syllabus's <em>"fetching a word, storing a word."</em></p>
+</section>
+
+<!-- commit to memory -->
+<section class="slide memslide" data-ch="Ch 1 · Commit to memory">
+  <div class="mhead"><div class="micon">🧠</div>
+    <div><div class="mtitle">Get this into your memory</div>
+    <div class="msub">Register transfers & microoperations — high-frequency exam answers.</div></div></div>
+  <div class="memcard">
+    <ul>
+      <li><span class="term">Microoperation</span> — an elementary operation on register data done in one clock (load, clear, count, shift, add).</li>
+      <li><span class="term">RTL</span> — <b>R2 ← R1</b>; source unchanged, destination overwritten.</li>
+      <li><span class="term">Control function</span> — <b>P : R2 ← R1</b>; the transfer occurs only when P = 1.</li>
+      <li><span class="term">Common bus</span> — built from <b>multiplexers</b> or <b>tri-state buffers + decoder</b>; one source at a time.</li>
+      <li><span class="term">Memory</span> — everything passes through MDR: Read <b>MDR ← M[MAR]</b>, Write <b>MDR ← R1, M[MAR] ← MDR</b>.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- key insight -->
+<section class="slide keyslide" data-ch="Ch 1 · Key insight">
+  <div class="kicon">🔑</div>
+  <div class="keybox frag"><span class="k">Every arrow in RTL is real hardware — wires plus a load signal.</span><br>
+    Master the microoperation and the control function, and the rest of the processor is just these steps, arranged.</div>
+</section>
+
+<!-- ════════════════ CH 2 · DIVIDER ════════════════ -->
+<section class="slide divider" data-ch="Ch 2 · Arithmetic, Logic & Shift Microoperations">
+  <div class="kicker">Chapter 2 of 5 · CO2 · Mano §4.3–4.6</div>
+  <div class="chnum">2</div>
+  <h1>Arithmetic, Logic &amp; Shift Microoperations</h1>
+  <p class="hook frag">We can move bits around. But moving isn't computing. How do the <em>same</em> set of wires
+     add, subtract, AND, and shift — and become the ALU?</p>
+</section>
+
+<!-- arithmetic microops -->
+<section class="slide" data-ch="Ch 2 · Arithmetic microoperations">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px">Four arithmetic microoperations</h2>
+  <p class="foothold"><span class="lbl">From moving to computing ·</span> Chapter 1 could only <em>move</em> bits — and moving isn't computing. The ALU's first job is arithmetic, so we start with the four basic operations.</p>
+  <div class="row">
+    <div class="card tint-green frag"><h3>Add / Subtract</h3><p><b>R3 ← R1 + R2</b><br><b>R3 ← R1 + R2&#773; + 1</b> (subtract)</p></div>
+    <div class="card tint-teal frag"><h3>Increment / Decrement</h3><p><b>R1 ← R1 + 1</b><br><b>R1 ← R1 − 1</b></p></div>
+  </div>
+  <p class="frag big em-y" style="margin-top:20px">Subtraction reuses addition:</p>
+  <p class="frag" style="font-size:26px"><b>R1 − R2</b> = R1 + (1's complement of R2) + 1 = R1 + <b>2's complement</b> of R2. One adder does both.</p>
+</section>
+
+<!-- adder-subtractor (ANIMATED: flip the mode line, watch B complement and the result change) -->
+<section class="slide" data-ch="Ch 2 · Adder–subtractor">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">The adder–subtractor: <span class="em-g">one circuit, two jobs</span> &nbsp;<span class="muted" style="font-size:24px">— try A = 5, B = 3</span></h2>
+  <p class="foothold"><span class="lbl">Don't repeat hardware ·</span> We just met four operations. Building a separate circuit for each would waste silicon — so can a single adder be made to subtract as well?</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
+    <!-- operands -->
+    <text x="70" y="98" fill="var(--text)" font-size="26" font-weight="700">A = 0101 <tspan fill="var(--muted)" font-size="20">(5)</tspan></text>
+    <text x="70" y="168" fill="var(--text)" font-size="26" font-weight="700">B = 0011 <tspan fill="var(--muted)" font-size="20">(3)</tspan></text>
+    <!-- mode line across the top -->
+    <path d="M 300 46 L 760 46" stroke="var(--border)" stroke-width="2"/>
+    <text x="300" y="36" fill="var(--muted)" font-size="20">mode line M feeds every B-XOR and the carry-in</text>
+    <!-- the adder -->
+    <rect x="430" y="92" width="300" height="92" class="reg" style="stroke:var(--accent)"/>
+    <text x="580" y="132" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">n-bit parallel</text>
+    <text x="580" y="160" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">adder</text>
+    <!-- carry-in stub -->
+    <path d="M 580 240 L 580 186" stroke="var(--border)" stroke-width="2" marker-end="url(#u2c2ci)"/>
+    <!-- result box -->
+    <rect x="820" y="102" width="210" height="72" class="reg" style="stroke:var(--purple)"/>
+    <text x="925" y="134" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">result</text>
+
+    <!-- reveal 1: M = 0 → add. B passes straight through, Cin = 0 -->
+    <g class="frag">
+      <text x="150" y="285" fill="var(--green)" font-size="24" font-weight="800">M = 0 → A + B</text>
+      <text x="600" y="230" fill="var(--green)" font-size="20" font-weight="700">Cin = 0</text>
+      <g class="dpk grn" style="offset-path:path('M 250 90 L 430 118')"><rect x="-22" y="-14" width="44" height="28" rx="4"/><text x="0" y="6" text-anchor="middle">0101</text></g>
+      <g class="dpk grn" style="offset-path:path('M 250 160 L 430 158')"><rect x="-22" y="-14" width="44" height="28" rx="4"/><text x="0" y="6" text-anchor="middle">0011</text></g>
+      <text class="setval" x="925" y="160" text-anchor="middle" fill="var(--green)" font-size="30" font-weight="800">1000 = 8</text>
+    </g>
+
+    <!-- reveal 2: flip M = 1 → subtract. B is complemented, Cin = 1 -->
+    <g class="frag">
+      <rect x="120" y="266" width="360" height="34" fill="var(--bg)"/>
+      <text x="150" y="285" fill="var(--purple)" font-size="24" font-weight="800">M = 1 → A + B&#773; + 1 = A − B</text>
+      <text x="600" y="230" fill="var(--purple)" font-size="20" font-weight="700">Cin = 1</text>
+      <text class="flip" x="70" y="168" fill="var(--purple)" font-size="26" font-weight="700" style="transform-box:fill-box; transform-origin:center">B&#773; = 1100 <tspan fill="var(--muted)" font-size="20">(complement)</tspan></text>
+      <g class="dpk pur" style="offset-path:path('M 250 160 L 430 158')"><rect x="-22" y="-14" width="44" height="28" rx="4"/><text x="0" y="6" text-anchor="middle">1100</text></g>
+      <rect x="820" y="102" width="210" height="72" class="reg" style="stroke:var(--purple)"/>
+      <text x="925" y="134" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">result</text>
+      <text class="setval" x="925" y="160" text-anchor="middle" fill="var(--purple)" font-size="30" font-weight="800">0010 = 2</text>
+    </g>
+    <defs><marker id="u2c2ci" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--border)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:24px">One XOR per B bit, both fed by <b>M</b>: M = 0 passes B (add); M = 1 gives B&#773; with a carry-in of 1 — that is <b>+1 to the complement = subtract</b>. The very same adder, one control line.</p>
+</section>
+
+<!-- arithmetic circuit -->
+<section class="slide qslide" data-ch="Ch 2 · One circuit, eight operations">
+  <div class="qmark">?</div>
+  <div class="qlabel">Predict</div>
+  <div class="q">Feed the adder's second input through a MUX that can supply <span class="em-p">B, B&#773;, 0, or 1</span>, plus a carry-in.
+     Roughly <span class="em-y">how many</span> distinct arithmetic operations can this one circuit produce?</div>
+  <div class="qans frag"><b>Eight</b> — add, add-with-carry, subtract, subtract-with-borrow, increment, decrement, and two transfers —
+     just by choosing the MUX select (S1S0) and Cin. One adder, many operations.</div>
+</section>
+
+<!-- logic microops (ANIMATED: watch masked bits clear and selected bits set) -->
+<section class="slide" data-ch="Ch 2 · Logic microoperations">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Logic microoperations — <span class="em-a">bit by bit</span></h2>
+  <p class="foothold"><span class="lbl">A different need ·</span> Arithmetic treats the whole word as a number. But often we must touch <em>individual</em> bits — set one, clear one, flip one. That job is logic.</p>
+  <p class="frag" style="font-size:26px">16 possible; machines build just <span class="em-p">four</span> — <b>AND, OR, XOR, NOT</b> — and combine them.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 260" preserveAspectRatio="xMidYMid meet">
+    <!-- reveal 1: MASKING with AND — a 0 in the mask clears that bit -->
+    <g class="frag">
+      <text x="60" y="72" fill="var(--yellow)" font-size="24" font-weight="800">Mask (AND)</text>
+      <text x="250" y="72" fill="var(--text)" font-size="30" font-weight="700" letter-spacing="10">1011</text>
+      <text x="390" y="72" fill="var(--muted)" font-size="26">AND</text>
+      <text x="470" y="72" font-size="30" font-weight="700" letter-spacing="10"><tspan fill="var(--muted)">00</tspan><tspan fill="var(--yellow)">11</tspan></text>
+      <text x="610" y="72" fill="var(--muted)" font-size="26">=</text>
+      <!-- result cells: high two masked to 0, low two kept -->
+      <g font-size="28" font-weight="800" text-anchor="middle">
+        <rect class="toZero" x="650" y="46" width="54" height="42" rx="6" stroke="var(--red)" stroke-width="2"/><text x="677" y="76" fill="var(--red)">0</text>
+        <rect class="toZero" x="712" y="46" width="54" height="42" rx="6" stroke="var(--red)" stroke-width="2"/><text x="739" y="76" fill="var(--red)">0</text>
+        <rect x="774" y="46" width="54" height="42" rx="6" class="reg"/><text x="801" y="76" fill="var(--text)">1</text>
+        <rect x="836" y="46" width="54" height="42" rx="6" class="reg"/><text x="863" y="76" fill="var(--text)">1</text>
+      </g>
+      <text x="250" y="108" fill="var(--muted)" font-size="20">a 0 in the mask ⟶ that bit is cleared; a 1 lets the bit pass</text>
+    </g>
+
+    <!-- reveal 2: SELECTIVE-SET with OR — a 1 in the mask forces that bit to 1 -->
+    <g class="frag">
+      <text x="60" y="190" fill="var(--green)" font-size="24" font-weight="800">Set (OR)</text>
+      <text x="250" y="190" fill="var(--text)" font-size="30" font-weight="700" letter-spacing="10">1000</text>
+      <text x="390" y="190" fill="var(--muted)" font-size="26">OR</text>
+      <text x="470" y="190" font-size="30" font-weight="700" letter-spacing="10"><tspan fill="var(--muted)">00</tspan><tspan fill="var(--green)">11</tspan></text>
+      <text x="610" y="190" fill="var(--muted)" font-size="26">=</text>
+      <g font-size="28" font-weight="800" text-anchor="middle">
+        <rect x="650" y="164" width="54" height="42" rx="6" class="reg"/><text x="677" y="194" fill="var(--text)">1</text>
+        <rect x="712" y="164" width="54" height="42" rx="6" class="reg"/><text x="739" y="194" fill="var(--text)">0</text>
+        <rect class="toOne" x="774" y="164" width="54" height="42" rx="6" stroke="var(--green)" stroke-width="2"/><text x="801" y="194" fill="var(--green)">1</text>
+        <rect class="toOne" x="836" y="164" width="54" height="42" rx="6" stroke="var(--green)" stroke-width="2"/><text x="863" y="194" fill="var(--green)">1</text>
+      </g>
+      <text x="250" y="226" fill="var(--muted)" font-size="20">a 1 in the mask ⟶ that bit is forced to 1; a 0 leaves it alone</text>
+    </g>
+  </svg></div>
+  <p class="frag" style="font-size:24px">Same idea powers <b>selective-clear</b> (AND with a complement) and <b>toggle</b> (XOR). NOT just inverts every bit.</p>
+</section>
+
+<!-- shift microops (ANIMATED: each row physically slides one place) -->
+<section class="slide" data-ch="Ch 2 · Shift microoperations">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">Three kinds of shift — <span class="em-a">watch the bits move</span></h2>
+  <p class="foothold"><span class="lbl">Third family ·</span> After arithmetic and logic, one last group of microoperations slides the whole word sideways — and it buys us an almost-free multiply and divide.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
+    <!-- row 1: LOGICAL shift-left, a 0 enters at the right -->
+    <g class="frag">
+      <text x="30" y="52" fill="var(--teal)" font-size="22" font-weight="800">Logical ← (shl)</text>
+      <g class="slideL" font-size="26" font-weight="800" text-anchor="middle" fill="var(--text)">
+        <rect x="380" y="28" width="64" height="44" rx="6" class="reg"/><text x="412" y="59">0</text>
+        <rect x="452" y="28" width="64" height="44" rx="6" class="reg"/><text x="484" y="59">1</text>
+        <rect x="524" y="28" width="64" height="44" rx="6" class="reg"/><text x="556" y="59">1</text>
+        <rect x="596" y="28" width="64" height="44" rx="6" class="reg"/><text x="628" y="59">0</text>
+      </g>
+      <g class="fadein" font-size="26" font-weight="800" text-anchor="middle">
+        <rect x="596" y="28" width="64" height="44" rx="6" fill="none" stroke="var(--teal)" stroke-width="2.5"/><text x="628" y="59" fill="var(--teal)">0</text>
+      </g>
+      <text x="700" y="45" fill="var(--muted)" font-size="20">fresh 0 slides in</text>
+      <text x="700" y="70" fill="var(--muted)" font-size="20">≈ ×2</text>
+    </g>
+
+    <!-- row 2: ARITHMETIC shift-right, the sign bit is COPIED, not lost -->
+    <g class="frag">
+      <text x="30" y="152" fill="var(--purple)" font-size="22" font-weight="800">Arithmetic → (ashr)</text>
+      <g class="slideR" font-size="26" font-weight="800" text-anchor="middle" fill="var(--text)">
+        <rect x="380" y="128" width="64" height="44" rx="6" class="reg" style="stroke:var(--purple)"/><text x="412" y="159" fill="var(--purple)">1</text>
+        <rect x="452" y="128" width="64" height="44" rx="6" class="reg"/><text x="484" y="159">0</text>
+        <rect x="524" y="128" width="64" height="44" rx="6" class="reg"/><text x="556" y="159">1</text>
+        <rect x="596" y="128" width="64" height="44" rx="6" class="reg"/><text x="628" y="159">0</text>
+      </g>
+      <g class="fadein" font-size="26" font-weight="800" text-anchor="middle">
+        <rect x="380" y="128" width="64" height="44" rx="6" fill="none" stroke="var(--purple)" stroke-width="2.5"/><text x="412" y="159" fill="var(--purple)">1</text>
+      </g>
+      <text x="700" y="145" fill="var(--purple)" font-size="20">sign bit copied in</text>
+      <text x="700" y="170" fill="var(--muted)" font-size="20">signed ÷2</text>
+    </g>
+
+    <!-- row 3: CIRCULAR right, the bit that falls off re-enters the far end -->
+    <g class="frag">
+      <text x="30" y="252" fill="var(--green)" font-size="22" font-weight="800">Circular → (cir)</text>
+      <g class="slideR" font-size="26" font-weight="800" text-anchor="middle" fill="var(--text)">
+        <rect x="380" y="228" width="64" height="44" rx="6" class="reg"/><text x="412" y="259">1</text>
+        <rect x="452" y="228" width="64" height="44" rx="6" class="reg"/><text x="484" y="259">0</text>
+        <rect x="524" y="228" width="64" height="44" rx="6" class="reg"/><text x="556" y="259">0</text>
+        <rect x="596" y="228" width="64" height="44" rx="6" class="reg" style="stroke:var(--green)"/><text x="628" y="259" fill="var(--green)">1</text>
+      </g>
+      <g class="fadein" font-size="26" font-weight="800" text-anchor="middle">
+        <rect x="380" y="228" width="64" height="44" rx="6" fill="none" stroke="var(--green)" stroke-width="2.5"/><text x="412" y="259" fill="var(--green)">1</text>
+      </g>
+      <path class="fadein" d="M 628 282 C 628 300, 412 300, 412 274" stroke="var(--green)" stroke-width="2.5" fill="none" marker-end="url(#u2c2wrap)"/>
+      <text x="700" y="245" fill="var(--muted)" font-size="20">the bit that exits</text>
+      <text x="700" y="270" fill="var(--muted)" font-size="20">wraps to the other end</text>
+    </g>
+    <defs><marker id="u2c2wrap" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker></defs>
+  </svg></div>
+  <p class="frag big em-y" style="margin-top:4px">Left shift ≈ ×2, right shift ≈ ÷2 — a shift is far cheaper than a full multiply.</p>
+</section>
+
+<!-- ashr sign-preservation deep-dive (CONTENT GAP added this pass) -->
+<section class="slide" data-ch="Ch 2 · Why ashr keeps the sign">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">Why <span class="em-p">arithmetic</span> shift-right is special</h2>
+  <p class="foothold"><span class="lbl">A doubt to settle ·</span> We just claimed right-shift halves a number. For a <em>negative</em> value, does feeding a 0 into the top bit really still divide by two? Let's test it.</p>
+  <p class="frag big">Take the signed byte <span class="em-p">11111000</span> — that's <b>−8</b> in two's complement.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 250" preserveAspectRatio="xMidYMid meet">
+    <!-- reveal 1: naive logical ÷2 would feed a 0 into the sign position → wrong -->
+    <g class="frag">
+      <text x="40" y="70" fill="var(--red)" font-size="22" font-weight="800">Logical shr</text>
+      <text x="260" y="72" fill="var(--muted)" font-size="30" font-weight="800" letter-spacing="8">01111100</text>
+      <text x="620" y="72" fill="var(--red)" font-size="24" font-weight="800">= +124  ✗ sign lost!</text>
+      <text x="260" y="102" fill="var(--muted)" font-size="19">a 0 fell into the leftmost (sign) bit — the number flipped positive</text>
+    </g>
+    <!-- reveal 2: arithmetic shr copies the sign bit → correct ÷2 -->
+    <g class="frag">
+      <text x="40" y="170" fill="var(--green)" font-size="22" font-weight="800">Arithmetic ashr</text>
+      <g font-size="30" font-weight="800" letter-spacing="8">
+        <text x="260" y="172" fill="var(--text)"><tspan class="setval" fill="var(--purple)">1</tspan>1111100</text>
+      </g>
+      <text x="620" y="172" fill="var(--green)" font-size="24" font-weight="800">= −4  ✓ exactly −8 ÷ 2</text>
+      <path class="fadein" d="M 250 150 C 210 120, 210 200, 250 168" stroke="var(--purple)" stroke-width="3" fill="none" marker-end="url(#u2ashr)"/>
+      <text x="150" y="205" fill="var(--purple)" font-size="19">the old sign bit is duplicated back into the sign position</text>
+    </g>
+    <defs><marker id="u2ashr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:24px">That is the whole point of <b>ashr</b>: it re-inserts the <span class="em-p">sign bit</span> instead of a 0, so dividing a <em>negative</em> number by 2 still gives a negative number.</p>
+</section>
+
+<!-- ALU combine -->
+<section class="slide" data-ch="Ch 2 · The Arithmetic-Logic-Shift Unit">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">The Arithmetic–Logic–Shift Unit: <span class="em-a">fold them into one</span></h2>
+  <p class="foothold"><span class="lbl">The payoff ·</span> We now have three separate circuits — arithmetic, logic, shift. Combine them into a single unit the control lines can choose from, and we've built the ALU.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
+    <g class="frag"><rect x="120" y="60" width="220" height="52" class="reg" style="stroke:var(--green)"/><text x="230" y="94" text-anchor="middle" class="reg-lbl" style="fill:var(--green)">Arithmetic circuit</text></g>
+    <g class="frag"><rect x="120" y="124" width="220" height="52" class="reg" style="stroke:var(--yellow)"/><text x="230" y="158" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">Logic circuit</text></g>
+    <g class="frag"><rect x="120" y="188" width="220" height="52" class="reg" style="stroke:var(--teal)"/><text x="230" y="222" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Shifter</text></g>
+    <g class="frag"><polygon points="430,80 540,120 540,180 430,220" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/>
+      <text x="470" y="154" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">MUX</text>
+      <path d="M 340 86 L 430 110 M 340 150 L 430 150 M 340 214 L 430 190" stroke="var(--border)" stroke-width="2"/>
+      <text x="430" y="250" fill="var(--muted)" font-size="18">select S3 S2 S1 S0</text></g>
+    <g class="frag"><path d="M 540 150 L 720 150" stroke="var(--accent)" stroke-width="5" marker-end="url(#u2c2a)"/>
+      <rect x="730" y="122" width="140" height="56" class="reg" style="stroke:var(--purple)"/><text x="800" y="152" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">result</text>
+      <text x="120" y="285" fill="var(--muted)" font-size="19">select = "arithmetic" → only the adder's output is passed through</text>
+      <g class="dpk pur" style="offset-path:path('M 490 150 L 720 150')"><rect x="-24" y="-15" width="48" height="30" rx="5"/><text x="0" y="6" text-anchor="middle">1000</text></g>
+      <text class="setval reg-val" x="800" y="168" text-anchor="middle" fill="var(--purple)" font-size="20">1000</text></g>
+    <defs><marker id="u2c2a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:25px">One stage per bit: all three sub-units compute in parallel; the <b>select lines</b> choose which result leaves. Stack n stages → an n-bit ALU.</p>
+</section>
+
+<!-- commit to memory -->
+<section class="slide memslide" data-ch="Ch 2 · Commit to memory">
+  <div class="mhead"><div class="micon">🧠</div>
+    <div><div class="mtitle">Get this into your memory</div>
+    <div class="msub">ALU microoperations — guaranteed exam territory.</div></div></div>
+  <div class="memcard">
+    <ul>
+      <li><span class="term">Arithmetic</span> — add, subtract (via 2's complement), increment, decrement.</li>
+      <li><span class="term">Adder–subtractor</span> — XOR per B bit + mode M; M = 0 add, M = 1 subtract.</li>
+      <li><span class="term">Logic</span> — AND (mask/clear), OR (selective-set), XOR, NOT; 16 → 4 basic.</li>
+      <li><span class="term">Shift</span> — logical (0 in), arithmetic (sign kept, ÷2), circular (wrap-around).</li>
+      <li><span class="term">ALU</span> — arithmetic + logic + shift units, chosen by select lines.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- key insight -->
+<section class="slide keyslide" data-ch="Ch 2 · Key insight">
+  <div class="kicon">🔑</div>
+  <div class="keybox frag"><span class="k">One block, a handful of select lines — that is the whole ALU.</span><br>
+    Add, subtract, mask, set, shift: the same wires, told each clock which answer to hand back.</div>
+</section>
+
+<!-- ════════════════ CH 3 · DIVIDER ════════════════ -->
+<section class="slide divider" data-ch="Ch 3 · Execution of Complete Instructions">
+  <div class="kicker">Chapter 3 of 5 · CO2 · Hamacher §5.1–5.3</div>
+  <div class="chnum">3</div>
+  <h1>Execution of Complete Instructions</h1>
+  <p class="hook frag">You have moves (Ch 1) and an ALU (Ch 2) — loose pieces. But <span class="em-y">Add R4, R2, R3</span>
+     is <em>one</em> line. How many hardware beats does it really take?</p>
+</section>
+
+<!-- the datapath -->
+<section class="slide" data-ch="Ch 3 · The processor datapath">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">The <span class="em-a">datapath</span> — where operands flow</h2>
+  <div class="animwrap"><svg viewBox="0 0 1150 340" preserveAspectRatio="xMidYMid meet">
+    <g class="frag"><rect x="80" y="120" width="180" height="110" class="reg" style="stroke:var(--teal)"/>
+      <text x="170" y="170" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Register file</text>
+      <text x="170" y="200" text-anchor="middle" fill="var(--muted)" font-size="18">out A · out B · in C</text></g>
+    <g class="frag"><rect x="330" y="120" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="375" y="150" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RA</text>
+      <rect x="330" y="184" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="375" y="214" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RB</text>
+      <path d="M 260 150 L 328 150 M 260 200 L 328 205" stroke="var(--border)" stroke-width="2"/></g>
+    <g class="frag"><polygon points="470,120 580,160 580,200 470,240" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/>
+      <text x="510" y="185" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">ALU</text>
+      <path d="M 420 143 L 468 158 M 420 207 L 468 200" stroke="var(--border)" stroke-width="2"/></g>
+    <g class="frag"><rect x="620" y="157" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="665" y="187" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RZ</text>
+      <path d="M 580 180 L 618 180" stroke="var(--border)" stroke-width="2"/></g>
+    <g class="frag"><rect x="620" y="230" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="665" y="260" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RM</text>
+      <rect x="760" y="157" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="805" y="187" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RY</text>
+      <path d="M 710 180 L 758 180" stroke="var(--border)" stroke-width="2"/>
+      <path d="M 805 157 C 805 60, 170 60, 170 118" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2c3w)"/>
+      <text x="430" y="52" fill="var(--teal)" font-size="18">write-back to register file (in C)</text></g>
+    <defs><marker id="u2c3w" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--teal)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:24px">The <span class="em-t">register file</span> reads two operands (A, B) and writes one (C). Interstage registers
+     <span class="em-p">RA, RB, RZ, RM, RY</span> hold data as it moves stage to stage.</p>
+</section>
+
+<!-- five step -->
+<section class="slide" data-ch="Ch 3 · The five-step sequence">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:10px">Every instruction rides the same <span class="em-a">five beats</span></h2>
+  <div class="row">
+    <div class="card tint-green frag"><h3>1 · Fetch</h3><p>Read the instruction at [PC]; increment the PC.</p></div>
+    <div class="card tint-teal frag"><h3>2 · Decode</h3><p>Work out the operation; read source registers.</p></div>
+    <div class="card tint-yellow frag"><h3>3 · Compute</h3><p>ALU performs the op or computes an address.</p></div>
+  </div>
+  <div class="row" style="margin-top:16px">
+    <div class="card tint-orange frag"><h3>4 · Memory</h3><p>Read/write data — only for Load / Store.</p></div>
+    <div class="card tint-purple frag"><h3>5 · Write-back</h3><p>Result returns to the destination register.</p></div>
+  </div>
+</section>
+
+<!-- trace a load -->
+<section class="slide" data-ch="Ch 3 · Trace — Load R2, A">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px">Trace one instruction: <span class="em-p">Load R2, A</span></h2>
+  <table class="frag" style="font-size:25px; margin-top:6px">
+    <tr><th>Step</th><th>Action</th></tr>
+    <tr class="frag"><td>1 Fetch</td><td>IR ← M[PC]; &nbsp; PC ← PC + 4</td></tr>
+    <tr class="frag"><td>2 Decode</td><td>recognise Load; read base register</td></tr>
+    <tr class="frag"><td>3 Compute</td><td>RZ ← address of A (via ALU)</td></tr>
+    <tr class="frag"><td>4 Memory</td><td>RY ← M[RZ] &nbsp;— the value of A</td></tr>
+    <tr class="frag"><td>5 Write-back</td><td>R2 ← [RY]</td></tr>
+  </table>
+  <p class="frag" style="margin-top:12px; font-size:24px">One assembly line → five ordered hardware steps, each one clock beat.</p>
+</section>
+
+<!-- trace whole program (ask) -->
+<section class="slide qslide" data-ch="Ch 3 · Trace the whole program">
+  <div class="qmark">?</div>
+  <div class="qlabel">Our old friend: C = A + B</div>
+  <div class="q"><span class="em-p">Load R2,A · Load R3,B · Add R4,R2,R3 · Store R4,C</span><br>
+     In which step does the value of <span class="em-y">C reach memory</span>?</div>
+  <div class="qans frag">In the <b>Memory</b> step of the <b>Store</b> instruction: <b>M[RZ] ← [RM]</b>, where RZ holds C's address and RM holds [R4].
+     The <b>Add</b> never touches memory — it writes back to R4 in step 5.</div>
+</section>
+
+<!-- commit -->
+<section class="slide memslide" data-ch="Ch 3 · Commit to memory">
+  <div class="mhead"><div class="micon">🧠</div>
+    <div><div class="mtitle">Get this into your memory</div>
+    <div class="msub">The datapath and the five-step sequence.</div></div></div>
+  <div class="memcard">
+    <ul>
+      <li><span class="term">Register file</span> — two read ports (A, B), one write port (C).</li>
+      <li><span class="term">Interstage registers</span> — RA, RB (operands), RZ (ALU result), RM (memory data out), RY (data in).</li>
+      <li><span class="term">Five steps</span> — Fetch, Decode, Compute, Memory, Write-back.</li>
+      <li>Only <span class="term">Load / Store</span> use the Memory step; arithmetic writes back a register.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- key insight -->
+<section class="slide keyslide" data-ch="Ch 3 · Key insight">
+  <div class="kicon">🔑</div>
+  <div class="keybox frag"><span class="k">One assembly line = a fixed rhythm of at most five beats.</span><br>
+    Fetch, decode, compute, memory, write-back — the steady pulse behind every program.</div>
+</section>
+
+<!-- ════════════════ CH 4 · DIVIDER ════════════════ -->
+<section class="slide divider" data-ch="Ch 4 · Bus Organization">
+  <div class="kicker">Chapter 4 of 5 · CO2 · Hamacher §5.2–5.4</div>
+  <div class="chnum">4</div>
+  <h1>Bus Organization</h1>
+  <p class="hook frag">Our five-step trace worked — but on <em>one</em> bus, that means one move at a time.
+     Can we re-wire the datapath to do more per beat?</p>
+</section>
+
+<!-- single bus -->
+<section class="slide" data-ch="Ch 4 · Single-bus organization">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">Single-bus — one shared highway</h2>
+  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
+    <line x1="120" y1="150" x2="1000" y2="150" stroke="var(--accent)" stroke-width="6"/>
+    <text x="560" y="135" text-anchor="middle" fill="var(--accent)" font-size="22" font-weight="700">single common bus</text>
+    <g font-size="18">
+      <rect x="150" y="60" width="120" height="46" class="reg" style="stroke:var(--teal)"/><text x="210" y="90" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Registers</text><line x1="210" y1="106" x2="210" y2="150" stroke="var(--border)" stroke-width="2"/>
+      <rect x="360" y="60" width="120" height="46" class="reg" style="stroke:var(--purple)"/><text x="420" y="90" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">ALU</text><line x1="420" y1="106" x2="420" y2="150" stroke="var(--border)" stroke-width="2"/>
+      <rect x="570" y="60" width="120" height="46" class="reg"/><text x="630" y="90" text-anchor="middle" class="reg-lbl">MDR</text><line x1="630" y1="106" x2="630" y2="150" stroke="var(--border)" stroke-width="2"/>
+      <rect x="780" y="60" width="140" height="46" class="reg"/><text x="850" y="90" text-anchor="middle" class="reg-lbl">Memory</text><line x1="850" y1="106" x2="850" y2="150" stroke="var(--border)" stroke-width="2"/>
+    </g>
+    <text class="frag" x="560" y="235" text-anchor="middle" fill="var(--yellow)" font-size="24" font-weight="700">only ONE value can sit on the bus per clock</text>
+  </svg></div>
+  <p class="frag" style="font-size:25px">Cheap and simple — but adding two numbers means shuttling operands across the bus <b>one at a time</b>, so an ALU op spreads over several clocks.</p>
+</section>
+
+<!-- three bus -->
+<section class="slide" data-ch="Ch 4 · Multiple-bus organization">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">Three buses — two operands in, one result out, <span class="em-g">at once</span></h2>
+  <div class="animwrap"><svg viewBox="0 0 1120 320" preserveAspectRatio="xMidYMid meet">
+    <rect x="120" y="120" width="180" height="90" class="reg" style="stroke:var(--teal)"/><text x="210" y="170" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Register file</text>
+    <polygon points="640,110 760,150 760,200 640,240" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/><text x="685" y="180" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">ALU</text>
+    <g class="frag"><line x1="300" y1="140" x2="640" y2="140" stroke="var(--green)" stroke-width="5"/><text x="470" y="130" text-anchor="middle" fill="var(--green)" font-size="20" font-weight="700">Bus A</text></g>
+    <g class="frag"><line x1="300" y1="200" x2="640" y2="200" stroke="var(--yellow)" stroke-width="5"/><text x="470" y="225" text-anchor="middle" fill="var(--yellow)" font-size="20" font-weight="700">Bus B</text></g>
+    <g class="frag"><path d="M 760 175 L 900 175 L 900 275 L 210 275 L 210 212" stroke="var(--purple)" stroke-width="5" fill="none" marker-end="url(#u2c4c)"/><text x="520" y="298" text-anchor="middle" fill="var(--purple)" font-size="20" font-weight="700">Bus C — result back to the register file</text></g>
+    <defs><marker id="u2c4c" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:25px">Bus A and Bus B carry <b>both</b> operands to the ALU simultaneously; Bus C returns the result — the whole operation in <b>one step</b>.</p>
+</section>
+
+<!-- re-trace / comparison -->
+<section class="slide qslide" data-ch="Ch 4 · Count the steps">
+  <div class="qmark">?</div>
+  <div class="qlabel">Re-trace Add R4, R2, R3</div>
+  <div class="q">On a <span class="em-a">single bus</span>, moving R2, then R3, then the result takes several clocks.
+     On a <span class="em-g">three-bus</span> datapath, how many?</div>
+  <div class="qans frag"><b>One.</b> R2 on Bus A, R3 on Bus B, ALU adds, result on Bus C into R4 — all in a single step.
+     More buses = fewer clocks per instruction, at the cost of more wiring.</div>
+</section>
+
+<!-- commit -->
+<section class="slide memslide" data-ch="Ch 4 · Commit to memory">
+  <div class="mhead"><div class="micon">🧠</div>
+    <div><div class="mtitle">Get this into your memory</div>
+    <div class="msub">Single- vs multiple-bus organization.</div></div></div>
+  <div class="memcard">
+    <ul>
+      <li><span class="term">Single-bus</span> — one shared path; one transfer per clock; cheap but slow (bottleneck).</li>
+      <li><span class="term">Three-bus</span> — Bus A + Bus B feed the ALU together; Bus C returns the result.</li>
+      <li>Effect — a register-to-register operation drops from several clocks to <b>one</b>.</li>
+      <li>Trade-off — more buses mean more hardware and wiring.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- key insight + bridge -->
+<section class="slide keyslide" data-ch="Ch 4 · Key insight">
+  <div class="kicon">🔑</div>
+  <div class="keybox frag"><span class="k">More buses buy fewer clocks — you trade wires for speed.</span><br>
+    But single or triple, the datapath is just idle wires and an ALU. Something must raise the right signals, in the right order, every clock.</div>
+</section>
+
+<!-- ════════════════ CH 5 · DIVIDER ════════════════ -->
+<section class="slide divider" data-ch="Ch 5 · Control Unit">
+  <div class="kicker">Chapter 5 of 5 · CO2 · Mano §7 / Hamacher §5.4</div>
+  <div class="chnum">5</div>
+  <h1>Control Unit</h1>
+  <p class="hook frag">The datapath can move and compute — but it just sits there until <em>someone</em> raises the load
+     lines, opens the buses, sets the ALU. Who conducts this orchestra?</p>
+</section>
+
+<!-- the job of control -->
+<section class="slide" data-ch="Ch 5 · What control does">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px">The control unit's one job</h2>
+  <p class="frag big">Each clock, raise the exact <span class="em-y">control signals</span> the current step needs.</p>
+  <div class="row" style="margin-top:10px">
+    <div class="card tint-teal frag"><h3>Inputs</h3><p>the <b>IR</b> (which instruction), a <b>step counter</b> (which beat), and <b>condition flags</b> (Z, N, C, V).</p></div>
+    <div class="card tint-purple frag"><h3>Outputs</h3><p>the <b>control points</b>: register loads, bus enables, ALU function, memory read/write.</p></div>
+  </div>
+  <p class="frag big em-a" style="margin-top:20px">Two ways to build it: <b>hardwired</b> or <b>microprogrammed</b>.</p>
+</section>
+
+<!-- hardwired -->
+<section class="slide" data-ch="Ch 5 · Hardwired control">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px"><span class="em-a">Hardwired</span> — signals from logic gates</h2>
+  <div class="animwrap"><svg viewBox="0 0 1120 280" preserveAspectRatio="xMidYMid meet">
+    <rect x="90" y="60" width="150" height="50" class="reg"/><text x="165" y="92" text-anchor="middle" class="reg-lbl">IR</text>
+    <rect x="90" y="130" width="150" height="50" class="reg"/><text x="165" y="162" text-anchor="middle" class="reg-lbl">Step counter</text>
+    <rect x="90" y="200" width="150" height="50" class="reg"/><text x="165" y="232" text-anchor="middle" class="reg-lbl">Flags</text>
+    <g class="frag"><rect x="360" y="90" width="300" height="130" class="reg" style="stroke:var(--accent)"/>
+      <text x="510" y="150" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">Combinational</text>
+      <text x="510" y="180" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">logic circuit</text>
+      <path d="M 240 85 L 358 120 M 240 155 L 358 155 M 240 225 L 358 190" stroke="var(--border)" stroke-width="2"/></g>
+    <g class="frag"><path d="M 660 155 L 850 155" stroke="var(--yellow)" stroke-width="5" marker-end="url(#u2c5h)"/>
+      <text x="880" y="150" fill="var(--yellow)" font-size="22" font-weight="700">control</text><text x="880" y="176" fill="var(--yellow)" font-size="22" font-weight="700">signals</text></g>
+    <defs><marker id="u2c5h" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:25px">A fixed circuit maps (IR + step + flags) straight to signals. <b>Fast</b>, but changing the instruction set means <b>re-wiring the hardware</b>.</p>
+</section>
+
+<!-- microprogrammed -->
+<section class="slide" data-ch="Ch 5 · Microprogrammed control">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px"><span class="em-p">Microprogrammed</span> — signals stored in memory</h2>
+  <div class="animwrap"><svg viewBox="0 0 1120 290" preserveAspectRatio="xMidYMid meet">
+    <g class="frag"><rect x="90" y="110" width="150" height="60" class="reg" style="stroke:var(--purple)"/><text x="165" y="138" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">μPC / CAR</text><text x="165" y="160" text-anchor="middle" fill="var(--muted)" font-size="16">next address</text></g>
+    <g class="frag"><rect x="330" y="80" width="300" height="120" class="reg" style="stroke:var(--accent)"/>
+      <text x="480" y="128" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">Control memory</text>
+      <text x="480" y="158" text-anchor="middle" fill="var(--muted)" font-size="18">(control store, μ-memory)</text>
+      <path d="M 240 140 L 328 140" stroke="var(--border)" stroke-width="2" marker-end="url(#u2c5m1)"/></g>
+    <g class="frag"><rect x="700" y="80" width="330" height="55" class="reg" style="stroke:var(--yellow)"/><text x="865" y="114" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">control word → signals</text>
+      <rect x="700" y="145" width="330" height="55" class="reg" style="stroke:var(--green)"/><text x="865" y="179" text-anchor="middle" class="reg-lbl" style="fill:var(--green)">sequencing word → next address</text>
+      <path d="M 630 120 L 698 110 M 630 160 L 698 172" stroke="var(--border)" stroke-width="2"/>
+      <path d="M 865 200 C 865 250, 165 250, 165 172" stroke="var(--green)" stroke-width="3" fill="none" marker-end="url(#u2c5m2)"/></g>
+    <defs>
+      <marker id="u2c5m1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--border)"/></marker>
+      <marker id="u2c5m2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker>
+    </defs>
+  </svg></div>
+  <p class="frag" style="font-size:24px">Each step is a <b>microinstruction</b> = <span class="em-y">control word</span> (the signals) + <span class="em-g">sequencing word</span> (the next address). The <b>μPC</b> walks through a microroutine in the control store.</p>
+</section>
+
+<!-- microinstruction sequencing -->
+<section class="slide" data-ch="Ch 5 · Microinstruction sequencing">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px">How the μPC picks the next microinstruction</h2>
+  <div class="row">
+    <div class="card tint-green frag"><h3>In-line</h3><p>increment the control address register (CAR).</p></div>
+    <div class="card tint-yellow frag"><h3>Branch</h3><p>unconditional or <b>conditional</b> (test Z, N, C, V).</p></div>
+    <div class="card tint-teal frag"><h3>Map</h3><p>the instruction's <b>opcode</b> maps to its microroutine's start address.</p></div>
+  </div>
+  <p class="frag" style="margin-top:16px; font-size:25px">So a machine instruction is executed by <em>running a small microprogram</em> — fetch routine, then the routine its opcode maps to.</p>
+</section>
+
+<!-- contrast -->
+<section class="slide qslide" data-ch="Ch 5 · Hardwired vs microprogrammed">
+  <div class="qmark">?</div>
+  <div class="qlabel">Weigh them up</div>
+  <div class="q">You need to <span class="em-y">add a new instruction</span> after the chip is designed.
+     Which control style makes that easy — and what do you pay?</div>
+  <div class="qans frag"><b>Microprogrammed</b>: just edit the control store (rewrite microcode) — flexible, but slower (an extra memory read per step).
+     <b>Hardwired</b> is faster but rigid — a new instruction means redesigning the logic.</div>
+</section>
+
+<!-- commit -->
+<section class="slide memslide" data-ch="Ch 5 · Commit to memory">
+  <div class="mhead"><div class="micon">🧠</div>
+    <div><div class="mtitle">Get this into your memory</div>
+    <div class="msub">Control unit — hardwired vs microprogrammed.</div></div></div>
+  <div class="memcard">
+    <ul>
+      <li><span class="term">Control unit</span> — turns (IR + step + flags) into control signals each clock.</li>
+      <li><span class="term">Hardwired</span> — combinational logic + step counter; fast, rigid.</li>
+      <li><span class="term">Microprogrammed</span> — microinstructions in a <b>control store</b>; a <b>μPC/CAR</b> sequences them.</li>
+      <li><span class="term">Microinstruction</span> = control word (signals) + sequencing word (next address).</li>
+      <li>Sequencing — increment, branch, conditional branch, opcode mapping.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- key insight -->
+<section class="slide keyslide" data-ch="Ch 5 · Key insight">
+  <div class="kicon">🔑</div>
+  <div class="keybox frag"><span class="k">Control is just: which signals, in which order.</span><br>
+    Wire that decision into gates, or store it as a microprogram — either way, it's what turns a datapath into a processor.</div>
+</section>
+
+<!-- ════════════════ UNIT 2 · MAP ════════════════ -->
+<section class="slide" data-ch="Unit 2 · The whole map">
+  <div class="badge b-ext"><span class="dot"></span>Extended</div>
+  <h2 style="margin-bottom:14px">Unit 2 on one map</h2>
+  <div class="row">
+    <div class="card tint-green frag"><h3>1 · Register Transfers</h3><p>Microoperations, RTL, control functions, bus &amp; memory transfers.</p></div>
+    <div class="card tint-yellow frag"><h3>2 · ALU</h3><p>Arithmetic, logic, shift → one Arithmetic-Logic-Shift Unit.</p></div>
+    <div class="card tint-purple frag"><h3>3 · Execution</h3><p>Datapath (RA/RB/RZ/RM/RY) + the five-step sequence.</p></div>
+  </div>
+  <div class="row" style="margin-top:20px">
+    <div class="card tint-teal frag"><h3>4 · Bus Organization</h3><p>Single-bus bottleneck → three-bus, one op per step.</p></div>
+    <div class="card tint-orange frag"><h3>5 · Control Unit</h3><p>Hardwired vs microprogrammed control.</p></div>
+    <div class="card tint-green frag"><h3>The thread</h3><p>One assembly line → microoperations → datapath → buses → control.</p></div>
+  </div>
+</section>
+
+<section class="slide keyslide" data-ch="Unit 2 · Key insight">
+  <div class="kicon">🔑</div>
+  <div class="keybox frag"><span class="k">A processor is a datapath plus a plan for driving it.</span><br>
+    Registers move, the ALU computes, buses carry, and control decides the order — that is the whole of Unit 2,
+    and the machine behind every instruction you will ever write.</div>
+</section>
+<script>
+/* ── Deck engine: slides + stepwise fragment reveal + animation trigger ── */
+const slides=[...document.querySelectorAll('.slide')];
+let si=0, fi=0;
+const bar=document.getElementById('bar'),
+      counter=document.getElementById('counter'),
+      chlabel=document.getElementById('chlabel');
+
+function frags(s){return [...s.querySelectorAll('.frag')];}
+
+function render(){
+  slides.forEach((s,i)=>s.classList.toggle('active',i===si));
+  const s=slides[si], f=frags(s);
+  f.forEach((el,i)=>{el.classList.toggle('on',i<fi); el.classList.toggle('cur',i===fi-1);});
+  bar.style.width=((si)/(slides.length-1))*100+'%';
+  counter.textContent=`slide ${si+1} / ${slides.length}`;
+  chlabel.textContent=s.dataset.ch||'';
+}
+function next(){
+  const f=frags(slides[si]);
+  if(fi<f.length){fi++; render();}
+  else if(si<slides.length-1){si++; fi=0; render();}
+}
+function prev(){
+  if(fi>0){fi--; render();}
+  else if(si>0){si--; fi=frags(slides[si]).length; render();}
+}
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault(); next();}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault(); prev();}
+  else if(e.key==='Home'){si=0; fi=0; render();}
+  else if(e.key==='End'){si=slides.length-1; fi=frags(slides[si]).length; render();}
+});
+document.addEventListener('click',()=>next());
+render();
+</script>
+</body>
+</html>
