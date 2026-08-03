@@ -26,6 +26,53 @@
   p, li{font-size:33px; line-height:1.45}
   .muted{color:var(--muted)}
   .big{font-size:44px; line-height:1.4}
+  /* .op — the arithmetic "menu" pills on the Ch 2 opening slide (bright on dark) */
+  .op{display:inline-block; min-width:52px; text-align:center; padding:8px 22px;
+    border:2px solid var(--accent); border-radius:999px; background:#58A6FF14;
+    color:var(--text); font-size:36px; font-weight:800}
+  /* .ctrltab — the add/subtract control table on the adder–subtractor slide */
+  .ctrltab{border-collapse:collapse; margin-top:10px; font-size:25px; color:var(--text)}
+  .ctrltab th,.ctrltab td{border:1.5px solid var(--border); padding:8px 20px; text-align:center; font-weight:700}
+  .ctrltab th{color:var(--accent); font-size:22px; text-transform:uppercase; letter-spacing:.5px}
+  .ctrltab tr.add td{background:#3FB95014} .ctrltab tr.sub td{background:#D2A8FF14}
+  /* .logic16 — the full sixteen-function textbook table (two columns of eight) */
+  .logic16{border-collapse:collapse; font-size:22px; color:var(--text); flex:1}
+  .logic16 th,.logic16 td{border:1px solid var(--border); padding:5px 14px; text-align:left; white-space:nowrap}
+  .logic16 th{color:var(--accent); font-size:19px; text-transform:uppercase; letter-spacing:.5px}
+  .logic16 td:first-child{font-weight:700}
+  .logic16 tr.prim td{background:#D2A8FF1F; color:var(--text); font-weight:700}
+  .logic16 tr.prim td:last-child{color:var(--purple)}
+  /* interactive arithmetic-circuit demo (slide 'One circuit, many operations') —
+     the control unit buttons are clickable; JS drives the MUX / Cin / result. */
+  .cbtn{cursor:pointer}
+  .cbtn > rect{fill:var(--card); stroke:var(--border); stroke-width:2; transition:fill .2s, stroke .2s, filter .2s}
+  .cbtn text{fill:var(--text); font-weight:800; pointer-events:none}
+  .cbtn:hover > rect{stroke:var(--accent)}
+  .cbtn.active > rect{fill:#1F6FEB2E; stroke:var(--accent); filter:drop-shadow(0 0 8px var(--accent))}
+  .acwire{stroke:var(--border); stroke-width:2.5; fill:none; transition:stroke .25s, filter .25s, stroke-width .25s}
+  /* .on = the enabled data path — bright and it STAYS lit until another op is chosen */
+  .acwire.on{stroke:var(--green); stroke-width:4; filter:drop-shadow(0 0 7px var(--green))}
+  .muxin{fill:var(--muted); font-weight:700; font-size:22px; transition:fill .25s}
+  .muxin.sel{fill:var(--green); font-weight:800}
+  .acbox{fill:var(--card); stroke:var(--border); stroke-width:2; transition:stroke .25s, filter .25s}
+  .acbox.on{stroke:var(--green); filter:drop-shadow(0 0 9px var(--green))}
+  .selpill{fill:var(--accent); font-weight:800; transition:fill .2s}
+  @keyframes acpop{0%{opacity:0; transform:scale(.55)} 60%{transform:scale(1.12)} 100%{opacity:1; transform:scale(1)}}
+  .acpop{transform-box:fill-box; transform-origin:center; animation:acpop .5s ease both}
+  @keyframes acflip{0%{transform:scaleY(1)} 45%{transform:scaleY(.05)} 100%{transform:scaleY(1)}}
+  .acflip{transform-box:fill-box; transform-origin:center; animation:acflip .5s ease both}
+  /* worked-example helpers: monospaced binary + a roomy line spacing */
+  .bin{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:3px; font-weight:800}
+  .wex{font-size:29px; line-height:1.7; color:var(--text)}
+  .wex .op2{color:var(--muted); font-weight:700; display:inline-block; min-width:58px}
+  .stepbadge{display:inline-block; background:var(--accentGlow); color:#fff; font-weight:800;
+    border-radius:999px; padding:2px 14px; font-size:20px; margin-right:8px}
+  /* .code16 — a 4-bit output-code chip on the 'why sixteen' slide */
+  .code16{display:inline-flex; flex-direction:column; align-items:center; justify-content:center;
+    min-width:80px; min-height:52px; padding:6px 8px; border:1.5px solid var(--border); border-radius:10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-weight:800; font-size:22px; color:var(--text)}
+  .code16 small{font-weight:700; font-size:14px; color:var(--accent); margin-top:2px}
+  .code16.named{border-color:var(--accent); background:#58A6FF14}
   /* Foothold — the scaffolding line that opens a slide: why are we here,
      and what earlier idea are we standing on. Always visible (not a .frag),
      so the professor reads it before revealing any content. */
@@ -257,17 +304,34 @@
   <p class="frag big em-y" style="margin-top:22px">The smallest such step has a name: the <b>microoperation</b>.</p>
 </section>
 
-<!-- microoperation definition -->
-<section class="slide" data-ch="Ch 1 · The microoperation">
+<!-- microoperation definition + instruction contrast
+     (reworked: puts a full ISA instruction beside the microoperations it
+      decomposes into, so students don't confuse the two levels) -->
+<section class="slide" data-ch="Ch 1 · Instruction vs microoperation">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:8px">The <span class="em-a">microoperation</span> — one elementary step</h2>
-  <p class="foothold"><span class="lbl">Why now ·</span> We keep saying “a step.” Before building anything with steps, let's pin down the <b>smallest</b> step there is, and name it.</p>
-  <p class="frag big">An operation on data held in registers, done in <b>one clock pulse</b>.</p>
+  <h2 style="margin-bottom:6px">The <span class="em-a">microoperation</span> — one elementary step</h2>
+  <p class="foothold"><span class="lbl">Why now ·</span> We keep saying “a step.” Let's pin down the <b>smallest</b> step there is — and separate it from the <b>instruction</b> that commands it.</p>
+  <p class="frag big" style="font-size:34px">A <b>microoperation</b> is an operation on register data, carried out in <b>one clock pulse</b>.</p>
+
+  <!-- the two levels, side by side: what the programmer writes vs how it runs -->
   <div class="row" style="margin-top:10px">
-    <div class="card tint-green frag"><h3>Examples</h3><p><b>load, clear, count, shift, add</b> — each a single elementary act on register contents.</p></div>
-    <div class="card tint-teal frag"><h3>The whole machine</h3><p>Every instruction you met in Unit 1 is really a short <em>sequence</em> of these microoperations.</p></div>
+    <div class="card tint-teal frag"><h3>Instruction — what the <em>programmer</em> writes</h3>
+      <p>One command in the ISA: an opcode + operands.<br>
+      <b style="color:var(--teal)">ADD R1, R2</b> &nbsp;→&nbsp; “R1 ← R1 + R2”.<br>
+      Also <b>LOAD</b>, <b>STORE</b> — the Unit 1 instructions.</p></div>
+    <div class="card tint-green frag"><h3>Microoperation — how the CPU <em>runs</em> it</h3>
+      <p>An elementary internal step, one per clock:<br>
+      <b style="color:var(--green)">load, clear, count, shift, add</b> on register contents.</p></div>
   </div>
-  <p class="frag" style="margin-top:18px">A digital system is defined by the <span class="em-t">registers</span> it has and the <span class="em-y">microoperations</span> performed on them.</p>
+
+  <!-- worked example: ONE instruction unfolds into a sequence of microoperations -->
+  <table class="frag" style="margin-top:14px; font-size:23px">
+    <tr><th>One instruction</th><th>t1</th><th>t2</th><th>t3</th><th>t4 · execute</th></tr>
+    <tr><td><b>ADD R1, R2</b></td><td>MAR ← PC</td><td>MDR ← M[MAR],<br>PC ← PC + 1</td><td>IR ← MDR</td><td>R1 ← R1 + R2</td></tr>
+  </table>
+
+  <!-- the crux: the SAME verbs appear at both levels -->
+  <p class="frag" style="margin-top:14px; font-size:23px"><b class="em-y">Watch the words:</b> “load” and “add” name an action at <em>both</em> levels — <b>LOAD/ADD</b> are instruction names in the ISA; here they name the elementary step inside. <b>One instruction = a sequence of microoperations.</b></p>
 </section>
 
 <!-- RTL notation -->
@@ -483,23 +547,81 @@
 </section>
 
 <!-- arithmetic microops -->
-<section class="slide" data-ch="Ch 2 · Arithmetic microoperations">
+<section class="slide" data-ch="Ch 2 · Do we need six circuits?">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:8px">Four arithmetic microoperations</h2>
-  <p class="foothold"><span class="lbl">From moving to computing ·</span> Chapter 1 could only <em>move</em> bits — and moving isn't computing. The ALU's first job is arithmetic, so we start with the four basic operations.</p>
-  <div class="row">
-    <div class="card tint-green frag"><h3>Add / Subtract</h3><p><b>R3 ← R1 + R2</b><br><b>R3 ← R1 + R2&#773; + 1</b> (subtract)</p></div>
-    <div class="card tint-teal frag"><h3>Increment / Decrement</h3><p><b>R1 ← R1 + 1</b><br><b>R1 ← R1 − 1</b></p></div>
+  <h2 style="margin-bottom:8px">The operations an ALU must do — and one question</h2>
+  <p class="foothold"><span class="lbl">From moving to computing ·</span> Chapter 1 could only <em>move</em> bits — and moving isn't computing. Now the ALU has to actually <b>operate</b>. Here is the full menu — but must each one have its own hardware?</p>
+
+  <!-- reveal 1: the full menu of arithmetic operations, as pills -->
+  <div class="frag" style="display:flex; flex-wrap:wrap; gap:14px; margin:6px 0 4px">
+    <span class="op">+</span><span class="op">−</span><span class="op">×</span><span class="op">÷</span>
+    <span class="op">+1</span><span class="op">−1</span>
   </div>
-  <p class="frag big em-y" style="margin-top:20px">Subtraction reuses addition:</p>
-  <p class="frag" style="font-size:26px"><b>R1 − R2</b> = R1 + (1's complement of R2) + 1 = R1 + <b>2's complement</b> of R2. One adder does both.</p>
+
+  <!-- reveal 2: the naive assumption — one circuit per operation -->
+  <p class="frag big em-y" style="margin:14px 0 6px">Six operations → six circuits?</p>
+
+  <!-- reveal 3: the crack they get instantly — multiply IS repeated addition -->
+  <p class="frag" style="font-size:30px; margin:4px 0"><b>Start with ×.</b> Multiplying is nothing but <b class="em-g">repeated addition</b>: 3 × 4 means add 3, four times.</p>
+
+  <!-- reveal 4: an adder looping on an accumulator — one adder, run again and again -->
+  <div class="frag animwrap"><svg viewBox="0 0 1120 210" preserveAspectRatio="xMidYMid meet">
+    <!-- the single adder, reused each pass -->
+    <rect x="90" y="70" width="220" height="80" class="reg" style="stroke:var(--accent)"/>
+    <text x="200" y="104" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">the one</text>
+    <text x="200" y="132" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">adder</text>
+    <!-- feedback loop arrow: output returns as next input -->
+    <path d="M 310 110 C 360 110 360 40 200 40 C 120 40 90 55 90 68" fill="none" stroke="var(--teal)" stroke-width="2.5" marker-end="url(#u2mulL)"/>
+    <text x="360" y="34" fill="var(--teal)" font-size="20">accumulator feeds back — same adder runs again</text>
+    <!-- the running total across four passes -->
+    <text x="420" y="118" fill="var(--muted)" font-size="26">running total:</text>
+    <text x="660" y="118" fill="var(--green)" font-size="30" font-weight="800">3 → 6 → 9 → 12</text>
+    <text x="660" y="158" fill="var(--muted)" font-size="22">= 3 added four times = 3 × 4</text>
+    <defs><marker id="u2mulL" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--teal)"/></marker></defs>
+  </svg></div>
+
+  <!-- reveal 5: generalise — one adder covers x (repeat add) and the teaser for ÷ (repeat subtract) -->
+  <p class="frag" style="font-size:26px; margin-top:6px">So <b>×</b> needs no new box — just the adder, <b>used repeatedly</b>. And <b>÷</b>? Repeated <em>subtraction</em>…</p>
+
+  <!-- reveal 6: the cliff-hanger that opens slide 14 -->
+  <p class="frag big em-p" style="margin-top:10px">…but can the same adder go the other way and <b>subtract</b>?</p>
+</section>
+
+<!-- subtraction by the method of complements: prove it in NUMBERS (decimal || binary) before the circuit -->
+<section class="slide" data-ch="Ch 2 · Subtract without a subtractor">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px">Subtract without a subtractor — the method of complements</h2>
+  <p class="foothold"><span class="lbl">The other direction ·</span> We just saw one adder cover <b>×</b> by repeating. But repeating only ever <em>adds</em>. To subtract we seem to need new hardware — unless we can turn a subtraction <b>into</b> an addition.</p>
+
+  <!-- reveal 1: the idea -->
+  <p class="frag" style="font-size:30px; margin:2px 0 4px">The trick: <b>A − B = A + (2's complement of B)</b>. And 2's complement is easy — <b class="em-p">flip every bit, then add 1</b>.</p>
+
+  <!-- reveal 2: the answer we want (plain decimal) beside the binary 2's-complement magic -->
+  <div class="row frag" style="margin-top:10px; align-items:stretch">
+    <div class="card tint-teal" style="flex:0 0 300px; display:flex; flex-direction:column; justify-content:center">
+      <h3 class="em-t">What we want</h3>
+      <p style="color:var(--text); font-size:44px; font-weight:800; margin-top:6px">5 − 3 = <span class="em-g">2</span></p>
+    </div>
+    <div class="card tint-purple">
+      <h3 class="em-p">The magic — binary 2's complement</h3>
+      <p style="color:var(--text); font-size:26px; line-height:1.6">Take <b>3 = 0011</b> → flip → 1100 → +1 → <b>1101</b><br>
+        Now just <b>add</b>: <b>0101 + 1101 = 1&#8202;0010</b><br>
+        Throw away the carried <b>1</b> → <b class="em-g">0010 = 2</b> ✓ &nbsp;<span class="muted" style="font-size:22px">same answer, using only addition</span></p>
+    </div>
+  </div>
+
+  <!-- reveal 3: why this is perfect for hardware -->
+  <p class="frag" style="font-size:27px; margin-top:16px">Both are the <em>same</em> move, and both are free in hardware: <b class="em-p">flipping</b> is one XOR per bit — a <em>controlled</em> NOT, so M chooses flip or pass — and the <b class="em-p">"+1"</b> is just setting the adder's <b>carry-in = 1</b>.</p>
+
+  <!-- reveal 4: the history nugget + hand-off to the circuit slide -->
+  <p class="frag" style="font-size:23px; margin-top:12px; color:var(--muted)"><b style="color:var(--yellow)">Who thought of this?</b> The method of complements is centuries old — decimal adding machines used it. <b>John von Neumann</b> proposed <em>two's</em> complement for binary computers in his <b>1945 EDVAC report</b>; the 1949 EDSAC was the first to use it. Next: our adder doing exactly this.</p>
 </section>
 
 <!-- adder-subtractor (ANIMATED: flip the mode line, watch B complement and the result change) -->
 <section class="slide" data-ch="Ch 2 · Adder–subtractor">
   <div class="badge b-core"><span class="dot"></span>Core</div>
   <h2 style="margin-bottom:6px">The adder–subtractor: <span class="em-g">one circuit, two jobs</span> &nbsp;<span class="muted" style="font-size:24px">— try A = 5, B = 3</span></h2>
-  <p class="foothold"><span class="lbl">Don't repeat hardware ·</span> We just met four operations. Building a separate circuit for each would waste silicon — so can a single adder be made to subtract as well?</p>
+  <p class="foothold"><span class="lbl">From numbers to gates ·</span> The numbers just proved it — subtracting is adding the 2's complement. Now watch our <em>own</em> adder do exactly that: flip B, set carry-in = 1, same box.</p>
   <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
     <!-- operands -->
     <text x="70" y="98" fill="var(--text)" font-size="26" font-weight="700">A = 0101 <tspan fill="var(--muted)" font-size="20">(5)</tspan></text>
@@ -526,9 +648,15 @@
       <text class="setval" x="925" y="160" text-anchor="middle" fill="var(--green)" font-size="30" font-weight="800">1000 = 8</text>
     </g>
 
-    <!-- reveal 2: flip M = 1 → subtract. B is complemented, Cin = 1 -->
+    <!-- reveal 2: flip M = 1 → subtract. B is complemented, Cin = 1.
+         Earlier fragments stay visible, so first ERASE the M=0 labels
+         (mode line, Cin = 0, and the static B = 0011) with opaque bg
+         rects, then paint the M=1 values on top — otherwise the two
+         states superimpose and neither reads cleanly. -->
     <g class="frag">
       <rect x="120" y="266" width="360" height="34" fill="var(--bg)"/>
+      <rect x="590" y="212" width="132" height="26" fill="var(--bg)"/>
+      <rect x="62" y="148" width="240" height="32" fill="var(--bg)"/>
       <text x="150" y="285" fill="var(--purple)" font-size="24" font-weight="800">M = 1 → A + B&#773; + 1 = A − B</text>
       <text x="600" y="230" fill="var(--purple)" font-size="20" font-weight="700">Cin = 1</text>
       <text class="flip" x="70" y="168" fill="var(--purple)" font-size="26" font-weight="700" style="transform-box:fill-box; transform-origin:center">B&#773; = 1100 <tspan fill="var(--muted)" font-size="20">(complement)</tspan></text>
@@ -539,18 +667,133 @@
     </g>
     <defs><marker id="u2c2ci" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--border)"/></marker></defs>
   </svg></div>
-  <p class="frag" style="font-size:24px">One XOR per B bit, both fed by <b>M</b>: M = 0 passes B (add); M = 1 gives B&#773; with a carry-in of 1 — that is <b>+1 to the complement = subtract</b>. The very same adder, one control line.</p>
+  <!-- reveal 3: the control table — what M, the B-input, and Cin each mean -->
+  <table class="frag ctrltab">
+    <tr><th>M</th><th>B into adder</th><th>C<sub>in</sub></th><th>Adder computes</th><th>Operation</th></tr>
+    <tr class="add"><td>0</td><td>B <span class="muted">(unchanged)</span></td><td>0</td><td>A + B</td><td class="em-g">ADD</td></tr>
+    <tr class="sub"><td>1</td><td>B&#773; <span class="muted">(flipped)</span></td><td>1</td><td>A + B&#773; + 1 = A − B</td><td class="em-p">SUBTRACT</td></tr>
+  </table>
+  <p class="frag" style="font-size:23px; margin-top:8px">One <b>M</b> does both: it feeds every B-XOR <em>and</em> the carry-in — so C<sub>in</sub> = 1 is exactly the <b>"+1"</b> that makes B&#773; a full 2's complement.</p>
 </section>
 
-<!-- arithmetic circuit -->
-<section class="slide qslide" data-ch="Ch 2 · One circuit, eight operations">
-  <div class="qmark">?</div>
-  <div class="qlabel">Predict</div>
-  <div class="q">Feed the adder's second input through a MUX that can supply <span class="em-p">B, B&#773;, 0, or 1</span>, plus a carry-in.
-     Roughly <span class="em-y">how many</span> distinct arithmetic operations can this one circuit produce?</div>
-  <div class="qans frag"><b>Eight</b> — add, add-with-carry, subtract, subtract-with-borrow, increment, decrement, and two transfers —
-     just by choosing the MUX select (S1S0) and Cin. One adder, many operations.</div>
+<!-- arithmetic circuit — INTERACTIVE: click a control-unit button, watch the MUX + Cin + adder produce the result -->
+<section id="u2ac-slide" class="slide" data-ch="Ch 2 · One circuit, many operations">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">One adder + one MUX = <span class="em-a">many operations</span></h2>
+  <p class="foothold"><span class="lbl">The payoff ·</span> Our adder already subtracts. Put a MUX on its second input <b>Y</b> and let the <b>control unit</b> choose the word — now the <em>same</em> box does add, subtract, increment, decrement. Press a button and watch the signals.</p>
+
+  <div class="animwrap"><svg id="u2ac-svg" viewBox="0 0 1180 360" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="u2ac-ar" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--muted)"/></marker>
+      <marker id="u2ac-arg" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker>
+    </defs>
+
+    <!-- CONTROL UNIT with four clickable buttons -->
+    <rect x="20" y="44" width="200" height="278" rx="12" class="acbox"/>
+    <text x="120" y="72" text-anchor="middle" fill="var(--accent)" font-size="21" font-weight="800">CONTROL UNIT</text>
+    <g class="cbtn" data-op="add"><rect x="40" y="88"  width="160" height="44" rx="8"/><text x="120" y="116" text-anchor="middle" font-size="23">ADD &#8201;<tspan fill="var(--muted)" font-size="18">A+B</tspan></text></g>
+    <g class="cbtn" data-op="sub"><rect x="40" y="142" width="160" height="44" rx="8"/><text x="120" y="170" text-anchor="middle" font-size="23">SUB &#8201;<tspan fill="var(--muted)" font-size="18">A&#8722;B</tspan></text></g>
+    <g class="cbtn" data-op="inc"><rect x="40" y="196" width="160" height="44" rx="8"/><text x="120" y="224" text-anchor="middle" font-size="23">INC &#8201;<tspan fill="var(--muted)" font-size="18">A+1</tspan></text></g>
+    <g class="cbtn" data-op="dec"><rect x="40" y="250" width="160" height="44" rx="8"/><text x="120" y="278" text-anchor="middle" font-size="23">DEC &#8201;<tspan fill="var(--muted)" font-size="18">A&#8722;1</tspan></text></g>
+
+    <!-- the four MUX data inputs; each has its own wire, and the SELECTED one stays lit -->
+    <text id="in-B"    class="muxin" x="248" y="126">B&#160;&#160;= 0011</text>
+    <text id="in-Bbar" class="muxin" x="248" y="176">B&#773;&#160;= 1100</text>
+    <text id="in-0"    class="muxin" x="248" y="226">0&#8230;0 = 0000</text>
+    <text id="in-1"    class="muxin" x="248" y="276">1&#8230;1 = 1111</text>
+    <path id="wire-B"    class="acwire muxwire" d="M404 120 L548 128"/>
+    <path id="wire-Bbar" class="acwire muxwire" d="M404 170 L548 170"/>
+    <path id="wire-0"    class="acwire muxwire" d="M404 220 L548 212"/>
+    <path id="wire-1"    class="acwire muxwire" d="M404 270 L548 254"/>
+
+    <!-- MUX (4 -> 1); the internal ROUTE line shows exactly which input is passed to Y -->
+    <polygon id="u2ac-mux" class="acbox" points="548,104 604,150 604,232 548,278"/>
+    <path id="u2ac-route" class="acwire" d="M548 128 L604 191"/>
+    <text x="576" y="128" text-anchor="middle" fill="var(--accent)" font-size="17" font-weight="800">MUX</text>
+
+    <!-- SELECT LINE (S1S0) from the control unit into the bottom of the MUX -->
+    <path id="u2ac-wsel" class="acwire" d="M220 304 L500 304 L548 278" marker-end="url(#u2ac-ar)"/>
+    <text id="u2ac-sel" class="selpill" x="290" y="298" font-size="20">S1S0 = &#8212;</text>
+
+    <!-- selected word Y out of the MUX into the adder -->
+    <text id="u2ac-y" x="612" y="146" fill="var(--green)" font-size="22" font-weight="800">Y = &#8212;</text>
+    <path id="u2ac-wy" class="acwire" d="M604 191 L700 176" marker-end="url(#u2ac-ar)"/>
+
+    <!-- operand A straight into the top of the adder -->
+    <text x="795" y="98" text-anchor="middle" fill="var(--text)" font-size="24" font-weight="700">A = 0101 <tspan fill="var(--muted)" font-size="18">(5)</tspan></text>
+    <path id="u2ac-wa" class="acwire" d="M795 106 L795 120" marker-end="url(#u2ac-ar)"/>
+
+    <!-- ADDER -->
+    <rect id="u2ac-adder" class="acbox" x="700" y="120" width="190" height="112" rx="10"/>
+    <text x="795" y="182" text-anchor="middle" fill="var(--text)" font-size="24" font-weight="800">n-bit adder</text>
+
+    <!-- CARRY-IN from the control unit, entering the bottom of the adder; label sits at the entry -->
+    <path id="u2ac-wcin" class="acwire" d="M220 320 L760 320 L760 232" marker-end="url(#u2ac-ar)"/>
+    <text id="u2ac-cin" x="774" y="262" fill="var(--accent)" font-size="22" font-weight="800">Cin = &#8212;</text>
+
+    <!-- result -->
+    <path id="u2ac-wres" class="acwire" d="M890 176 L958 176" marker-end="url(#u2ac-ar)"/>
+    <rect class="acbox" x="958" y="140" width="200" height="72" rx="10" style="stroke:var(--green)"/>
+    <text id="u2ac-res" x="1058" y="186" text-anchor="middle" fill="var(--green)" font-size="34" font-weight="800">&#8212;</text>
+    <text x="1058" y="230" text-anchor="middle" fill="var(--muted)" font-size="17">carry-out is dropped</text>
+  </svg></div>
+
+  <p id="u2ac-explain" style="font-size:24px; margin-top:6px; min-height:60px; color:var(--text)">Press a button in the <b>Control Unit</b> — the select line <b>S1S0</b> picks the MUX word and sets C<sub>in</sub>; the chosen path lights up green and stays lit. <span class="muted" style="font-size:21px">(A = 5, B = 3 · use → to continue)</span></p>
 </section>
+<script>
+/* Interactive arithmetic circuit (slide 'One circuit, many operations').
+   A control button asserts a select code S1S0 (which word the MUX passes to Y)
+   and a carry-in. The whole enabled data path — chosen input -> MUX -> Y ->
+   adder -> result — lights green and STAYS lit until another op is chosen.
+   Clicks here must NOT advance the deck, so every click stopPropagation()s. */
+(function(){
+  var OPS={
+    add:{Y:'0011',cin:'0',res:'1000 = 8', inp:'B',    s:'00', flip:false,
+      rtn:'<b class="em-g">ADD</b> — select <b>S1S0 = 00</b> passes <b>Y = B = 0011</b>, and <b>C<sub>in</sub> = 0</b>. Adder: A + B = 0101 + 0011 = <b>1000 = 8</b>.'},
+    sub:{Y:'1100',cin:'1',res:'0010 = 2', inp:'Bbar', s:'01', flip:true,
+      rtn:'<b class="em-p">SUB</b> — select <b>S1S0 = 01</b> passes <b>Y = B&#773; = 1100</b> (B flipped), and <b>C<sub>in</sub> = 1</b> is the <b>+1</b> that completes the 2&#8217;s complement. Adder: A + B&#773; + 1 = 0101 + 1100 + 1 = <b>0010 = 2</b> = A &#8722; B.'},
+    inc:{Y:'0000',cin:'1',res:'0110 = 6', inp:'0',    s:'10', flip:false,
+      rtn:'<b class="em-a">INC</b> — select <b>S1S0 = 10</b> passes <b>Y = 0&#8230;0 = 0000</b>, and <b>C<sub>in</sub> = 1</b>. Adder: A + 0 + 1 = <b>0110 = 6</b> = A + 1.'},
+    dec:{Y:'1111',cin:'0',res:'0100 = 4', inp:'1',    s:'11', flip:false,
+      rtn:'<b class="em-o">DEC</b> — select <b>S1S0 = 11</b> passes <b>Y = 1&#8230;1 = 1111</b> (= &#8722;1), and <b>C<sub>in</sub> = 0</b>. Adder: A + (&#8722;1) = <b>0100 = 4</b> = A &#8722; 1.'}
+  };
+  // where the internal MUX route line starts, per selected input (all end at the output, 604,191)
+  var ROUTE={B:'M548 128 L604 191', Bbar:'M548 170 L604 191', '0':'M548 212 L604 191', '1':'M548 254 L604 191'};
+  var svg=document.getElementById('u2ac-svg');
+  if(!svg) return;
+  function retrig(el,cls){ if(!el) return; el.classList.remove(cls); void el.getBBox(); el.classList.add(cls); }
+  function litOn(id){ var e=document.getElementById(id); if(e){ e.classList.add('on'); if(e.tagName==='path') e.setAttribute('marker-end','url(#u2ac-arg)'); } }
+  function run(op){
+    var o=OPS[op]; if(!o) return;
+    // active button
+    svg.querySelectorAll('.cbtn').forEach(function(b){ b.classList.toggle('active', b.dataset.op===op); });
+    // clear the previous data path (only the input branches change which one is lit)
+    svg.querySelectorAll('.muxin').forEach(function(t){ t.classList.remove('sel'); });
+    svg.querySelectorAll('.muxwire').forEach(function(w){ w.classList.remove('on'); });
+    // light the chosen input and its branch — stays lit
+    var it=document.getElementById('in-'+o.inp);
+    if(it){ it.classList.add('sel'); if(o.flip) retrig(it,'acflip'); }
+    litOn('wire-'+o.inp);
+    // move the internal MUX route line to the selected input so the selection is visible
+    var rt=document.getElementById('u2ac-route'); if(rt) rt.setAttribute('d', ROUTE[o.inp]);
+    // the rest of the enabled chain stays lit: route -> MUX -> Y -> adder -> result, plus A and the two control lines
+    ['u2ac-route','u2ac-mux','u2ac-wy','u2ac-adder','u2ac-wres','u2ac-wa','u2ac-wsel','u2ac-wcin'].forEach(litOn);
+    // readouts (persist)
+    document.getElementById('u2ac-sel').textContent='S1S0 = '+o.s;
+    document.getElementById('u2ac-y').textContent='Y = '+o.Y;
+    document.getElementById('u2ac-cin').textContent='Cin = '+o.cin;
+    // result pops in after the signal has propagated
+    var res=document.getElementById('u2ac-res');
+    setTimeout(function(){ res.textContent=o.res; retrig(res,'acpop'); }, 560);
+    document.getElementById('u2ac-explain').innerHTML=o.rtn;
+  }
+  svg.querySelectorAll('.cbtn').forEach(function(b){
+    b.addEventListener('click', function(e){ e.stopPropagation(); run(b.dataset.op); });
+  });
+  var slide=document.getElementById('u2ac-slide');
+  if(slide) slide.addEventListener('click', function(e){ e.stopPropagation(); });
+})();
+</script>
 
 <!-- logic microops (ANIMATED: watch masked bits clear and selected bits set) -->
 <section class="slide" data-ch="Ch 2 · Logic microoperations">
@@ -592,14 +835,228 @@
       <text x="250" y="226" fill="var(--muted)" font-size="20">a 1 in the mask ⟶ that bit is forced to 1; a 0 leaves it alone</text>
     </g>
   </svg></div>
-  <p class="frag" style="font-size:24px">Same idea powers <b>selective-clear</b> (AND with a complement) and <b>toggle</b> (XOR). NOT just inverts every bit.</p>
+  <!-- reveal 3: the PURPOSE, with an everyday flag example for each -->
+  <div class="row frag" style="margin-top:2px">
+    <div class="card tint-yellow"><h3 class="em-y">Mask (AND) → clear a flag</h3>
+      <p style="color:var(--text); font-size:22px">Turn one flag <b>off</b> without disturbing the rest. Flags <span class="bin">1011</span>, clear the <b>ERROR</b> bit: AND <span class="bin">1101</span> (a 0 only there) = <span class="bin em-g">1001</span>. ERROR → 0, the others untouched.</p></div>
+    <div class="card tint-green"><h3 class="em-g">Set (OR) → set a flag</h3>
+      <p style="color:var(--text); font-size:22px">Turn one flag <b>on</b> without disturbing the rest. Flags <span class="bin">1001</span>, set the <b>READY</b> bit: OR <span class="bin">0100</span> (a 1 only there) = <span class="bin em-g">1101</span>. READY → 1, the others untouched.</p></div>
+  </div>
+  <p class="frag" style="font-size:22px; color:var(--muted)">Partners on the same idea: <b>selective-clear</b> = AND with a complemented mask, and <b>toggle</b> = XOR (next slides). NOT just inverts every bit.</p>
+</section>
+
+<!-- the full 16 logic functions (Mano) — textbook table, then the "only four gates" payoff -->
+<!-- 18a: WHY there are exactly sixteen — grounded in a real op, then the count -->
+<section class="slide" data-ch="Ch 2 · Why sixteen?">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Why exactly <span class="em-a">sixteen</span>? — an operation is a set of answers</h2>
+  <p class="foothold"><span class="lbl">What an op really is ·</span> With two input bits there are only <b>four</b> possible situations: 00, 01, 10, 11. A logic operation is just a rule that answers one question for each — <b>output 0 or 1?</b></p>
+
+  <!-- reveal 1: WHAT — a concrete op (AND) is four answers, one per situation -->
+  <div class="frag" style="display:flex; gap:38px; align-items:center; margin-top:6px">
+    <table class="logic16" style="font-size:24px">
+      <tr><th>x</th><th>y</th><th>AND says</th></tr>
+      <tr><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>0</td><td>1</td><td>0</td></tr>
+      <tr><td>1</td><td>0</td><td>0</td></tr>
+      <tr><td>1</td><td>1</td><td class="em-g">1</td></tr>
+    </table>
+    <div style="font-size:25px; color:var(--text); max-width:640px">Take <b>AND</b>: its rule is "say <b>1</b> only when both are 1." That is <em>four answers</em> — 0, 0, 0, 1 — one for each situation. Those four answers <b>are</b> the operation.</div>
+  </div>
+
+  <!-- reveal 2: the four answers stacked = a 4-bit code -->
+  <p class="frag" style="font-size:25px; margin-top:12px">Stack the four answers into a code: <b>AND = <span class="bin em-g">0001</span></b>. A different rule → a different code: <b>OR = <span class="bin em-g">0111</span></b> ("1 unless both are 0").</p>
+
+  <!-- reveal 3: WHY 16 — four independent yes/no answers, like four switches -->
+  <p class="frag" style="font-size:25px; margin-top:8px">Four answers, each independently 0 or 1 — like <b>four on/off switches</b>. Multiply the choices <span class="muted">(not 4 × 2 = 8)</span>: &nbsp;<span class="bin em-a" style="font-size:34px">2×2×2×2 = 2<sup>4</sup> = 16</span></p>
+
+  <!-- reveal 4: all sixteen codes; the familiar ones named -->
+  <div class="frag" style="display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; max-width:1190px">
+    <span class="code16 named">0000<small>Clear</small></span>
+    <span class="code16 named">0001<small>AND</small></span>
+    <span class="code16">0010</span>
+    <span class="code16 named">0011<small>= x</small></span>
+    <span class="code16">0100</span>
+    <span class="code16 named">0101<small>= y</small></span>
+    <span class="code16 named">0110<small>XOR</small></span>
+    <span class="code16 named">0111<small>OR</small></span>
+    <span class="code16 named">1000<small>NOR</small></span>
+    <span class="code16 named">1001<small>XNOR</small></span>
+    <span class="code16">1010</span>
+    <span class="code16">1011</span>
+    <span class="code16">1100</span>
+    <span class="code16">1101</span>
+    <span class="code16 named">1110<small>NAND</small></span>
+    <span class="code16 named">1111<small>Set</small></span>
+  </div>
+</section>
+
+<!-- 18b: the full sixteen (Mano's list) -->
+<section class="slide" data-ch="Ch 2 · The sixteen logic microoperations">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">The sixteen logic microoperations <span class="muted" style="font-size:26px">(Mano)</span></h2>
+  <p class="foothold"><span class="lbl">The full list ·</span> Here are all sixteen the textbook names. Read down them — most are just familiar gates, and four (★) are the ones everything else is built from.</p>
+
+  <div class="frag" style="display:flex; gap:26px; margin-top:6px">
+    <table class="logic16">
+      <tr><th>Boolean</th><th>Microoperation</th><th>Name</th></tr>
+      <tr><td>0</td><td>F ← 0</td><td>Clear</td></tr>
+      <tr class="prim"><td>A·B</td><td>F ← A ∧ B</td><td>AND ★</td></tr>
+      <tr><td>A·B&#773;</td><td>F ← A ∧ B&#773;</td><td>—</td></tr>
+      <tr><td>A</td><td>F ← A</td><td>Transfer A</td></tr>
+      <tr><td>A&#773;·B</td><td>F ← A&#773; ∧ B</td><td>—</td></tr>
+      <tr><td>B</td><td>F ← B</td><td>Transfer B</td></tr>
+      <tr class="prim"><td>A⊕B</td><td>F ← A ⊕ B</td><td>XOR ★</td></tr>
+      <tr class="prim"><td>A+B</td><td>F ← A ∨ B</td><td>OR ★</td></tr>
+    </table>
+    <table class="logic16">
+      <tr><th>Boolean</th><th>Microoperation</th><th>Name</th></tr>
+      <tr><td>(A+B)&#773;</td><td>F ← (A ∨ B)&#773;</td><td>NOR</td></tr>
+      <tr><td>(A⊕B)&#773;</td><td>F ← (A ⊕ B)&#773;</td><td>XNOR</td></tr>
+      <tr><td>B&#773;</td><td>F ← B&#773;</td><td>Complement B</td></tr>
+      <tr><td>A+B&#773;</td><td>F ← A ∨ B&#773;</td><td>—</td></tr>
+      <tr class="prim"><td>A&#773;</td><td>F ← A&#773;</td><td>NOT (Compl A) ★</td></tr>
+      <tr><td>A&#773;+B</td><td>F ← A&#773; ∨ B</td><td>—</td></tr>
+      <tr><td>(A·B)&#773;</td><td>F ← (A ∧ B)&#773;</td><td>NAND</td></tr>
+      <tr><td>1</td><td>F ← all 1s</td><td>Set</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- 18c: only four gates, and NAND underneath -->
+<section class="slide" data-ch="Ch 2 · Sixteen operations, four gates">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Sixteen operations, <span class="em-p">four gates</span> — one gate underneath</h2>
+  <p class="foothold"><span class="lbl">How few we really need ·</span> We do not build sixteen circuits. Every one of the sixteen is a combination of just four logic operations — and those four are themselves built from a single universal gate.</p>
+
+  <!-- reveal 1: the four primitives -->
+  <p class="frag big em-p" style="margin-top:8px">★ Build only <b>AND, OR, XOR, NOT</b> — the other twelve are combinations of these four.</p>
+
+  <!-- reveal 2: two different levels, resolve the 'why not just NAND?' doubt -->
+  <div class="frag row" style="margin-top:16px">
+    <div class="card tint-purple"><h3 class="em-p">What the ALU offers</h3><p style="color:var(--text)">Four <b>operations</b> — AND, OR, XOR, NOT — picked by a MUX. The other twelve are just combinations of these.</p></div>
+    <div class="card tint-teal"><h3 class="em-t">What it's built from</h3><p style="color:var(--text)">One <b>universal gate</b>: <b>NAND</b> alone can build all four — and the adder and the MUX too. NAND is the brick; these four are what we assemble from it.</p></div>
+  </div>
+  <p class="frag" style="font-size:23px; margin-top:14px; color:var(--muted)">Two levels, don't confuse them: <b style="color:var(--text)">four operations</b> = what the machine offers; <b style="color:var(--text)">one gate (NAND)</b> = what silicon is made of.</p>
+</section>
+
+<!-- why bitwise operations matter — motivate the whole logic family before shifts -->
+<section class="slide" data-ch="Ch 2 · Why bitwise operations matter">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Why these bit-level operations <span class="em-a">matter</span></h2>
+  <p class="foothold"><span class="lbl">The next level up ·</span> Each logic op touches one bit — humble on its own. But they are the <b>primitives</b> that bigger operations are built from. Here is what they buy us.</p>
+
+  <div class="row frag" style="margin-top:6px">
+    <div class="card tint-green"><h3 class="em-g">Masking — pick out bits</h3><p style="color:var(--text)"><b>AND</b> with a mask clears the bits you don't want; <b>OR</b> sets the ones you do. That is how a field is <em>extracted</em> or <em>inserted</em> inside a word.</p></div>
+    <div class="card tint-teal"><h3 class="em-t">Flags &amp; control bits</h3><p style="color:var(--text)">Set / clear / test one bit — status-register flags, permission bits, an IoT <b>GPIO</b> pin driven high or low.</p></div>
+  </div>
+  <div class="row frag" style="margin-top:18px">
+    <div class="card tint-yellow"><h3 class="em-y">Shifts do arithmetic</h3><p style="color:var(--text)">Left shift ≈ <b>×2</b>, right shift ≈ <b>÷2</b>. General multiply / divide is <b>shift-and-add</b> — the very idea from slide 13.</p></div>
+    <div class="card tint-purple"><h3 class="em-p">…and bigger systems</h3><p style="color:var(--text)">Packing fields, <b>checksums / CRC</b>, hashing, <b>encryption</b>, and graphics colour maths — all stand on these bit ops.</p></div>
+  </div>
+
+  <p class="frag big em-a" style="margin-top:16px">Individually humble, collectively the foundation of everything above the gate.</p>
+</section>
+
+<!-- worked bitwise examples: AND & OR -->
+<section class="slide" data-ch="Ch 2 · Worked — AND clears, OR sets">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Worked: <span class="em-g">AND</span> clears bits, <span class="em-g">OR</span> sets bits</h2>
+  <p class="foothold"><span class="lbl">See it on a byte ·</span> A mask is a second word we choose. AND it in to <em>keep or clear</em> bits; OR it in to <em>force bits to 1</em>. Watch each on the same 8-bit value.</p>
+
+  <div class="row frag" style="margin-top:8px">
+    <div class="card tint-green">
+      <h3 class="em-g">AND — mask / clear</h3>
+      <p class="wex"><span class="op2"></span><span class="bin">1011 0110</span> <span class="muted">(182)</span><br>
+        <span class="op2">AND</span><span class="bin">0000 1111</span> <span class="muted">(mask)</span><br>
+        <span class="op2">=</span><span class="bin em-g">0000 0110</span> <span class="muted">(6)</span></p>
+      <p style="font-size:22px; color:var(--muted)">Where the mask is <b>0</b> the bit is cleared; where it is <b>1</b> the bit passes. → <b>extract the low nibble</b>, or test one bit.</p>
+    </div>
+    <div class="card tint-teal">
+      <h3 class="em-t">OR — set</h3>
+      <p class="wex"><span class="op2"></span><span class="bin">1011 0000</span><br>
+        <span class="op2">OR</span><span class="bin">0000 1111</span><br>
+        <span class="op2">=</span><span class="bin em-g">1011 1111</span></p>
+      <p style="font-size:22px; color:var(--muted)">Where the mask is <b>1</b> the bit is forced to 1; where it is 0 the bit is left alone. → <b>turn on flags / GPIO pins</b>.</p>
+    </div>
+  </div>
+  <p class="frag" style="font-size:24px; margin-top:14px">Same trick, opposite jobs: <b>AND with 0</b> knocks bits down, <b>OR with 1</b> lifts bits up.</p>
+</section>
+
+<!-- worked bitwise examples: XOR & NOT -->
+<section class="slide" data-ch="Ch 2 · Worked — XOR toggles, NOT inverts">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Worked: <span class="em-p">XOR</span> toggles bits, <span class="em-p">NOT</span> inverts all</h2>
+  <p class="foothold"><span class="lbl">The other two ·</span> XOR flips exactly the bits the mask marks; NOT flips every bit. Both are the tools behind toggling and behind the 2's-complement subtraction you already saw.</p>
+
+  <div class="row frag" style="margin-top:8px">
+    <div class="card tint-purple">
+      <h3 class="em-p">XOR — toggle</h3>
+      <p class="wex"><span class="op2"></span><span class="bin">1010 1010</span><br>
+        <span class="op2">XOR</span><span class="bin">0000 1111</span><br>
+        <span class="op2">=</span><span class="bin em-g">1010 0101</span></p>
+      <p style="font-size:22px; color:var(--muted)">A <b>1</b> in the mask flips that bit; a 0 leaves it. And <b>X XOR X = 0</b> → used in swaps, parity, and simple ciphers.</p>
+    </div>
+    <div class="card tint-orange">
+      <h3 class="em-o">NOT — complement</h3>
+      <p class="wex"><span class="op2">NOT</span><span class="bin">1010 0011</span><br>
+        <span class="op2">=</span><span class="bin em-g">0101 1100</span></p>
+      <p style="font-size:22px; color:var(--muted)">Every bit inverted = the <b>1's complement</b>. Add 1 → 2's complement → that is the <b>subtraction trick</b> from earlier.</p>
+    </div>
+  </div>
+  <p class="frag" style="font-size:24px; margin-top:14px">XOR is a <em>selective</em> NOT (flip the marked bits); NOT flips them all — the same inverter, controlled or not.</p>
 </section>
 
 <!-- shift microops (ANIMATED: each row physically slides one place) -->
+<!-- a shift, explained as TWO explicit steps: move, then fill -->
+<section class="slide" data-ch="Ch 2 · A shift in two steps">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">A shift, in <span class="em-a">two little steps</span></h2>
+  <p class="foothold"><span class="lbl">Slow it down ·</span> A shift is really <em>two</em> actions. Let's left-shift the word <b>0110</b> one place, doing each action on its own so it's clear what moves and what enters.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
+    <!-- Before -->
+    <text x="40" y="66" fill="var(--muted)" font-size="22" font-weight="800">Before</text>
+    <g font-size="26" font-weight="800" text-anchor="middle" fill="var(--text)">
+      <rect x="380" y="40" width="64" height="44" rx="6" class="reg"/><text x="412" y="71">0</text>
+      <rect x="452" y="40" width="64" height="44" rx="6" class="reg"/><text x="484" y="71">1</text>
+      <rect x="524" y="40" width="64" height="44" rx="6" class="reg"/><text x="556" y="71">1</text>
+      <rect x="596" y="40" width="64" height="44" rx="6" class="reg"/><text x="628" y="71">0</text>
+    </g>
+    <text x="700" y="70" fill="var(--muted)" font-size="22">= 6</text>
+
+    <!-- Step 1: every bit moves one place left; the MSB drops off; right end is vacated -->
+    <g class="frag">
+      <text x="40" y="162" fill="var(--accent)" font-size="21" font-weight="800">① move</text>
+      <g font-size="26" font-weight="800" text-anchor="middle" fill="var(--text)">
+        <rect x="380" y="134" width="64" height="44" rx="6" class="reg"/><text x="412" y="165">1</text>
+        <rect x="452" y="134" width="64" height="44" rx="6" class="reg"/><text x="484" y="165">1</text>
+        <rect x="524" y="134" width="64" height="44" rx="6" class="reg"/><text x="556" y="165">0</text>
+        <rect x="596" y="134" width="64" height="44" rx="6" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-dasharray="6 5"/><text x="628" y="165" fill="var(--yellow)">?</text>
+      </g>
+      <text x="270" y="126" fill="var(--red)" font-size="19">MSB 0 drops off</text>
+      <text x="700" y="162" fill="var(--muted)" font-size="20">every bit moves one place; the right end is now empty</text>
+    </g>
+
+    <!-- Step 2: fill the vacated end (for a logical shift, with a 0) -->
+    <g class="frag">
+      <text x="40" y="252" fill="var(--green)" font-size="21" font-weight="800">② fill</text>
+      <g font-size="26" font-weight="800" text-anchor="middle" fill="var(--text)">
+        <rect x="380" y="226" width="64" height="44" rx="6" class="reg"/><text x="412" y="257">1</text>
+        <rect x="452" y="226" width="64" height="44" rx="6" class="reg"/><text x="484" y="257">1</text>
+        <rect x="524" y="226" width="64" height="44" rx="6" class="reg"/><text x="556" y="257">0</text>
+        <rect x="596" y="226" width="64" height="44" rx="6" class="reg" style="stroke:var(--green)"/><text x="628" y="257" fill="var(--green)">0</text>
+      </g>
+      <text x="700" y="256" fill="var(--green)" font-size="22" font-weight="800">= 1100 = 12 = 6 × 2</text>
+    </g>
+  </svg></div>
+  <p class="frag" style="font-size:24px">So a shift = <b>① move every bit one place</b>, then <b>② fill the vacated end</b>. The only question left is <em>what</em> fills that end — next.</p>
+</section>
+
+<!-- the three shift types differ only in WHAT fills the vacated end -->
 <section class="slide" data-ch="Ch 2 · Shift microoperations">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:6px">Three kinds of shift — <span class="em-a">watch the bits move</span></h2>
-  <p class="foothold"><span class="lbl">Third family ·</span> After arithmetic and logic, one last group of microoperations slides the whole word sideways — and it buys us an almost-free multiply and divide.</p>
+  <h2 style="margin-bottom:6px">What fills the vacated end? — <span class="em-a">three kinds of shift</span></h2>
+  <p class="foothold"><span class="lbl">The one difference ·</span> Every shift moves the bits the same way. The three types differ only in step ② — what slides into the empty end — and that one choice decides what the shift <em>means</em>.</p>
   <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
     <!-- row 1: LOGICAL shift-left, a 0 enters at the right -->
     <g class="frag">
@@ -652,6 +1109,7 @@
     <defs><marker id="u2c2wrap" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker></defs>
   </svg></div>
   <p class="frag big em-y" style="margin-top:4px">Left shift ≈ ×2, right shift ≈ ÷2 — a shift is far cheaper than a full multiply.</p>
+  <p class="frag" style="font-size:22px; color:var(--muted)"><b style="color:var(--yellow)">Who thought of this?</b> Doubling-and-adding to multiply is <em>ancient</em> — Egyptian multiplication (Rhind papyrus, ~1550 BCE) and Russian-peasant multiplication both use it. It becomes a literal <b>shift</b> only in the binary system (Leibniz, ~1703). It predates Boolean algebra and von Neumann — they only built it into hardware.</p>
 </section>
 
 <!-- ashr sign-preservation deep-dive (CONTENT GAP added this pass) -->
@@ -683,27 +1141,122 @@
   <p class="frag" style="font-size:24px">That is the whole point of <b>ashr</b>: it re-inserts the <span class="em-p">sign bit</span> instead of a 0, so dividing a <em>negative</em> number by 2 still gives a negative number.</p>
 </section>
 
+<!-- worked: a shift multiplies / divides by 2 -->
+<section class="slide" data-ch="Ch 2 · Worked — shift = ×2 and ÷2">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Worked: a shift <span class="em-y">multiplies</span> or <span class="em-y">divides</span> by 2</h2>
+  <p class="foothold"><span class="lbl">Prove it on numbers ·</span> Just like 2's-complement subtraction, let's see the arithmetic actually happen — decimal beside binary — so "left ≈ ×2, right ≈ ÷2" stops being a slogan.</p>
+
+  <div class="row frag" style="margin-top:8px">
+    <div class="card tint-yellow">
+      <h3 class="em-y">Left shift → ×2</h3>
+      <p class="wex"><span class="op2">5 =</span><span class="bin">0101</span><br>
+        <span class="op2">&lt;&lt;1</span><span class="bin em-g">1010</span> <span class="muted">= 10  (×2)</span><br>
+        <span class="op2">&lt;&lt;2</span><span class="bin em-g">10100</span> <span class="muted">= 20  (×4)</span></p>
+      <p style="font-size:22px; color:var(--muted)">Every bit moves up one place → worth twice as much; a fresh <b>0</b> enters at the right.</p>
+    </div>
+    <div class="card tint-teal">
+      <h3 class="em-t">Right shift → ÷2</h3>
+      <p class="wex"><span class="op2">6 =</span><span class="bin">0110</span><br>
+        <span class="op2">&gt;&gt;1</span><span class="bin em-g">0011</span> <span class="muted">= 3  (÷2)</span></p>
+      <p style="font-size:22px; color:var(--muted)">Every bit moves down one place → worth half. For a <b>negative</b> number use <b>ashr</b> (previous slide) so the sign survives.</p>
+    </div>
+  </div>
+  <p class="frag big em-y" style="margin-top:14px">Shifting by k = ×2<sup>k</sup> or ÷2<sup>k</sup> — one cheap operation instead of a full multiply or divide.</p>
+</section>
+
+<!-- worked: general multiply by shift-and-add -->
+<section class="slide" data-ch="Ch 2 · Worked — multiply by shift-and-add">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Worked: multiply by <span class="em-a">shift-and-add</span> &nbsp;<span class="muted" style="font-size:26px">(5 × 3)</span></h2>
+  <p class="foothold"><span class="lbl">Back to slide 13 ·</span> We said multiply is repeated addition. Precisely, it is <b>shift-and-add</b>: for every <b>1</b> in the multiplier, add a copy of the multiplicand shifted to that bit's place.</p>
+
+  <div class="frag" style="font-size:29px; line-height:1.8; margin-top:8px">
+    Multiplier <b>3 = <span class="bin">011</span></b>, multiplicand <b>5 = <span class="bin">00101</span></b>:
+  </div>
+  <div class="frag" style="font-size:29px; line-height:1.85; margin-top:6px">
+    <div><span class="op2">bit 0 = 1</span> → add 5&lt;&lt;0 = <span class="bin">00101</span></div>
+    <div><span class="op2">bit 1 = 1</span> → add 5&lt;&lt;1 = <span class="bin">01010</span></div>
+    <div><span class="op2">bit 2 = 0</span> → add nothing</div>
+  </div>
+  <div class="frag" style="font-size:30px; margin-top:8px">sum = <span class="bin em-g">01111</span> = <b class="em-g">15</b> = 5 × 3 ✓</div>
+
+  <p class="frag big em-a" style="margin-top:14px">n shifts + n adds → any product. Division is the mirror: <b>shift-and-subtract</b>.</p>
+</section>
+
 <!-- ALU combine -->
 <section class="slide" data-ch="Ch 2 · The Arithmetic-Logic-Shift Unit">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:6px">The Arithmetic–Logic–Shift Unit: <span class="em-a">fold them into one</span></h2>
-  <p class="foothold"><span class="lbl">The payoff ·</span> We now have three separate circuits — arithmetic, logic, shift. Combine them into a single unit the control lines can choose from, and we've built the ALU.</p>
-  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
-    <g class="frag"><rect x="120" y="60" width="220" height="52" class="reg" style="stroke:var(--green)"/><text x="230" y="94" text-anchor="middle" class="reg-lbl" style="fill:var(--green)">Arithmetic circuit</text></g>
-    <g class="frag"><rect x="120" y="124" width="220" height="52" class="reg" style="stroke:var(--yellow)"/><text x="230" y="158" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">Logic circuit</text></g>
-    <g class="frag"><rect x="120" y="188" width="220" height="52" class="reg" style="stroke:var(--teal)"/><text x="230" y="222" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Shifter</text></g>
-    <g class="frag"><polygon points="430,80 540,120 540,180 430,220" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/>
-      <text x="470" y="154" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">MUX</text>
-      <path d="M 340 86 L 430 110 M 340 150 L 430 150 M 340 214 L 430 190" stroke="var(--border)" stroke-width="2"/>
-      <text x="430" y="250" fill="var(--muted)" font-size="18">select S3 S2 S1 S0</text></g>
-    <g class="frag"><path d="M 540 150 L 720 150" stroke="var(--accent)" stroke-width="5" marker-end="url(#u2c2a)"/>
-      <rect x="730" y="122" width="140" height="56" class="reg" style="stroke:var(--purple)"/><text x="800" y="152" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">result</text>
-      <text x="120" y="285" fill="var(--muted)" font-size="19">select = "arithmetic" → only the adder's output is passed through</text>
-      <g class="dpk pur" style="offset-path:path('M 490 150 L 720 150')"><rect x="-24" y="-15" width="48" height="30" rx="5"/><text x="0" y="6" text-anchor="middle">1000</text></g>
-      <text class="setval reg-val" x="800" y="168" text-anchor="middle" fill="var(--purple)" font-size="20">1000</text></g>
-    <defs><marker id="u2c2a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
+  <h2 style="margin-bottom:4px">The Arithmetic–Logic–Shift Unit — <span class="em-a">one example through every box</span></h2>
+  <p class="foothold"><span class="lbl">Fold them into one ·</span> Arithmetic, logic and shift all compute <em>in parallel</em> on the same A and B; a final MUX passes just one result. Let's push <b>A = 5, B = 3</b> through and see each box's output — and settle how many select lines the MUX really needs.</p>
+  <div class="animwrap"><svg viewBox="0 0 1160 330" preserveAspectRatio="xMidYMid meet">
+    <!-- operands feed all three blocks -->
+    <text x="20" y="150" fill="var(--text)" font-size="22" font-weight="700">A = 0101 <tspan fill="var(--muted)" font-size="17">(5)</tspan></text>
+    <text x="20" y="182" fill="var(--text)" font-size="22" font-weight="700">B = 0011 <tspan fill="var(--muted)" font-size="17">(3)</tspan></text>
+
+    <!-- reveal 1..3: each computation block with its worked output for A=5, B=3 -->
+    <g class="frag">
+      <rect x="180" y="34" width="360" height="66" rx="10" class="reg" style="stroke:var(--green)"/>
+      <text x="200" y="62" fill="var(--green)" font-size="21" font-weight="800">Arithmetic circuit</text>
+      <text x="200" y="88" fill="var(--text)" font-size="20">A + B = <tspan class="bin" fill="var(--green)">1000</tspan> = 8</text>
+      <text x="548" y="60" fill="var(--muted)" font-size="14">add/sub/inc/dec</text>
+      <text x="548" y="80" fill="var(--muted)" font-size="14">via S1 S0, Cin</text>
+    </g>
+    <g class="frag">
+      <rect x="180" y="116" width="360" height="66" rx="10" class="reg" style="stroke:var(--yellow)"/>
+      <text x="200" y="144" fill="var(--yellow)" font-size="21" font-weight="800">Logic circuit</text>
+      <text x="200" y="170" fill="var(--text)" font-size="20">A ∧ B = <tspan class="bin" fill="var(--yellow)">0001</tspan> = 1</text>
+      <text x="548" y="142" fill="var(--muted)" font-size="14">AND/OR/XOR/NOT</text>
+      <text x="548" y="162" fill="var(--muted)" font-size="14">via S1 S0</text>
+    </g>
+    <g class="frag">
+      <rect x="180" y="198" width="360" height="66" rx="10" class="reg" style="stroke:var(--teal)"/>
+      <text x="200" y="226" fill="var(--teal)" font-size="21" font-weight="800">Shifter</text>
+      <text x="200" y="252" fill="var(--text)" font-size="20">shl A = <tspan class="bin" fill="var(--teal)">1010</tspan>=10 · shr A = <tspan class="bin" fill="var(--teal)">0010</tspan>=2</text>
+    </g>
+
+    <!-- reveal 4: the final 4->1 MUX, selected by only TWO lines S3 S2 -->
+    <g class="frag">
+      <polygon points="660,64 720,104 720,236 660,276" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/>
+      <text x="690" y="162" text-anchor="middle" fill="var(--accent)" font-size="18" font-weight="800">4→1</text>
+      <text x="690" y="184" text-anchor="middle" fill="var(--accent)" font-size="16" font-weight="800">MUX</text>
+      <path d="M540 67 L660 100" stroke="var(--border)" stroke-width="2"/>
+      <path d="M540 149 L660 150" stroke="var(--border)" stroke-width="2"/>
+      <path d="M540 231 L660 196" stroke="var(--border)" stroke-width="2"/>
+      <path d="M540 244 L660 224" stroke="var(--border)" stroke-width="2"/>
+      <text x="598" y="92" fill="var(--muted)" font-size="14">00 arith</text>
+      <text x="598" y="146" fill="var(--muted)" font-size="14">01 logic</text>
+      <text x="598" y="190" fill="var(--muted)" font-size="14">10 shr</text>
+      <text x="598" y="220" fill="var(--muted)" font-size="14">11 shl</text>
+      <path d="M690 306 L690 276" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#u2alu)"/>
+      <text x="690" y="324" text-anchor="middle" fill="var(--accent)" font-size="18" font-weight="800">select S3 S2</text>
+    </g>
+
+    <!-- reveal 5: chosen path S3 S2 = 00 -> arithmetic -> result -->
+    <g class="frag">
+      <path d="M720 150 L840 150" stroke="var(--accent)" stroke-width="5" marker-end="url(#u2alu)"/>
+      <rect x="852" y="118" width="188" height="64" rx="10" class="reg" style="stroke:var(--purple)"/>
+      <text x="946" y="145" text-anchor="middle" fill="var(--purple)" font-size="19" font-weight="800">result</text>
+      <text x="946" y="172" text-anchor="middle" class="bin" fill="var(--purple)" font-size="21">1000 = 8</text>
+      <text x="756" y="132" fill="var(--muted)" font-size="15">S3 S2 = 00</text>
+    </g>
+    <defs><marker id="u2alu" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
   </svg></div>
-  <p class="frag" style="font-size:25px">One stage per bit: all three sub-units compute in parallel; the <b>select lines</b> choose which result leaves. Stack n stages → an n-bit ALU.</p>
+
+  <!-- reveal 6: the select-line fix, spelled out -->
+  <div class="frag" style="display:flex; gap:28px; align-items:center; margin-top:2px">
+    <table class="ctrltab" style="font-size:21px">
+      <tr><th>S3 S2</th><th>output the MUX passes</th></tr>
+      <tr class="add"><td>00</td><td>Arithmetic (A+B, A−B, …)</td></tr>
+      <tr><td>01</td><td>Logic (A∧B, A∨B, …)</td></tr>
+      <tr><td>10</td><td>shift-right</td></tr>
+      <tr class="sub"><td>11</td><td>shift-left</td></tr>
+    </table>
+    <div style="font-size:21px; color:var(--text); max-width:560px">
+      The final MUX picks one of <b>four</b> → it needs only <b>2 select lines, S3 S2</b>. The other two, <b>S1 S0</b> (with <b>Cin</b>), choose the op <em>inside</em> the arithmetic and logic boxes — so the whole ALU select is <b>S3 S2 S1 S0 + Cin</b>.
+      <span class="muted">One such stage per bit; stack n → an n-bit ALU. ×, ÷ aren't a box — they're multi-step add/sub + shift sequences.</span>
+    </div>
+  </div>
 </section>
 
 <!-- commit to memory -->
