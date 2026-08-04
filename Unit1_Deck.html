@@ -175,7 +175,7 @@
 
 <!-- ════════════════ CH 1 · DIVIDER ════════════════ -->
 <section class="slide divider" data-ch="Ch 1 · The Five Functional Units">
-  <div class="kicker">Chapter 1 of 6 · CO1 · Hamacher §1.2</div>
+  <div class="kicker">Chapter 1 of 7 · CO1 · Hamacher §1.2</div>
   <div class="chnum">1</div>
   <h1>The Five Functional Units</h1>
   <p class="hook frag">A ₹500 smart-watch and a ₹50-crore supercomputer share the <em>same five boxes</em>.
@@ -666,7 +666,7 @@
 
 <!-- ════════════════ CH 2 · DIVIDER ════════════════ -->
 <section class="slide divider" data-ch="Ch 2 · Basic Operational Concepts">
-  <div class="kicker">Chapter 2 of 6</div>
+  <div class="kicker">Chapter 2 of 7</div>
   <div class="chnum">2</div>
   <h1>Basic Operational Concepts</h1>
   <p class="hook frag">The five boxes are wired together. But nothing has <em>run</em> yet —
@@ -1043,7 +1043,7 @@
 
 <!-- ════════════════ CH 3 · DIVIDER ════════════════ -->
 <section class="slide divider" data-ch="Ch 3 · Bus Structures">
-  <div class="kicker">Chapter 3 of 6 · CO1 · Hamacher §1.2 / Mano §5</div>
+  <div class="kicker">Chapter 3 of 7 · CO1 · Hamacher §1.2 / Mano §5</div>
   <div class="chnum">3</div>
   <h1>Bus Structures</h1>
   <p class="hook frag">Five units must swap data constantly. Do we run a private wire between every pair —
@@ -1223,7 +1223,7 @@
 
 <!-- ════════════════ CH 4 · DIVIDER ════════════════ -->
 <section class="slide divider" data-ch="Ch 4 · Memory Locations &amp; Addresses">
-  <div class="kicker">Chapter 4 of 6 · CO1 · Hamacher §2.2</div>
+  <div class="kicker">Chapter 4 of 7 · CO1 · Hamacher §2.2</div>
   <div class="chnum">4</div>
   <h1>Memory Locations &amp; Addresses</h1>
   <p class="hook frag">Memory is millions of numbered lockers. Before we can store anything, we must agree
@@ -1383,7 +1383,7 @@
 
 <!-- ════════════════ CH 5 · DIVIDER ════════════════ -->
 <section class="slide divider" data-ch="Ch 5 · Memory Operations &amp; Instructions">
-  <div class="kicker">Chapter 5 of 6 · CO1 · Hamacher §2.2–2.4 / Mano §5</div>
+  <div class="kicker">Chapter 5 of 7 · CO1 · Hamacher §2.2–2.4 / Mano §5</div>
   <div class="chnum">5</div>
   <h1>Memory Operations &amp; Instructions</h1>
   <p class="hook frag">There are really only two things you can do to memory — <em>read</em> it and <em>write</em> it.
@@ -1468,7 +1468,7 @@
 </section>
 
 <!-- instruction address count -->
-<!-- anatomy of an instruction: opcode + operand, and the ways to classify -->
+<!-- anatomy of an instruction: opcode + operand (definition only) -->
 <section class="slide" data-ch="Ch 5 · Opcode &amp; operand">
   <div class="badge b-core"><span class="dot"></span>Core</div>
   <h2 style="margin-bottom:4px">Every instruction = <span class="em-a">opcode</span> + <span class="em-t">operand(s)</span></h2>
@@ -1501,106 +1501,117 @@
     <text x="920" y="106" fill="var(--muted)" font-size="16">a memory address or a constant</text>
     <text x="920" y="128" fill="var(--yellow)" font-size="16">— or be implied, and not written.</text>
   </svg>
-  <p class="frag" style="margin-top:6px; font-size:23px">And we can <b>classify instructions</b> in three ways:</p>
-  <div class="row" style="margin-top:6px">
-    <div class="card tint-green frag"><h3>① By function</h3>
-      <p style="line-height:1.55">data transfer — Load, Store, Move<br>
-      arithmetic &amp; logic — Add, Sub, AND<br>
-      control transfer — Branch, Jump, Call<br>
-      input / output — In, Out<br>
-      machine control — Halt</p></div>
-    <div class="card tint-teal frag"><h3>② By format</h3>
-      <p style="line-height:1.55">memory-reference<br>
-      register-reference<br>
-      input–output</p>
-      <p style="margin-top:8px; font-size:19px">Based on <b>where the operand lives</b>.</p></div>
-    <div class="card tint-yellow frag"><h3>③ By number of operands</h3>
-      <p style="line-height:1.55">3-address<br>
-      2-address<br>
-      1-address<br>
-      0-address</p>
-      <p style="margin-top:8px; font-size:19px">This also reveals how the <b>CPU is organised</b>.</p></div>
-  </div>
+  <p class="frag" style="margin-top:10px; font-size:24px">Keep the opcode fixed, and we can <b>classify any instruction three ways</b> —
+     <span class="em-g">by what it does</span>, <span class="em-y">by how many operands</span>, and <span class="em-t">by where the operand lives</span>. One lens per slide next.</p>
 </section>
 
-<!-- the same job written four ways -->
-<section class="slide" data-ch="Ch 5 · How many operands?">
-  <div class="badge b-sup"><span class="dot"></span>Supporting</div>
-  <h2 style="margin-bottom:8px">The same job four ways: <span class="em-a">C = A + B</span></h2>
-  <table style="width:100%; font-size:20px">
-    <tr><th>Type</th><th>Machine it suits</th><th>Program for C = A + B</th><th>What is <em>implied</em></th></tr>
-    <tr class="frag"><td><b>3-address</b></td><td>general-register<br><span class="muted">(or memory-to-memory)</span></td>
-      <td style="font-family:Consolas,monospace; text-align:left; padding-left:28px">Add C, A, B</td><td>nothing — all three named</td></tr>
-    <tr class="frag"><td><b>2-address</b></td><td>general-register<br><span class="muted">(classic CISC)</span></td>
-      <td style="font-family:Consolas,monospace; text-align:left; padding-left:28px">Move C, A<br>Add&nbsp; C, B</td><td>destination doubles as a source</td></tr>
-    <tr class="frag"><td><b>1-address</b></td><td><b>accumulator</b> machine<br><span class="muted">one working register, AC</span></td>
-      <td style="font-family:Consolas,monospace; text-align:left; padding-left:28px">Load&nbsp; A<br>Add&nbsp;&nbsp; B<br>Store C</td><td>the <b>AC</b> — <span class="em-t">AC ← [AC] + [B]</span></td></tr>
-    <tr class="frag"><td><b>0-address</b></td><td><b>stack</b> machine<br><span class="muted">no arithmetic registers</span></td>
-      <td style="font-family:Consolas,monospace; text-align:left; padding-left:28px">Push A<br>Push B<br>Add<br>Pop&nbsp; C</td><td>the <b>top two stack entries</b><br><span class="muted">Add pops 2, pushes the sum</span></td></tr>
-  </table>
-  <p class="frag" style="margin-top:14px; font-size:21px">Fewer addresses → shorter instructions, but you need <b>more</b> of them — watch the program grow down the table.
-     <span class="muted">Careful: the address <em>count</em> is the instruction format; accumulator / general-register / stack is the CPU organisation. They go together, but they are two different ideas.</span></p>
-</section>
-
-<!-- instruction formats (Mano parity) -->
-<section class="slide" data-ch="Ch 5 · Instruction formats">
+<!-- lens 1 : by functionality -->
+<section class="slide" data-ch="Ch 5 · Classify — by function">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:8px">Three basic instruction formats — sorting the instructions we already know</h2>
-  <div class="row">
-    <div class="card tint-green frag"><h3>Memory-reference</h3>
-      <p>Opcode + a <b>memory address</b>. Acts on a memory operand.</p>
-      <p style="margin-top:8px; font-size:18px; color:var(--muted)">ones you've already used:</p>
-      <p style="font-family:Consolas,monospace; color:var(--green); font-size:21px">Load R2, A · Store R4, C</p>
-      <p style="margin-top:6px; font-size:18px; color:var(--muted)">textbook (Morris Mano):</p>
-      <p style="font-family:Consolas,monospace; color:var(--green); font-size:21px">LDA 200 · STA 200 · ADD 200</p></div>
-    <div class="card tint-teal frag"><h3>Register-reference</h3>
-      <p>Works <b>inside the processor</b> — no memory address at all.</p>
-      <p style="margin-top:8px; font-size:18px; color:var(--muted)">ones you've already used:</p>
-      <p style="font-family:Consolas,monospace; color:var(--teal); font-size:21px">Add R4, R2, R3 · Increment R1 · Halt</p>
-      <p style="margin-top:6px; font-size:18px; color:var(--muted)">textbook (Morris Mano):</p>
-      <p style="font-family:Consolas,monospace; color:var(--teal); font-size:21px">CLA · CMA · INC · HLT</p></div>
-    <div class="card tint-yellow frag"><h3>Input–Output</h3>
-      <p>Controls an <b>I/O device</b> — no memory address.</p>
-      <p style="margin-top:8px; font-size:18px; color:var(--muted)">the "display the answer" step of our very first role-play lives here.</p>
-      <p style="margin-top:6px; font-size:18px; color:var(--muted)">textbook (Morris Mano):</p>
-      <p style="font-family:Consolas,monospace; color:var(--yellow); font-size:21px">INP · OUT · SKI · ION</p>
-      <p style="margin-top:4px; font-size:17px; color:var(--muted)">input · output · skip-if-flag · interrupt on</p></div>
-  </div>
+  <div class="kicker" style="color:var(--green)">LENS ① · WHAT IT DOES</div>
+  <h2 style="margin-bottom:6px">By functionality — grouping instructions by the <span class="em-g">job</span> they perform</h2>
+  <table style="width:100%; font-size:24px">
+    <tr><th style="text-align:left; padding-left:24px">Type</th><th style="text-align:left; padding-left:24px">What it does</th><th>Examples</th></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Data transfer</b></td>
+      <td style="text-align:left; padding-left:24px">move data — copy it, don't change it</td>
+      <td style="font-family:Consolas,monospace; color:var(--green)">Load · Store · Move</td></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Arithmetic &amp; logic</b></td>
+      <td style="text-align:left; padding-left:24px">compute a result in the ALU</td>
+      <td style="font-family:Consolas,monospace; color:var(--green)">Add · Sub · AND · OR · Shift</td></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Control transfer</b></td>
+      <td style="text-align:left; padding-left:24px">change <em>which</em> instruction runs next</td>
+      <td style="font-family:Consolas,monospace; color:var(--green)">Branch · Jump · Call · Return</td></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Input / Output</b></td>
+      <td style="text-align:left; padding-left:24px">talk to a device outside the CPU</td>
+      <td style="font-family:Consolas,monospace; color:var(--green)">In · Out</td></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Machine control</b></td>
+      <td style="text-align:left; padding-left:24px">manage the processor itself</td>
+      <td style="font-family:Consolas,monospace; color:var(--green)">Halt · No-op</td></tr>
+  </table>
+  <p class="frag" style="margin-top:12px; font-size:22px">Same five families you'd find on any CPU — only the exact mnemonics change from chip to chip.</p>
+</section>
+
+<!-- lens 2 : by number of operands -->
+<section class="slide" data-ch="Ch 5 · Classify — by operand count">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <div class="kicker" style="color:var(--yellow)">LENS ② · HOW MANY OPERANDS</div>
+  <h2 style="margin-bottom:6px">By number of operands — the same job <span class="em-y">C = A + B</span>, written four ways</h2>
+  <table style="width:100%; font-size:23px">
+    <tr><th>Type</th><th>Example</th><th style="text-align:left; padding-left:24px">What is <em>implied</em></th><th>CPU it suits</th></tr>
+    <tr class="frag"><td><b>3-address</b></td>
+      <td style="font-family:Consolas,monospace">Add C, A, B</td>
+      <td style="text-align:left; padding-left:24px">nothing — all three named</td>
+      <td>general-register</td></tr>
+    <tr class="frag"><td><b>2-address</b></td>
+      <td style="font-family:Consolas,monospace">Add C, A</td>
+      <td style="text-align:left; padding-left:24px">destination doubles as a source</td>
+      <td>classic CISC</td></tr>
+    <tr class="frag"><td><b>1-address</b></td>
+      <td style="font-family:Consolas,monospace">Add B</td>
+      <td style="text-align:left; padding-left:24px">the accumulator <span class="em-t">AC ← [AC] + [B]</span></td>
+      <td>accumulator machine</td></tr>
+    <tr class="frag"><td><b>0-address</b></td>
+      <td style="font-family:Consolas,monospace">Add</td>
+      <td style="text-align:left; padding-left:24px">the top two stack entries</td>
+      <td>stack machine</td></tr>
+  </table>
+  <p class="frag" style="margin-top:12px; font-size:22px">Fewer addresses → <b>shorter</b> instructions, but you need <b>more</b> of them.
+     <span class="muted">The address count is the instruction <em>format</em>; general-register / accumulator / stack is the CPU <em>organisation</em> — two ideas that travel together.</span></p>
+</section>
+
+<!-- lens 3 : by where the operand lives (formats, Mano parity) -->
+<section class="slide" data-ch="Ch 5 · Classify — by where it lives">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <div class="kicker" style="color:var(--teal)">LENS ③ · WHERE THE OPERAND LIVES</div>
+  <h2 style="margin-bottom:6px">By format — three basic instruction formats</h2>
+  <table style="width:100%; font-size:22px">
+    <tr><th>Format</th><th style="text-align:left; padding-left:24px">Where the operand is</th>
+      <th>Examples (generic)</th><th>Textbook (Morris Mano)</th></tr>
+    <tr class="frag"><td><b class="em-g">Memory-reference</b></td>
+      <td style="text-align:left; padding-left:24px">a <b>memory address</b> — acts on a memory operand</td>
+      <td style="font-family:Consolas,monospace; color:var(--green)">Load R2, A · Store R4, C</td>
+      <td style="font-family:Consolas,monospace; color:var(--green)">LDA 200 · STA 200 · ADD 200</td></tr>
+    <tr class="frag"><td><b class="em-t">Register-reference</b></td>
+      <td style="text-align:left; padding-left:24px"><b>inside the CPU</b> — no memory address at all</td>
+      <td style="font-family:Consolas,monospace; color:var(--teal)">Add R4, R2, R3 · Increment R1 · Halt</td>
+      <td style="font-family:Consolas,monospace; color:var(--teal)">CLA · CMA · INC · HLT</td></tr>
+    <tr class="frag"><td><b class="em-y">Input–Output</b></td>
+      <td style="text-align:left; padding-left:24px">an <b>I/O device</b> — no memory address</td>
+      <td style="font-family:Consolas,monospace; color:var(--yellow)">In · Out</td>
+      <td style="font-family:Consolas,monospace; color:var(--yellow)">INP · OUT · SKI · ION</td></tr>
+  </table>
   <p class="frag" style="margin-top:12px; font-size:22px"><b>Why two different sets of names?</b> Assembly language is <span class="em-y">machine-specific</span> — the same idea is
      <code>Load</code> in our textbook, <code>LDA</code> in the Morris Mano textbook, <code>MOV</code> on x86, <code>LDR</code> on ARM. We teach with a
-     <b>generic mnemonic</b> so the concept is clear; for a real chip you open its <b>manual</b> (the instruction-set reference) and translate.</p>
+     <b>generic mnemonic</b> so the concept is clear; for a real chip you open its <b>manual</b> and translate.</p>
 </section>
 
-<!-- RISC vs CISC + question -->
-<section class="slide" data-ch="Ch 5 · RISC vs CISC">
+<!-- RISC vs CISC : definitions + comparison -->
+<section class="slide" data-ch="Ch 5 · RISC vs CISC — the two philosophies">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <div class="kicker">You now know what instructions are made of — so…</div>
-  <h2 style="margin-bottom:6px">Now <em>you</em> design the machine: would you allow <span class="em-o">Add A, B</span>?</h2>
+  <h2 style="margin-bottom:8px">Two design philosophies: <span class="em-p">RISC</span> vs <span class="em-o">CISC</span></h2>
   <div class="row">
-    <div class="card tint-orange frag"><h3>Choice 1 — allow it (CISC)</h3>
-      <p style="line-height:1.5"><span style="font-family:Consolas,monospace">Add A, B</span> — arithmetic straight on memory.</p>
-      <p style="margin-top:8px; line-height:1.5">✔ Shorter programs — one instruction does it all.<br>
-      ✘ That one instruction must fetch 2 operands, add, and store — it takes a <b>variable, unpredictable</b> number of cycles.<br>
-      ✘ Hard to pipeline or speed up.</p></div>
-    <div class="card tint-purple frag"><h3>Choice 2 — forbid it (RISC)</h3>
-      <p style="line-height:1.5">Force the programmer to load first:<br>
-      <span style="font-family:Consolas,monospace">Load R2, A<br>Load R3, B<br>Add R4, R2, R3</span></p>
-      <p style="margin-top:8px; line-height:1.5">✔ Every instruction is <b>one word</b> and takes a <b>predictable</b> time.<br>
-      ✔ Only Load/Store touch memory → simple, fast, easy to <b>pipeline</b>.</p></div>
+    <div class="card tint-purple"><h3>RISC — Reduced Instruction Set</h3>
+      <p style="line-height:1.5">A <b>small, simple</b> set of instructions, each optimised to run in about <b>one clock cycle</b>.</p></div>
+    <div class="card tint-orange"><h3>CISC — Complex Instruction Set</h3>
+      <p style="line-height:1.5">A <b>large, rich</b> set; single instructions do complex, <b>multi-cycle</b> work and may touch memory directly.</p></div>
   </div>
-  <p class="frag" style="margin-top:12px; font-size:22px"><b>The pay-off:</b> uniform, predictable instructions can be overlapped in a pipeline and clocked faster.
-     That is why <span class="em-p">modern processors are RISC-based</span> — the ARM chip in your phone runs billions of these simple
-     instructions a second on a small battery. <span class="muted">(Pipelining is Unit 3.)</span></p>
-  <p class="frag" style="margin-top:10px; font-size:23px">So on a <b>RISC (load/store)</b> machine, is each of these legal?</p>
-  <table class="frag" style="width:100%; font-size:23px; margin-top:6px">
-    <tr><th style="text-align:left; padding-left:24px">Instruction</th><th>RISC?</th><th style="text-align:left; padding-left:24px">Why</th></tr>
-    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Load&nbsp; R2, A</td><td style="color:var(--green); font-weight:800">✓ allowed</td><td style="text-align:left; padding-left:24px">Load may touch memory</td></tr>
-    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Store R4, C</td><td style="color:var(--green); font-weight:800">✓ allowed</td><td style="text-align:left; padding-left:24px">Store may touch memory</td></tr>
-    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Add R4, R2, R3</td><td style="color:var(--green); font-weight:800">✓ allowed</td><td style="text-align:left; padding-left:24px">register-to-register arithmetic</td></tr>
-    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Add R2, A</td><td style="color:var(--red); font-weight:800">✗ not allowed</td><td style="text-align:left; padding-left:24px">arithmetic on a memory operand</td></tr>
-    <tr><td style="text-align:left; padding-left:24px; font-family:Consolas,monospace">Increment C</td><td style="color:var(--red); font-weight:800">✗ not allowed</td><td style="text-align:left; padding-left:24px">operates directly on memory</td></tr>
+  <table style="width:100%; font-size:22px; margin-top:14px">
+    <tr><th></th><th class="em-p">RISC</th><th class="em-o">CISC</th></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Instruction set</b></td>
+      <td>few &amp; simple (often &lt; 100)</td><td>many (100s–1000s), memory-to-memory</td></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Execution / pipelining</b></td>
+      <td>one cycle → easy to pipeline</td><td>variable length → multi-cycle</td></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Burden falls on…</b></td>
+      <td>the <b>compiler</b> (software)</td><td>the <b>hardware</b></td></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Power &amp; heat</b></td>
+      <td>simpler circuitry → less power</td><td>complex circuitry → more power</td></tr>
+    <tr class="frag"><td style="text-align:left; padding-left:24px"><b>Used in · examples</b></td>
+      <td>mobile, IoT, automotive — <b>ARM, RISC-V</b></td><td>desktops, servers — <b>x86 (Intel/AMD)</b></td></tr>
   </table>
+  <p class="frag" style="margin-top:10px; font-size:22px">The trade-off in one line: CISC does more per instruction; RISC does less per instruction but runs them faster and more predictably.
+     <span class="muted">Next: you decide which one you'd build.</span></p>
 </section>
+
 
 <section class="slide qslide" data-ch="Ch 5 · The big question">
   <div class="qmark">?</div>
@@ -1634,17 +1645,217 @@
     and you've chosen RISC or CISC.</div>
 </section>
 
-<!-- ════════════════ CH 6 · DIVIDER ════════════════ -->
-<section class="slide divider" data-ch="Ch 6 · Instruction Sequencing">
-  <div class="kicker">Chapter 6 of 6 · CO1 · Hamacher §2.3</div>
+<!-- ════════════════ CH 6 · DIVIDER · Addressing Modes ════════════════ -->
+<section class="slide divider" data-ch="Ch 6 · Addressing Modes">
+  <div class="kicker">Chapter 6 of 7 · CO1 · Hamacher §2.4–2.5</div>
   <div class="chnum">6</div>
+  <h1>Addressing Modes</h1>
+  <p class="hook frag">Every instruction has to say <em>where</em> its operand is — a constant, a register,
+     an address, or a pointer. How many ways can one instruction reach its data?</p>
+</section>
+
+<!-- 6.1 · motivate — an operand's four homes (locker analogy before jargon) -->
+<section class="slide" data-ch="Ch 6 · An operand's four homes">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px">Same operation — but <span class="em-a">where</span> is the operand?</h2>
+  <p class="frag big">Ask a friend to fetch something. Four honest answers:</p>
+  <div class="row" style="margin-top:8px">
+    <div class="card tint-green frag"><h3>“Here — take it”</h3><p>The value sits <b>inside the instruction</b>.<br><span class="em-g">Immediate</span></p></div>
+    <div class="card tint-teal frag"><h3>“It’s in your pocket”</h3><p>The value is <b>in a register</b>.<br><span class="em-t">Register</span></p></div>
+  </div>
+  <div class="row" style="margin-top:14px">
+    <div class="card tint-yellow frag"><h3>“In locker 1000”</h3><p>The instruction gives the <b>memory address</b>.<br><span class="em-y">Absolute / Direct</span></p></div>
+    <div class="card tint-purple frag"><h3>“Read the note in locker 1000”</h3><p>That address points to <b>another address</b>.<br><span class="em-p">Indirect</span></p></div>
+  </div>
+  <p class="frag" style="margin-top:16px">How an instruction names <em>where</em> its operand lives is its <span class="em-a">addressing mode</span>.</p>
+</section>
+
+<!-- 6.1b · corrected RISC/CISC beat — who may reach into memory -->
+<section class="slide qslide" data-ch="Ch 6 · Who may reach into memory?">
+  <div class="qmark">?</div>
+  <div class="qlabel">Think back to Chapter 5</div>
+  <div class="q">Can an <span class="em-p">Add</span> take its operand <span class="em-y">straight from memory</span>?</div>
+  <div class="qans frag"><b>CISC:</b> yes — <span class="em-o">Add&nbsp;B,&nbsp;A</span> operates on memory directly.
+     &nbsp; <b>RISC:</b> no — arithmetic uses registers/immediates; only <b>Load&nbsp;/&nbsp;Store</b> touch memory.
+     So in RISC these memory-addressing modes ride on <b>Load&nbsp;/&nbsp;Store</b>; in CISC, on almost any instruction.</div>
+</section>
+
+<!-- 6.2 · Immediate -->
+<section class="slide" data-ch="Ch 6 · Immediate">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px"><span class="em-g">Immediate</span> — the value is inside the instruction</h2>
+  <div class="animwrap"><svg viewBox="0 0 1120 270" preserveAspectRatio="xMidYMid meet">
+    <text x="80" y="54" fill="var(--muted)" font-size="22">Instruction</text>
+    <rect x="80" y="72" width="360" height="72" class="reg"/>
+    <line x1="230" y1="72" x2="230" y2="144" stroke="var(--border)" stroke-width="2"/>
+    <line x1="330" y1="72" x2="330" y2="144" stroke="var(--border)" stroke-width="2"/>
+    <text x="155" y="116" text-anchor="middle" class="reg-lbl">Move</text>
+    <text x="280" y="116" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">R2</text>
+    <text x="385" y="116" text-anchor="middle" class="reg-val">#5</text>
+    <text x="155" y="168" text-anchor="middle" fill="var(--muted)" font-size="17">opcode</text>
+    <text x="280" y="168" text-anchor="middle" fill="var(--muted)" font-size="17">destination</text>
+    <text x="385" y="168" text-anchor="middle" fill="var(--muted)" font-size="17">immediate</text>
+    <path class="frag" d="M 385 144 C 440 225, 560 225, 620 146" stroke="var(--green)" stroke-width="4" fill="none" marker-end="url(#amImm)"/>
+    <g class="frag"><rect x="620" y="74" width="160" height="72" class="reg" style="stroke:var(--teal)"/>
+      <text x="700" y="108" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">R2</text>
+      <text x="700" y="136" text-anchor="middle" class="reg-val">5</text></g>
+    <text class="frag" x="840" y="104" fill="var(--yellow)" font-size="26" font-weight="700">R2 ← 5</text>
+    <text class="frag" x="840" y="136" fill="var(--muted)" font-size="20">no memory access</text>
+    <defs><marker id="amImm" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:26px">Written <b>Move R2, #5</b> → <b>R2 ← 5</b> — destination first, exactly like <b>Load</b> and <b>Add</b>. The <b>#</b> marks an immediate operand that travels <em>with</em> the instruction — perfect for setting a register to a constant.</p>
+</section>
+
+<!-- 6.3 · Register -->
+<section class="slide" data-ch="Ch 6 · Register">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px"><span class="em-t">Register</span> — the operand is in a register</h2>
+  <p class="frag big"><span class="em-p">Add R4, R2, R3</span> &nbsp;→&nbsp; every operand names a register.</p>
+  <p class="frag" style="margin-top:12px">The effective address <em>is</em> the register — <b>no memory access</b>, so it is the fastest way to
+     supply an operand. This is the everyday mode of the RISC machine from Chapter 5.</p>
+  <div class="card tint-teal frag" style="margin-top:16px"><h3>Why keep operands in registers?</h3>
+    <p style="font-size:26px">A register read is a tiny fraction of a memory read. RISC holds operands in registers precisely
+       so an instruction can finish in about one clock cycle.</p></div>
+</section>
+
+<!-- 6.4 · Absolute / Direct -->
+<section class="slide" data-ch="Ch 6 · Absolute / Direct">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px"><span class="em-y">Absolute (Direct)</span> — the instruction holds the address</h2>
+  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
+    <text x="90" y="52" fill="var(--muted)" font-size="22">Instruction</text>
+    <rect x="90" y="70" width="250" height="66" class="reg"/>
+    <line x1="205" y1="70" x2="205" y2="136" stroke="var(--border)" stroke-width="2"/>
+    <text x="147" y="110" text-anchor="middle" class="reg-lbl">Load R2,</text>
+    <text x="272" y="110" text-anchor="middle" class="reg-val">A</text>
+    <text x="90" y="176" fill="var(--muted)" font-size="20">A = address 1000</text>
+    <text x="470" y="52" fill="var(--teal)" font-size="20" font-weight="700">MEMORY</text>
+    <g class="frag"><rect x="470" y="70" width="220" height="66" class="reg" style="stroke:var(--yellow)"/>
+      <text x="500" y="110" fill="var(--muted)" font-size="20">1000</text>
+      <text x="660" y="110" text-anchor="end" class="reg-val">5</text>
+      <path d="M 345 103 L 462 103" stroke="var(--yellow)" stroke-width="4" marker-end="url(#amAbs)"/></g>
+    <g class="frag"><rect x="820" y="70" width="150" height="66" class="reg" style="stroke:var(--teal)"/>
+      <text x="895" y="104" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">R2</text>
+      <text x="895" y="128" text-anchor="middle" class="reg-val">5</text>
+      <path d="M 700 103 L 812 103" stroke="var(--teal)" stroke-width="4" marker-end="url(#amAbs2)"/></g>
+    <defs>
+      <marker id="amAbs" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker>
+      <marker id="amAbs2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--teal)"/></marker>
+    </defs>
+  </svg></div>
+  <p class="frag" style="font-size:26px"><span class="em-p">Load R2, A</span> → <b>R2 ← [A]</b>. One memory access.
+     <span class="muted">This is the exact mode our <b>C = A + B</b> program used to reach A, B and C.</span></p>
+</section>
+
+<!-- 6.5 · Indirect -->
+<section class="slide" data-ch="Ch 6 · Indirect">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px"><span class="em-p">Indirect</span> — the address of the address (a pointer)</h2>
+  <p style="font-size:34px; margin:2px 0 6px"><span class="em-p">Load R2, (R5)</span> &nbsp;→&nbsp; <b>R2 ← [[R5]]</b>
+     <span class="muted" style="font-size:24px">— now follow the pointer, step by step:</span></p>
+  <div class="animwrap"><svg viewBox="0 0 1150 300" preserveAspectRatio="xMidYMid meet">
+    <g class="frag"><rect x="70" y="90" width="150" height="64" class="reg" style="stroke:var(--purple)"/>
+    <text x="145" y="122" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">R5</text>
+    <text x="145" y="146" text-anchor="middle" class="reg-val">1000</text></g>
+    <g class="frag"><rect x="330" y="90" width="230" height="64" class="reg" style="stroke:var(--yellow)"/>
+      <text x="358" y="126" fill="var(--muted)" font-size="19">1000</text>
+      <text x="535" y="126" text-anchor="end" class="reg-val">2000</text>
+      <path d="M 225 122 L 322 122" stroke="var(--purple)" stroke-width="4" marker-end="url(#amInd1)"/>
+      <text x="250" y="108" fill="var(--muted)" font-size="17">go to [R5]</text></g>
+    <g class="frag"><rect x="680" y="90" width="230" height="64" class="reg" style="stroke:var(--teal)"/>
+      <text x="708" y="126" fill="var(--muted)" font-size="19">2000</text>
+      <text x="885" y="126" text-anchor="end" class="reg-val">5</text>
+      <path d="M 565 122 L 672 122" stroke="var(--yellow)" stroke-width="4" marker-end="url(#amInd2)"/>
+      <text x="588" y="108" fill="var(--muted)" font-size="17">real operand</text></g>
+    <g class="frag"><rect x="980" y="90" width="130" height="64" class="reg" style="stroke:var(--teal)"/>
+      <text x="1045" y="124" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">R2</text>
+      <text x="1045" y="147" text-anchor="middle" class="reg-val">5</text>
+      <path d="M 915 122 L 972 122" stroke="var(--teal)" stroke-width="4" marker-end="url(#amInd3)"/></g>
+    <defs>
+      <marker id="amInd1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker>
+      <marker id="amInd2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker>
+      <marker id="amInd3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--teal)"/></marker>
+    </defs>
+  </svg></div>
+  <p class="frag" style="font-size:26px">Two memory accesses in all. This is the key to pointers, arrays-of-pointers and linked structures.</p>
+</section>
+
+<!-- 6.6 · Index -->
+<section class="slide" data-ch="Ch 6 · Index">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px"><span class="em-a">Index</span> — a base register plus an offset</h2>
+  <p class="frag big"><span class="em-p">Load R2, 20(R5)</span> &nbsp;→&nbsp; <b>EA = 20 + [R5]</b></p>
+  <div class="card tint-yellow frag" style="margin-top:12px"><h3>Made for arrays</h3>
+    <p style="font-size:26px">Fix the base <b>R5</b> at the array's start; change the offset <b>20</b> to step to any element.
+       If R5 = 1000, then <b>20(R5)</b> reaches address <b>1020</b>.</p></div>
+  <p class="frag" style="margin-top:14px; font-size:25px">Richer cousins: <b>base-with-index</b> <span class="em-t">(Ri, Rj)</span> → EA = [Ri] + [Rj], and
+     <b>base + index + offset</b> <span class="em-t">X(Ri, Rj)</span> — for records and 2-D data.</p>
+</section>
+
+<!-- 6.7 · Relative — deliberate bridge into Instruction Sequencing -->
+<section class="slide" data-ch="Ch 6 · Relative">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px"><span class="em-o">Relative</span> — index mode, but the register is the <span class="em-p">PC</span></h2>
+  <p class="frag big"><b>EA = X + [PC]</b></p>
+  <p class="frag" style="margin-top:12px"><span class="em-p">Branch&gt;0 LOOP</span> doesn't store LOOP's full address — it stores the
+     <b>offset X</b> from the current PC. The target is computed as <b>PC + X</b>.</p>
+  <div class="card tint-purple frag" style="margin-top:16px"><h3>Hold onto this</h3>
+    <p style="font-size:27px">Relative addressing is <em>exactly</em> how a program jumps to another instruction —
+       which is the whole question of the next chapter.</p></div>
+</section>
+
+<!-- 6.8 · Autoincrement / Autodecrement -->
+<section class="slide" data-ch="Ch 6 · Autoincrement / decrement">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:8px"><span class="em-t">Autoincrement / Autodecrement</span> — walk through data</h2>
+  <div class="row">
+    <div class="card tint-green frag"><h3>Autoincrement &nbsp;(R5)+</h3>
+      <p style="font-size:26px">Use <b>[R5]</b> as the address, <em>then</em> <b>R5 ← R5 + 1</b>.<br>
+         Step forward through an array, element by element.</p></div>
+    <div class="card tint-purple frag"><h3>Autodecrement &nbsp;−(R5)</h3>
+      <p style="font-size:26px"><b>R5 ← R5 − 1</b> <em>first</em>, then use <b>[R5]</b>.<br>
+         Natural for a <b>stack</b> — push and pop.</p></div>
+  </div>
+  <p class="frag" style="margin-top:16px; font-size:25px">The register updates itself, so a loop needs no extra "advance the pointer" instruction each pass.</p>
+</section>
+
+<!-- 6.9 · Commit to memory -->
+<section class="slide memslide" data-ch="Ch 6 · Commit to memory">
+  <div class="mhead"><div class="micon">🧠</div>
+    <div><div class="mtitle">Get this into your memory</div>
+    <div class="msub">Addressing modes with their effective address — a guaranteed exam question.</div></div></div>
+  <div class="memcard">
+    <table style="width:100%">
+      <tr><th style="text-align:left">Mode</th><th>Notation</th><th>Effective address</th></tr>
+      <tr class="frag"><td style="text-align:left"><span class="term">Immediate</span></td><td>#Value</td><td>operand is in the instruction</td></tr>
+      <tr class="frag"><td style="text-align:left"><span class="term">Register</span></td><td>Ri</td><td>operand is in Ri</td></tr>
+      <tr class="frag"><td style="text-align:left"><span class="term">Absolute / Direct</span></td><td>LOC</td><td>EA = LOC</td></tr>
+      <tr class="frag"><td style="text-align:left"><span class="term">Indirect</span></td><td>(Ri)</td><td>EA = [Ri]</td></tr>
+      <tr class="frag"><td style="text-align:left"><span class="term">Index</span></td><td>X(Ri)</td><td>EA = X + [Ri]</td></tr>
+      <tr class="frag"><td style="text-align:left"><span class="term">Relative</span></td><td>X(PC)</td><td>EA = X + [PC]</td></tr>
+      <tr class="frag"><td style="text-align:left"><span class="term">Autoincrement</span></td><td>(Ri)+</td><td>EA = [Ri], then Ri ← Ri + 1</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- 6.10 · Key insight -->
+<section class="slide keyslide" data-ch="Ch 6 · Key insight">
+  <div class="kicon">🔑</div>
+  <div class="keybox frag"><span class="k">A mode is not <em>what</em> you compute — it's <em>how</em> the instruction reaches what to compute on.</span><br>
+    One opcode, many reaches: the value itself, a register, an address, a pointer, or an address it works out on the fly.</div>
+</section>
+
+
+<!-- ════════════════ CH 7 · DIVIDER ════════════════ -->
+<section class="slide divider" data-ch="Ch 7 · Instruction Sequencing">
+  <div class="kicker">Chapter 7 of 7 · CO1 · Hamacher §2.3</div>
+  <div class="chnum">7</div>
   <h1>Instruction Sequencing</h1>
-  <p class="hook frag">One instruction runs — what decides which one runs <em>next</em>?
-     Master that, and you can make a computer loop, choose, and decide.</p>
+  <p class="hook frag">You just built <em>PC-relative</em> addressing — a target computed as PC + offset. That is exactly how a program jumps. So what decides which instruction runs <em>next</em>? Master that, and a computer can loop, choose, and decide.</p>
 </section>
 
 <!-- straight-line sequencing animation -->
-<section class="slide" data-ch="Ch 6 · Straight-line sequencing">
+<section class="slide" data-ch="Ch 7 · Straight-line sequencing">
   <div class="badge b-core"><span class="dot"></span>Core</div>
   <h2 style="margin-bottom:6px">Straight-line: just keep adding to the PC</h2>
   <div class="animwrap"><svg viewBox="0 0 1160 420" preserveAspectRatio="xMidYMid meet">
@@ -1668,10 +1879,42 @@
      <span class="em-a">straight-line</span> (the PC just steps on) and <span class="em-y">branching</span> (a new address is loaded into the PC) — next.</p>
 </section>
 
-<!-- branching — a simple comparison so the branch is obvious -->
-<section class="slide" data-ch="Ch 6 · Branching">
+<!-- unconditional branch : same PC move as straight-line, but a written target, always taken -->
+<section class="slide" data-ch="Ch 7 · Unconditional branch">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:2px">Branching — a <span class="em-a">comparison</span>: put the larger of A and B into MAX</h2>
+  <h2 style="margin-bottom:2px">Unconditional branch — a <span class="em-y">jump</span>: load a new address into the PC, <span class="em-y">always</span></h2>
+  <div class="animwrap"><svg viewBox="0 0 1160 400" preserveAspectRatio="xMidYMid meet">
+    <defs><marker id="ub" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker></defs>
+    <text x="310" y="34" text-anchor="middle" fill="var(--teal)" font-size="19" font-weight="700">PROGRAM</text>
+    <g font-family="Consolas,monospace">
+      <rect x="120" y="52" width="400" height="48" rx="6" class="reg"/><text x="140" y="83" fill="var(--muted)" font-size="16">100</text><text x="205" y="83" class="reg-val" font-size="19">Load    R2, A</text>
+      <rect x="120" y="110" width="400" height="48" rx="6" class="reg"/><text x="140" y="141" fill="var(--muted)" font-size="16">104</text><text x="205" y="141" class="reg-val" font-size="19">Add     R2, B</text>
+      <rect x="120" y="168" width="400" height="48" rx="6" class="reg"/><text x="140" y="199" fill="var(--muted)" font-size="16">108</text><text x="205" y="199" class="reg-val" font-size="19">Store   R2, C</text>
+      <rect x="120" y="226" width="400" height="48" rx="6" class="reg" style="stroke:var(--yellow);stroke-width:3"/><text x="140" y="257" fill="var(--muted)" font-size="16">112</text><text x="205" y="257" font-size="19" font-weight="700" style="fill:var(--yellow)">Branch  100</text>
+    </g>
+    <!-- jump arrow: 112 back up to 100, always -->
+    <path d="M 526 250 C 645 250, 645 76, 526 76" stroke="var(--yellow)" stroke-width="3.5" fill="none" marker-end="url(#ub)"/>
+    <text x="662" y="150" fill="var(--yellow)" font-size="18" font-weight="700">PC ← 100</text>
+    <text x="662" y="176" fill="var(--muted)" font-size="16">always — no test, no choice</text>
+    <!-- contrast box -->
+    <g class="frag">
+      <rect x="700" y="238" width="430" height="150" rx="10" class="reg"/>
+      <text x="722" y="272" fill="var(--accent)" font-size="18" font-weight="800">Same kind of move as straight-line…</text>
+      <text x="722" y="302" fill="var(--text)" font-size="17" font-family="Consolas,monospace">straight-line:   PC ← PC + 4</text>
+      <text x="722" y="330" fill="var(--yellow)" font-size="17" font-family="Consolas,monospace">unconditional:   PC ← 100</text>
+      <text x="722" y="364" fill="var(--muted)" font-size="16">both just load an address — no condition at all</text>
+    </g>
+  </svg></div>
+  <p class="frag" style="margin-top:2px; font-size:24px">An <b>unconditional branch</b> (a <b>jump</b>) puts a <b>fixed target address</b> into the PC <b>every time</b> —
+     used to <b>loop back</b> to the top of a block, or to skip ahead.</p>
+  <p class="frag" style="margin-top:8px; font-size:24px"><span class="em-y">But on its own this loops forever.</span> To <b>decide</b> whether to jump, the machine must <b>check something first</b> —
+     and that is a <b>conditional branch</b> → next.</p>
+</section>
+
+<!-- branching — a simple comparison so the branch is obvious -->
+<section class="slide" data-ch="Ch 7 · Conditional branch">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:2px">Conditional branch — <span class="em-a">check first</span>, then decide: put the larger of A and B into MAX</h2>
   <div class="animwrap"><svg viewBox="0 0 1160 400" preserveAspectRatio="xMidYMid meet">
     <defs>
       <marker id="bt" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker>
@@ -1708,11 +1951,12 @@
       <text x="722" y="322" fill="var(--text)" font-size="17">112 loads B, so R1 = 5</text>
       <text x="722" y="352" fill="var(--green)" font-size="18" font-weight="800">MAX = 5</text></g>
   </svg></div>
-  <p class="frag" style="margin-top:2px; font-size:24px">A <b>conditional branch</b> either loads a new address into the PC — or it does not, and the PC simply steps on.
-     That single choice is all that branching is.</p>
+  <p class="frag" style="margin-top:2px; font-size:22px"><b>How does it know?</b> The <code>Compare R1, B</code> subtracts, then <b>stores the outcome in the processor's condition-code flags</b>
+     — a small status register that records <em>was the result zero? negative? …</em> The <code>Branch&gt;0</code> that follows simply <b>reads those flags</b>. That is why a conditional branch always sits <b>right after</b> an instruction that sets them.</p>
+  <p class="frag" style="margin-top:8px; font-size:22px">Then, exactly like the jump, it loads the new address into the PC (<span class="em-y">taken</span>) — <b>or</b> it does not, and the PC just steps on (<span class="em-g">not taken</span>). One <b>checked</b> choice — that is all a conditional branch is.</p>
 </section>
 
-<section class="slide qslide" data-ch="Ch 6 · The big question">
+<section class="slide qslide" data-ch="Ch 7 · The big question">
   <div class="qmark">?</div>
   <div class="qlabel">Target &amp; offset</div>
   <div class="q">Our <span class="em-p">Branch&gt;0 116</span> sits at address 108. Instead of storing the target "116",
@@ -1722,21 +1966,22 @@
 </section>
 
 <!-- MEMORY slide -->
-<section class="slide memslide" data-ch="Ch 6 · Commit to memory">
+<section class="slide memslide" data-ch="Ch 7 · Commit to memory">
   <div class="mhead"><div class="micon">🧠</div>
     <div><div class="mtitle">Get this into your memory</div>
     <div class="msub">Sequencing — the exam essentials.</div></div></div>
   <div class="memcard">
     <ul>
       <li><span class="term">Straight-line sequencing</span> — the PC is auto-incremented after each fetch, so instructions execute in increasing address order.</li>
-      <li><span class="term">Branching</span> — a branch instruction loads a new address into the PC, changing the flow.</li>
-      <li><span class="term">Conditional branch</span> — the jump happens only if a tested condition is true (e.g. Branch&gt;0).</li>
+      <li><span class="term">Branching</span> — a branch loads a new address into the PC instead of PC+4. Two kinds: <b>unconditional</b> and <b>conditional</b>.</li>
+      <li><span class="term">Unconditional branch (jump)</span> — <b>always</b> taken; PC ← target every time (e.g. loop back).</li>
+      <li><span class="term">Conditional branch</span> — taken <b>only if</b> a tested condition is true. The preceding Compare/arithmetic stores its result in the <b>condition-code flags</b>, which the branch reads (e.g. Branch&gt;0).</li>
       <li><span class="term">Branch target</span> = the destination address; <span class="term">offset</span> = target − (PC of next instruction).</li>
     </ul>
   </div>
 </section>
 
-<section class="slide keyslide" data-ch="Ch 6 · Key insight">
+<section class="slide keyslide" data-ch="Ch 7 · Key insight">
   <div class="kicon">🔑</div>
   <div class="keybox frag"><span class="k">The PC is the story-teller.</span><br>
     Increment it and the program marches; overwrite it and the program loops, chooses, decides.
@@ -1751,11 +1996,12 @@
     <div class="card tint-green frag"><h3>1 · Five Units</h3><p>Input, Memory, ALU, Output, Control.</p></div>
     <div class="card tint-purple frag"><h3>2 · Operation</h3><p>PC, IR, MAR, MDR; fetch–decode–execute.</p></div>
     <div class="card tint-teal frag"><h3>3 · Buses</h3><p>Shared wires: address, data, control.</p></div>
+    <div class="card tint-yellow frag"><h3>4 · Addresses</h3><p>Bytes, words, 2<sup>k</sup>, endianness, alignment.</p></div>
   </div>
   <div class="row" style="margin-top:20px">
-    <div class="card tint-yellow frag"><h3>4 · Addresses</h3><p>Bytes, words, 2<sup>k</sup>, endianness, alignment.</p></div>
     <div class="card tint-orange frag"><h3>5 · Instructions</h3><p>Read/write, formats, RISC vs CISC.</p></div>
-    <div class="card tint-red frag"><h3>6 · Sequencing</h3><p>Straight-line + branching via the PC.</p></div>
+    <div class="card tint-purple frag"><h3>6 · Addressing modes</h3><p>Immediate, register, direct, indirect, index, relative.</p></div>
+    <div class="card tint-red frag"><h3>7 · Sequencing</h3><p>Straight-line + branching via the PC.</p></div>
   </div>
 </section>
 
