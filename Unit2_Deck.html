@@ -73,6 +73,13 @@
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-weight:800; font-size:22px; color:var(--text)}
   .code16 small{font-weight:700; font-size:14px; color:var(--accent); margin-top:2px}
   .code16.named{border-color:var(--accent); background:#58A6FF14}
+  /* .regbit — a single flag cell of a control/status register (why-bitwise slide) */
+  .regbit{display:inline-flex; flex-direction:column; align-items:center; justify-content:center;
+    min-width:66px; min-height:58px; padding:4px 6px; border:1.5px solid var(--border); border-radius:10px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-weight:800; font-size:24px; color:var(--text)}
+  .regbit small{font-weight:700; font-size:12px; color:var(--muted); margin-top:3px}
+  .regbit.hot{border-color:var(--red); background:#F8514914}
+  .regbit.hot small{color:var(--red)}
   /* Foothold — the scaffolding line that opens a slide: why are we here,
      and what earlier idea are we standing on. Always visible (not a .frag),
      so the professor reads it before revealing any content. */
@@ -796,11 +803,42 @@
 </script>
 
 <!-- logic microops (ANIMATED: watch masked bits clear and selected bits set) -->
+<!-- 17a: WHAT bitwise ops are, and WHY (control-register motivation) — before the how -->
+<section class="slide" data-ch="Ch 2 · Bitwise operations — what & why">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Bitwise microoperations — <span class="em-a">what</span> they are, and <span class="em-a">why</span></h2>
+  <p class="foothold"><span class="lbl">A different need ·</span> Arithmetic treats the whole word as one number. Logic works the other way — on the <em>individual bits</em>. When would we ever need that? Here is the everyday reason.</p>
+
+  <!-- reveal 1: WHAT -->
+  <div class="frag" style="font-size:26px; color:var(--text); margin-top:6px; max-width:1160px">
+    <b class="em-a">What.</b> A logic (bitwise) microoperation lines up two words and applies a Boolean op — AND, OR, XOR, NOT — to <b>each bit position on its own</b>, not to the word as a number.
+  </div>
+
+  <!-- reveal 2: WHY — a control/status register of one-bit flags -->
+  <div class="frag" style="margin-top:12px">
+    <p style="font-size:25px; color:var(--text); margin-bottom:8px"><b class="em-a">Why.</b> A <b>control / status register</b> packs many one-bit flags into a single word:</p>
+    <div style="display:flex; gap:8px">
+      <div class="regbit">0</div>
+      <div class="regbit">0</div>
+      <div class="regbit">1<small>ENABLE</small></div>
+      <div class="regbit">0</div>
+      <div class="regbit">1<small>READY</small></div>
+      <div class="regbit hot">0<small>ERROR</small></div>
+      <div class="regbit">1</div>
+      <div class="regbit">1</div>
+    </div>
+  </div>
+
+  <!-- reveal 3: the concrete need -->
+  <p class="frag" style="font-size:25px; color:var(--text); margin-top:12px">To report a fault we must <b>set</b> the ERROR bit → 1; once handled, <b>clear</b> it → 0 — while every <em>other</em> flag stays exactly as it was.</p>
+  <p class="frag big em-p" style="margin-top:8px">Change <b>one bit</b>, leave its neighbours alone. A plain overwrite can't — bitwise ops can.</p>
+</section>
+
+<!-- 17b: HOW — the two workhorses, OR to set and AND to clear -->
 <section class="slide" data-ch="Ch 2 · Logic microoperations">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:4px">Logic microoperations — <span class="em-a">bit by bit</span></h2>
-  <p class="foothold"><span class="lbl">A different need ·</span> Arithmetic treats the whole word as a number. But often we must touch <em>individual</em> bits — set one, clear one, flip one. That job is logic.</p>
-  <p class="frag" style="font-size:26px">16 possible; machines build just <span class="em-p">four</span> — <b>AND, OR, XOR, NOT</b> — and combine them.</p>
+  <h2 style="margin-bottom:4px">How — <span class="em-g">OR</span> sets a bit, <span class="em-g">AND</span> clears a bit</h2>
+  <p class="foothold"><span class="lbl">Change one, keep the rest ·</span> So we must flip one flag and leave its neighbours untouched. A <b>mask</b> — a second word we choose — marks which bits to touch; the logic op does the rest.</p>
   <div class="animwrap"><svg viewBox="0 0 1120 260" preserveAspectRatio="xMidYMid meet">
     <!-- reveal 1: MASKING with AND — a 0 in the mask clears that bit -->
     <g class="frag">
@@ -842,7 +880,77 @@
     <div class="card tint-green"><h3 class="em-g">Set (OR) → set a flag</h3>
       <p style="color:var(--text); font-size:22px">Turn one flag <b>on</b> without disturbing the rest. Flags <span class="bin">1001</span>, set the <b>READY</b> bit: OR <span class="bin">0100</span> (a 1 only there) = <span class="bin em-g">1101</span>. READY → 1, the others untouched.</p></div>
   </div>
-  <p class="frag" style="font-size:22px; color:var(--muted)">Partners on the same idea: <b>selective-clear</b> = AND with a complemented mask, and <b>toggle</b> = XOR (next slides). NOT just inverts every bit.</p>
+  <p class="frag" style="font-size:22px; color:var(--muted)">Partners on the same idea: <b>selective-clear</b> = AND with a complemented mask, <b>toggle</b> = XOR, and NOT just inverts every bit — all of them appear in the full sixteen-operation list ahead.</p>
+</section>
+
+<!-- worked bitwise examples: AND & OR -->
+<section class="slide" data-ch="Ch 2 · Worked — AND clears, OR sets">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Worked: <span class="em-g">AND</span> clears bits, <span class="em-g">OR</span> sets bits</h2>
+  <p class="foothold"><span class="lbl">See it on a byte ·</span> A mask is a second word we choose. AND it in to <em>keep or clear</em> bits; OR it in to <em>force bits to 1</em>. Watch each on the same 8-bit value.</p>
+
+  <div class="row frag" style="margin-top:8px">
+    <div class="card tint-green">
+      <h3 class="em-g">AND — mask / clear</h3>
+      <p class="wex"><span class="op2"></span><span class="bin">1011 0110</span> <span class="muted">(182)</span><br>
+        <span class="op2">AND</span><span class="bin">0000 1111</span> <span class="muted">(mask)</span><br>
+        <span class="op2">=</span><span class="bin em-g">0000 0110</span> <span class="muted">(6)</span></p>
+      <p style="font-size:22px; color:var(--muted)">Where the mask is <b>0</b> the bit is cleared; where it is <b>1</b> the bit passes. → <b>extract the low nibble</b>, or test one bit.</p>
+    </div>
+    <div class="card tint-teal">
+      <h3 class="em-t">OR — set</h3>
+      <p class="wex"><span class="op2"></span><span class="bin">1011 0000</span><br>
+        <span class="op2">OR</span><span class="bin">0000 1111</span><br>
+        <span class="op2">=</span><span class="bin em-g">1011 1111</span></p>
+      <p style="font-size:22px; color:var(--muted)">Where the mask is <b>1</b> the bit is forced to 1; where it is 0 the bit is left alone. → <b>turn on flags / GPIO pins</b>.</p>
+    </div>
+  </div>
+  <p class="frag" style="font-size:24px; margin-top:14px">Same trick, opposite jobs: <b>AND with 0</b> knocks bits down, <b>OR with 1</b> lifts bits up.</p>
+</section>
+
+<!-- worked: extract a field vs insert a field (masking, both directions) -->
+<section class="slide" data-ch="Ch 2 · Worked — extract & insert a field">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Worked: <span class="em-g">extract</span> a field, <span class="em-g">insert</span> a field</h2>
+  <p class="foothold"><span class="lbl">What masking is for ·</span> A word often holds a small <b>field</b> packed inside it. <b>Extract</b> = copy that field <em>out</em> as a value. <b>Insert</b> = write a new value <em>into</em> that field, leaving every other bit alone. Take the byte <span class="bin">1011&#8202;0110</span> — high nibble = flags, low nibble = a <b>mode</b> field.</p>
+
+  <div class="row frag" style="margin-top:8px">
+    <div class="card tint-green">
+      <h3 class="em-g">Extract the mode (read it out)</h3>
+      <p class="wex" style="font-size:26px"><span class="op2"></span><span class="bin">1011 0110</span> <span class="muted">(word)</span><br>
+        <span class="op2">AND</span><span class="bin">0000 1111</span> <span class="muted">(keep the field)</span><br>
+        <span class="op2">=</span><span class="bin em-g">0000 0110</span> <span class="muted">→ mode = 6</span></p>
+      <p style="font-size:21px; color:var(--muted)">Everything outside the field is masked to 0, so the field stands alone as a value. (If it sat higher up, <b>shift it down</b> to read it.)</p>
+    </div>
+    <div class="card tint-purple">
+      <h3 class="em-p">Insert mode = 1010 (write it in)</h3>
+      <p class="wex" style="font-size:24px"><span class="op2">①clear</span><span class="bin">1011 0110</span> AND <span class="bin">1111 0000</span><br>
+        <span class="op2"></span>= <span class="bin">1011 0000</span><br>
+        <span class="op2">②place</span><span class="bin">1011 0000</span> OR <span class="bin">0000 1010</span><br>
+        <span class="op2"></span>= <span class="bin em-g">1011 1010</span></p>
+      <p style="font-size:21px; color:var(--muted)">Clear the field with AND, then OR the new bits in. Mode is now 1010; the flag nibble <b>1011</b> is untouched.</p>
+    </div>
+  </div>
+  <p class="frag" style="font-size:24px; margin-top:12px"><b>Extract</b> = AND to isolate the field. <b>Insert</b> = AND to clear the field, then OR to drop the new bits in — same mask idea, opposite direction.</p>
+</section>
+
+<!-- why bitwise operations matter — motivate the whole logic family before shifts -->
+<section class="slide" data-ch="Ch 2 · Why bitwise operations matter">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Why these bit-level operations <span class="em-a">matter</span></h2>
+  <p class="foothold"><span class="lbl">The next level up ·</span> Each logic op touches one bit — humble on its own. But they are the <b>primitives</b> that bigger operations are built from. Here is what they buy us.</p>
+
+  <div class="row frag" style="margin-top:6px">
+    <div class="card tint-green"><h3 class="em-g">Masking — pick out bits</h3><p style="color:var(--text)"><b>AND</b> with a mask clears the bits you don't want; <b>OR</b> sets the ones you do. That is how a field is <em>extracted</em> or <em>inserted</em> inside a word.</p></div>
+    <div class="card tint-teal"><h3 class="em-t">Flags &amp; control bits</h3><p style="color:var(--text)">Set / clear / test one bit — status-register flags, permission bits, an IoT <b>GPIO</b> pin driven high or low.</p></div>
+  </div>
+  <div class="row frag" style="margin-top:18px">
+    <div class="card tint-yellow"><h3 class="em-y">Shifts do arithmetic — almost free</h3><p style="color:var(--text)">Left shift = <b>×2</b>, right shift = <b>÷2</b>; multiply / divide is <b>shift-and-add</b>. A shift is just <b>rewiring</b> — one clock pulse, no adder — so it costs the hardware almost <b>nothing</b> next to a full multiply.</p></div>
+    <div class="card tint-purple"><h3 class="em-p">…and bigger systems</h3><p style="color:var(--text)">Packing fields, <b>checksums / CRC</b>, hashing, <b>encryption</b>, and graphics colour maths — all stand on these bit ops.</p></div>
+  </div>
+
+  <p class="frag big em-a" style="margin-top:16px">Individually humble, collectively the foundation of everything above the gate.</p>
+  <p class="frag" style="font-size:21px; color:var(--muted); margin-top:6px">And they are <b style="color:var(--yellow)">cheap</b>: each logic op or shift is a single ALU clock pulse — which is exactly why we let the ALU do them, and why multiply / divide are built from shifts.</p>
 </section>
 
 <!-- the full 16 logic functions (Mano) — textbook table, then the "only four gates" payoff -->
@@ -870,25 +978,28 @@
   <!-- reveal 3: WHY 16 — four independent yes/no answers, like four switches -->
   <p class="frag" style="font-size:25px; margin-top:8px">Four answers, each independently 0 or 1 — like <b>four on/off switches</b>. Multiply the choices <span class="muted">(not 4 × 2 = 8)</span>: &nbsp;<span class="bin em-a" style="font-size:34px">2×2×2×2 = 2<sup>4</sup> = 16</span></p>
 
-  <!-- reveal 4: all sixteen codes; the familiar ones named -->
+  <!-- reveal 4: all sixteen codes; the famous ones named, four are 'mixed' -->
   <div class="frag" style="display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; max-width:1190px">
     <span class="code16 named">0000<small>Clear</small></span>
     <span class="code16 named">0001<small>AND</small></span>
-    <span class="code16">0010</span>
+    <span class="code16">0010<small>mixed</small></span>
     <span class="code16 named">0011<small>= x</small></span>
-    <span class="code16">0100</span>
+    <span class="code16">0100<small>mixed</small></span>
     <span class="code16 named">0101<small>= y</small></span>
     <span class="code16 named">0110<small>XOR</small></span>
     <span class="code16 named">0111<small>OR</small></span>
     <span class="code16 named">1000<small>NOR</small></span>
     <span class="code16 named">1001<small>XNOR</small></span>
-    <span class="code16">1010</span>
-    <span class="code16">1011</span>
-    <span class="code16">1100</span>
-    <span class="code16">1101</span>
+    <span class="code16 named">1010<small>y'</small></span>
+    <span class="code16">1011<small>mixed</small></span>
+    <span class="code16 named">1100<small>x'</small></span>
+    <span class="code16">1101<small>mixed</small></span>
     <span class="code16 named">1110<small>NAND</small></span>
     <span class="code16 named">1111<small>Set</small></span>
   </div>
+
+  <!-- reveal 5: why the 'nameless' codes still belong -->
+  <p class="frag" style="font-size:22px; color:var(--muted); margin-top:10px; max-width:1180px">The four <b style="color:var(--text)">mixed</b> codes (e.g. <span class="bin" style="color:var(--text)">1011</span> = <b style="color:var(--text)">x + y'</b>, i.e. A ∨ B&#773;) have no everyday gate name — but they're real functions with real uses: <b style="color:var(--text)">x · y'</b> (A ∧ B&#773;) is <b>selective-clear</b> (clear only the bits B marks), and x + y' is logical <b>implication</b>. We list all sixteen because 2<sup>4</sup> is <em>every</em> possible rule; hardware just names the handful worth exposing and builds the rest by combining.</p>
 </section>
 
 <!-- 18b: the full sixteen (Mano's list) -->
@@ -938,73 +1049,6 @@
     <div class="card tint-teal"><h3 class="em-t">What it's built from</h3><p style="color:var(--text)">One <b>universal gate</b>: <b>NAND</b> alone can build all four — and the adder and the MUX too. NAND is the brick; these four are what we assemble from it.</p></div>
   </div>
   <p class="frag" style="font-size:23px; margin-top:14px; color:var(--muted)">Two levels, don't confuse them: <b style="color:var(--text)">four operations</b> = what the machine offers; <b style="color:var(--text)">one gate (NAND)</b> = what silicon is made of.</p>
-</section>
-
-<!-- why bitwise operations matter — motivate the whole logic family before shifts -->
-<section class="slide" data-ch="Ch 2 · Why bitwise operations matter">
-  <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:4px">Why these bit-level operations <span class="em-a">matter</span></h2>
-  <p class="foothold"><span class="lbl">The next level up ·</span> Each logic op touches one bit — humble on its own. But they are the <b>primitives</b> that bigger operations are built from. Here is what they buy us.</p>
-
-  <div class="row frag" style="margin-top:6px">
-    <div class="card tint-green"><h3 class="em-g">Masking — pick out bits</h3><p style="color:var(--text)"><b>AND</b> with a mask clears the bits you don't want; <b>OR</b> sets the ones you do. That is how a field is <em>extracted</em> or <em>inserted</em> inside a word.</p></div>
-    <div class="card tint-teal"><h3 class="em-t">Flags &amp; control bits</h3><p style="color:var(--text)">Set / clear / test one bit — status-register flags, permission bits, an IoT <b>GPIO</b> pin driven high or low.</p></div>
-  </div>
-  <div class="row frag" style="margin-top:18px">
-    <div class="card tint-yellow"><h3 class="em-y">Shifts do arithmetic</h3><p style="color:var(--text)">Left shift ≈ <b>×2</b>, right shift ≈ <b>÷2</b>. General multiply / divide is <b>shift-and-add</b> — the very idea from slide 13.</p></div>
-    <div class="card tint-purple"><h3 class="em-p">…and bigger systems</h3><p style="color:var(--text)">Packing fields, <b>checksums / CRC</b>, hashing, <b>encryption</b>, and graphics colour maths — all stand on these bit ops.</p></div>
-  </div>
-
-  <p class="frag big em-a" style="margin-top:16px">Individually humble, collectively the foundation of everything above the gate.</p>
-</section>
-
-<!-- worked bitwise examples: AND & OR -->
-<section class="slide" data-ch="Ch 2 · Worked — AND clears, OR sets">
-  <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:4px">Worked: <span class="em-g">AND</span> clears bits, <span class="em-g">OR</span> sets bits</h2>
-  <p class="foothold"><span class="lbl">See it on a byte ·</span> A mask is a second word we choose. AND it in to <em>keep or clear</em> bits; OR it in to <em>force bits to 1</em>. Watch each on the same 8-bit value.</p>
-
-  <div class="row frag" style="margin-top:8px">
-    <div class="card tint-green">
-      <h3 class="em-g">AND — mask / clear</h3>
-      <p class="wex"><span class="op2"></span><span class="bin">1011 0110</span> <span class="muted">(182)</span><br>
-        <span class="op2">AND</span><span class="bin">0000 1111</span> <span class="muted">(mask)</span><br>
-        <span class="op2">=</span><span class="bin em-g">0000 0110</span> <span class="muted">(6)</span></p>
-      <p style="font-size:22px; color:var(--muted)">Where the mask is <b>0</b> the bit is cleared; where it is <b>1</b> the bit passes. → <b>extract the low nibble</b>, or test one bit.</p>
-    </div>
-    <div class="card tint-teal">
-      <h3 class="em-t">OR — set</h3>
-      <p class="wex"><span class="op2"></span><span class="bin">1011 0000</span><br>
-        <span class="op2">OR</span><span class="bin">0000 1111</span><br>
-        <span class="op2">=</span><span class="bin em-g">1011 1111</span></p>
-      <p style="font-size:22px; color:var(--muted)">Where the mask is <b>1</b> the bit is forced to 1; where it is 0 the bit is left alone. → <b>turn on flags / GPIO pins</b>.</p>
-    </div>
-  </div>
-  <p class="frag" style="font-size:24px; margin-top:14px">Same trick, opposite jobs: <b>AND with 0</b> knocks bits down, <b>OR with 1</b> lifts bits up.</p>
-</section>
-
-<!-- worked bitwise examples: XOR & NOT -->
-<section class="slide" data-ch="Ch 2 · Worked — XOR toggles, NOT inverts">
-  <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:4px">Worked: <span class="em-p">XOR</span> toggles bits, <span class="em-p">NOT</span> inverts all</h2>
-  <p class="foothold"><span class="lbl">The other two ·</span> XOR flips exactly the bits the mask marks; NOT flips every bit. Both are the tools behind toggling and behind the 2's-complement subtraction you already saw.</p>
-
-  <div class="row frag" style="margin-top:8px">
-    <div class="card tint-purple">
-      <h3 class="em-p">XOR — toggle</h3>
-      <p class="wex"><span class="op2"></span><span class="bin">1010 1010</span><br>
-        <span class="op2">XOR</span><span class="bin">0000 1111</span><br>
-        <span class="op2">=</span><span class="bin em-g">1010 0101</span></p>
-      <p style="font-size:22px; color:var(--muted)">A <b>1</b> in the mask flips that bit; a 0 leaves it. And <b>X XOR X = 0</b> → used in swaps, parity, and simple ciphers.</p>
-    </div>
-    <div class="card tint-orange">
-      <h3 class="em-o">NOT — complement</h3>
-      <p class="wex"><span class="op2">NOT</span><span class="bin">1010 0011</span><br>
-        <span class="op2">=</span><span class="bin em-g">0101 1100</span></p>
-      <p style="font-size:22px; color:var(--muted)">Every bit inverted = the <b>1's complement</b>. Add 1 → 2's complement → that is the <b>subtraction trick</b> from earlier.</p>
-    </div>
-  </div>
-  <p class="frag" style="font-size:24px; margin-top:14px">XOR is a <em>selective</em> NOT (flip the marked bits); NOT flips them all — the same inverter, controlled or not.</p>
 </section>
 
 <!-- shift microops (ANIMATED: each row physically slides one place) -->
@@ -1112,35 +1156,6 @@
   <p class="frag" style="font-size:22px; color:var(--muted)"><b style="color:var(--yellow)">Who thought of this?</b> Doubling-and-adding to multiply is <em>ancient</em> — Egyptian multiplication (Rhind papyrus, ~1550 BCE) and Russian-peasant multiplication both use it. It becomes a literal <b>shift</b> only in the binary system (Leibniz, ~1703). It predates Boolean algebra and von Neumann — they only built it into hardware.</p>
 </section>
 
-<!-- ashr sign-preservation deep-dive (CONTENT GAP added this pass) -->
-<section class="slide" data-ch="Ch 2 · Why ashr keeps the sign">
-  <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:6px">Why <span class="em-p">arithmetic</span> shift-right is special</h2>
-  <p class="foothold"><span class="lbl">A doubt to settle ·</span> We just claimed right-shift halves a number. For a <em>negative</em> value, does feeding a 0 into the top bit really still divide by two? Let's test it.</p>
-  <p class="frag big">Take the signed byte <span class="em-p">11111000</span> — that's <b>−8</b> in two's complement.</p>
-  <div class="animwrap"><svg viewBox="0 0 1120 250" preserveAspectRatio="xMidYMid meet">
-    <!-- reveal 1: naive logical ÷2 would feed a 0 into the sign position → wrong -->
-    <g class="frag">
-      <text x="40" y="70" fill="var(--red)" font-size="22" font-weight="800">Logical shr</text>
-      <text x="260" y="72" fill="var(--muted)" font-size="30" font-weight="800" letter-spacing="8">01111100</text>
-      <text x="620" y="72" fill="var(--red)" font-size="24" font-weight="800">= +124  ✗ sign lost!</text>
-      <text x="260" y="102" fill="var(--muted)" font-size="19">a 0 fell into the leftmost (sign) bit — the number flipped positive</text>
-    </g>
-    <!-- reveal 2: arithmetic shr copies the sign bit → correct ÷2 -->
-    <g class="frag">
-      <text x="40" y="170" fill="var(--green)" font-size="22" font-weight="800">Arithmetic ashr</text>
-      <g font-size="30" font-weight="800" letter-spacing="8">
-        <text x="260" y="172" fill="var(--text)"><tspan class="setval" fill="var(--purple)">1</tspan>1111100</text>
-      </g>
-      <text x="620" y="172" fill="var(--green)" font-size="24" font-weight="800">= −4  ✓ exactly −8 ÷ 2</text>
-      <path class="fadein" d="M 250 150 C 210 120, 210 200, 250 168" stroke="var(--purple)" stroke-width="3" fill="none" marker-end="url(#u2ashr)"/>
-      <text x="150" y="205" fill="var(--purple)" font-size="19">the old sign bit is duplicated back into the sign position</text>
-    </g>
-    <defs><marker id="u2ashr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker></defs>
-  </svg></div>
-  <p class="frag" style="font-size:24px">That is the whole point of <b>ashr</b>: it re-inserts the <span class="em-p">sign bit</span> instead of a 0, so dividing a <em>negative</em> number by 2 still gives a negative number.</p>
-</section>
-
 <!-- worked: a shift multiplies / divides by 2 -->
 <section class="slide" data-ch="Ch 2 · Worked — shift = ×2 and ÷2">
   <div class="badge b-core"><span class="dot"></span>Core</div>
@@ -1149,47 +1164,147 @@
 
   <div class="row frag" style="margin-top:8px">
     <div class="card tint-yellow">
-      <h3 class="em-y">Left shift → ×2</h3>
-      <p class="wex"><span class="op2">5 =</span><span class="bin">0101</span><br>
-        <span class="op2">&lt;&lt;1</span><span class="bin em-g">1010</span> <span class="muted">= 10  (×2)</span><br>
-        <span class="op2">&lt;&lt;2</span><span class="bin em-g">10100</span> <span class="muted">= 20  (×4)</span></p>
-      <p style="font-size:22px; color:var(--muted)">Every bit moves up one place → worth twice as much; a fresh <b>0</b> enters at the right.</p>
+      <h3 class="em-y">Shift left → double it (×2)</h3>
+      <p class="wex"><span class="op2">5 =</span><span class="bin">0000 0101</span> <span class="muted">(5)</span><br>
+        <span class="op2">&lt;&lt;1</span><span class="bin em-g">0000 1010</span> <span class="muted">= 10&nbsp; (×2)</span><br>
+        <span class="op2">&lt;&lt;1</span><span class="bin em-g">0001 0100</span> <span class="muted">= 20&nbsp; (×2 again)</span></p>
+      <p style="font-size:22px; color:var(--muted)">Each left shift slides every bit up one place — worth twice as much — and a fresh <b>0</b> enters at the right. <b>5 → 10 → 20.</b></p>
     </div>
     <div class="card tint-teal">
-      <h3 class="em-t">Right shift → ÷2</h3>
-      <p class="wex"><span class="op2">6 =</span><span class="bin">0110</span><br>
-        <span class="op2">&gt;&gt;1</span><span class="bin em-g">0011</span> <span class="muted">= 3  (÷2)</span></p>
-      <p style="font-size:22px; color:var(--muted)">Every bit moves down one place → worth half. For a <b>negative</b> number use <b>ashr</b> (previous slide) so the sign survives.</p>
+      <h3 class="em-t">Shift right → halve it (÷2)</h3>
+      <p class="wex"><span class="op2">20 =</span><span class="bin">0001 0100</span> <span class="muted">(20)</span><br>
+        <span class="op2">&gt;&gt;1</span><span class="bin em-g">0000 1010</span> <span class="muted">= 10&nbsp; (÷2)</span><br>
+        <span class="op2">&gt;&gt;1</span><span class="bin em-g">0000 0101</span> <span class="muted">= 5&nbsp; (÷2 again)</span></p>
+      <p style="font-size:22px; color:var(--muted)">Each right shift slides every bit down one place — worth half. <b>20 → 10 → 5.</b> <span class="em-o">But a <b>negative</b> number breaks this — see the next slide.</span></p>
     </div>
   </div>
   <p class="frag big em-y" style="margin-top:14px">Shifting by k = ×2<sup>k</sup> or ÷2<sup>k</sup> — one cheap operation instead of a full multiply or divide.</p>
 </section>
 
-<!-- worked: general multiply by shift-and-add -->
-<section class="slide" data-ch="Ch 2 · Worked — multiply by shift-and-add">
+<!-- ashr sign-preservation deep-dive (CONTENT GAP added this pass) -->
+<section class="slide" data-ch="Ch 2 · Why ashr keeps the sign">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:4px">Worked: multiply by <span class="em-a">shift-and-add</span> &nbsp;<span class="muted" style="font-size:26px">(5 × 3)</span></h2>
-  <p class="foothold"><span class="lbl">Back to slide 13 ·</span> We said multiply is repeated addition. Precisely, it is <b>shift-and-add</b>: for every <b>1</b> in the multiplier, add a copy of the multiplicand shifted to that bit's place.</p>
+  <h2 style="margin-bottom:6px">Why <span class="em-p">arithmetic</span> shift-right is special</h2>
+  <p class="foothold"><span class="lbl">A doubt to settle ·</span> We just halved <b>20 → 10 → 5</b> by shifting right. Try the <em>negative</em> case: divide <b>−20</b> by 2 the same way — shift right and feed a 0 into the top bit. Does it still work?</p>
+  <p class="frag big">Take the signed byte <span class="em-p">1110 1100</span> — that's <b>−20</b> in two's complement.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 250" preserveAspectRatio="xMidYMid meet">
+    <!-- reveal 1: naive logical ÷2 would feed a 0 into the sign position → wrong -->
+    <g class="frag">
+      <text x="40" y="70" fill="var(--red)" font-size="22" font-weight="800">Logical shr</text>
+      <text x="260" y="72" fill="var(--muted)" font-size="30" font-weight="800" letter-spacing="8">01110110</text>
+      <text x="620" y="72" fill="var(--red)" font-size="24" font-weight="800">= +118  ✗ sign lost!</text>
+      <text x="260" y="102" fill="var(--muted)" font-size="19">a 0 fell into the leftmost (sign) bit — −20 flipped positive, answer is wrong</text>
+    </g>
+    <!-- reveal 2: arithmetic shr copies the sign bit → correct ÷2 -->
+    <g class="frag">
+      <text x="40" y="170" fill="var(--green)" font-size="22" font-weight="800">Arithmetic ashr</text>
+      <g font-size="30" font-weight="800" letter-spacing="8">
+        <text x="260" y="172" fill="var(--text)"><tspan class="setval" fill="var(--purple)">1</tspan>1110110</text>
+      </g>
+      <text x="620" y="172" fill="var(--green)" font-size="24" font-weight="800">= −10  ✓ exactly −20 ÷ 2</text>
+      <path class="fadein" d="M 250 150 C 210 120, 210 200, 250 168" stroke="var(--purple)" stroke-width="3" fill="none" marker-end="url(#u2ashr)"/>
+      <text x="150" y="205" fill="var(--purple)" font-size="19">instead of a 0, the old sign bit (1) is copied back into the sign position</text>
+    </g>
+    <defs><marker id="u2ashr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:24px">That is the whole point of <b>ashr</b>: it re-inserts the <span class="em-p">sign bit</span> instead of a 0, so dividing a <em>negative</em> number by 2 still gives a negative number.</p>
+</section>
 
-  <div class="frag" style="font-size:29px; line-height:1.8; margin-top:8px">
-    Multiplier <b>3 = <span class="bin">011</span></b>, multiplicand <b>5 = <span class="bin">00101</span></b>:
-  </div>
-  <div class="frag" style="font-size:29px; line-height:1.85; margin-top:6px">
-    <div><span class="op2">bit 0 = 1</span> → add 5&lt;&lt;0 = <span class="bin">00101</span></div>
-    <div><span class="op2">bit 1 = 1</span> → add 5&lt;&lt;1 = <span class="bin">01010</span></div>
-    <div><span class="op2">bit 2 = 0</span> → add nothing</div>
-  </div>
-  <div class="frag" style="font-size:30px; margin-top:8px">sum = <span class="bin em-g">01111</span> = <b class="em-g">15</b> = 5 × 3 ✓</div>
+<!-- worked: general multiply by shift-and-add -->
+<!-- multiply by shift-and-add: (1) the core idea -->
+<section class="slide" data-ch="Ch 2 · Multiply — the core idea">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Multiplying, the smart way: <span class="em-a">shift-and-add</span></h2>
+  <p class="foothold"><span class="lbl">Back to slide 13 ·</span> "Multiply is repeated addition" works, but it ignores the structure of binary. Shift-and-add is smarter — it uses the multiplier's <b>bits</b> to decide which scaled copies of the multiplicand to add.</p>
 
-  <p class="frag big em-a" style="margin-top:14px">n shifts + n adds → any product. Division is the mirror: <b>shift-and-subtract</b>.</p>
+  <div class="row frag" style="margin-top:10px">
+    <div class="card tint-yellow"><h3 class="em-y">Repeated addition</h3><p style="color:var(--text)">5 × 3 = <span class="bin">5 + 5 + 5</span>. Correct, but <b>slow</b> — the count of adds grows with the number, and it wastes the binary structure.</p></div>
+    <div class="card tint-green"><h3 class="em-g">Shift-and-add</h3><p style="color:var(--text)">Read the multiplier's binary digits; for each <b>1</b>, add a <em>shifted</em> copy of the multiplicand. Fewer, structured steps.</p></div>
+  </div>
+  <p class="frag big em-a" style="margin-top:16px">Exactly what a simple circuit can do: <b>shift and add, bit by bit</b>.</p>
+</section>
+
+<!-- multiply by shift-and-add: (2) why it works -->
+<section class="slide" data-ch="Ch 2 · Multiply — why it works">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Why it works — a number is a <span class="em-a">sum of powers of two</span></h2>
+  <p class="foothold"><span class="lbl">The key identity ·</span> Write the multiplier in binary as a sum of powers of 2. Then multiplying by it splits into a few multiply-by-a-power-of-2 — and each of those is just a shift.</p>
+
+  <div class="frag" style="font-size:29px; line-height:1.9; margin-top:8px">
+    <b>3 = <span class="bin">011</span></b> means &nbsp; 3 = (1 × 2<sup>1</sup>) + (1 × 2<sup>0</sup>)
+  </div>
+  <div class="frag" style="font-size:29px; line-height:1.9; margin-top:4px">
+    so &nbsp; 5 × 3 = 5 × (2<sup>1</sup> + 2<sup>0</sup>) = <b class="em-a">(5 × 2<sup>1</sup>) + (5 × 2<sup>0</sup>)</b>
+  </div>
+  <div class="frag" style="margin-top:14px; font-size:27px">
+    And multiplying by 2<sup>n</sup> <b>is</b> a left shift by n places:
+    <div style="margin-top:8px; line-height:1.7">
+      <span class="op2">5 &lt;&lt; 1</span> = <span class="bin em-g">01010</span> = 10 &nbsp;<span class="muted">(= 5 × 2)</span><br>
+      <span class="op2">5 &lt;&lt; 0</span> = <span class="bin em-g">00101</span> = 5 &nbsp;<span class="muted">(just 5 itself)</span>
+    </div>
+  </div>
+  <p class="frag big em-p" style="margin-top:12px">Each product term is simply 5, <b>shifted</b>.</p>
+</section>
+
+<!-- multiply by shift-and-add: (3) walk the bits (worked 5x3) -->
+<section class="slide" data-ch="Ch 2 · Multiply — walk the bits (5 × 3)">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Walk the multiplier's bits — <span class="em-a">5 × 3</span></h2>
+  <p class="foothold"><span class="lbl">Do it ·</span> Scan the multiplier from the <b>least-significant bit up</b>. A <b>1</b> includes 5 shifted to that place; a <b>0</b> contributes nothing (anything × 0 = 0).</p>
+
+  <div class="frag" style="font-size:27px; margin-top:6px">Multiplier <b>3 = <span class="bin">011</span></b>, multiplicand <b>5 = <span class="bin">00101</span></b></div>
+  <div class="frag" style="font-size:27px; line-height:1.85; margin-top:6px">
+    <div><span class="op2">bit 0 = 1</span> → include 5&lt;&lt;0 = <span class="bin">00101</span></div>
+    <div><span class="op2">bit 1 = 1</span> → include 5&lt;&lt;1 = <span class="bin">01010</span></div>
+    <div><span class="op2">bit 2 = 0</span> → skip <span class="muted">(0 contributes nothing)</span></div>
+  </div>
+  <div class="frag" style="margin-top:10px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-weight:800; font-size:30px; line-height:1.45; display:inline-block">
+    <div>&#160;&#160;00101</div>
+    <div>+ 01010</div>
+    <div class="em-g" style="border-top:2px solid var(--muted); padding-top:4px">&#160;&#160;01111 &#160;=&#160; 15</div>
+  </div>
+  <p class="frag big em-g" style="margin-top:10px">01111 = 15 = 5 × 3 ✓</p>
+</section>
+
+<!-- multiply by shift-and-add: (4) why it scales -->
+<section class="slide" data-ch="Ch 2 · Multiply — why it scales">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Why this <span class="em-a">scales</span></h2>
+  <p class="foothold"><span class="lbl">Count the work ·</span> Shift-and-add does at most <b>one add per bit</b> of the multiplier — no matter how large the numbers are.</p>
+
+  <div class="row frag" style="margin-top:10px">
+    <div class="card tint-red"><h3 style="color:var(--red)">Repeated addition</h3><p style="color:var(--text)">"Add the multiplicand <b>K</b> times" → the number of adds grows with the <em>value</em>. A big multiplier = arbitrarily many additions.</p></div>
+    <div class="card tint-green"><h3 class="em-g">Shift-and-add</h3><p style="color:var(--text)">An <b>n-bit</b> multiplier → at most <b>n shifts + n adds</b>. One potential add per bit — bounded by the number of <em>digits</em>, not the value.</p></div>
+  </div>
+  <p class="frag big em-a" style="margin-top:16px">This is essentially what a <b>hardware multiplier</b> does at the gate level.</p>
+</section>
+
+<!-- multiply by shift-and-add: (5) the mirror — shift-and-subtract division -->
+<section class="slide" data-ch="Ch 2 · Divide — the mirror (shift-and-subtract)">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">The mirror: division is <span class="em-a">shift-and-subtract</span></h2>
+  <p class="foothold"><span class="lbl">Run it backwards ·</span> Multiplication <em>builds up</em> a product by adding shifted copies. Division does the reverse — it <em>strips away</em> shifted copies of the divisor from the dividend, one bit at a time, from the <b>most-significant bit down</b>.</p>
+
+  <div class="frag" style="font-size:26px; line-height:1.8; margin-top:8px">
+    At each quotient bit position:
+    <div style="margin-top:6px"><span class="stepbadge">1</span> shift the divisor to line up with that position.</div>
+    <div><span class="stepbadge">2</span> if the shifted divisor <b>fits</b> (subtracting won't go negative) → <b>subtract</b>, record a <span class="em-g">1</span>.</div>
+    <div><span class="stepbadge">3</span> if it <b>doesn't fit</b> → record a <span class="em-y">0</span>, move on without subtracting.</div>
+  </div>
+
+  <div class="row frag" style="margin-top:14px">
+    <div class="card tint-green"><h3 class="em-g">Multiply asks</h3><p style="color:var(--text)">"Which shifted copies do I <b>add</b> to build the product?"</p></div>
+    <div class="card tint-purple"><h3 class="em-p">Divide asks</h3><p style="color:var(--text)">"Which shifted copies can I <b>subtract</b> out before the value hits zero?"</p></div>
+  </div>
+  <p class="frag em-a" style="font-size:24px; margin-top:12px">Same shift-based structure — opposite direction, opposite operation.</p>
 </section>
 
 <!-- ALU combine -->
 <section class="slide" data-ch="Ch 2 · The Arithmetic-Logic-Shift Unit">
   <div class="badge b-core"><span class="dot"></span>Core</div>
   <h2 style="margin-bottom:4px">The Arithmetic–Logic–Shift Unit — <span class="em-a">one example through every box</span></h2>
-  <p class="foothold"><span class="lbl">Fold them into one ·</span> Arithmetic, logic and shift all compute <em>in parallel</em> on the same A and B; a final MUX passes just one result. Let's push <b>A = 5, B = 3</b> through and see each box's output — and settle how many select lines the MUX really needs.</p>
-  <div class="animwrap"><svg viewBox="0 0 1160 330" preserveAspectRatio="xMidYMid meet">
+  <p class="foothold"><span class="lbl">Fold them into one ·</span> Arithmetic, logic and shift all compute <em>in parallel</em> on A and B; a final MUX passes one result. Push <b>A = 5, B = 3</b> through and watch each box.</p>
+  <div class="animwrap" style="min-height:400px"><svg viewBox="0 0 1060 330" preserveAspectRatio="xMidYMid meet">
     <!-- operands feed all three blocks -->
     <text x="20" y="150" fill="var(--text)" font-size="22" font-weight="700">A = 0101 <tspan fill="var(--muted)" font-size="17">(5)</tspan></text>
     <text x="20" y="182" fill="var(--text)" font-size="22" font-weight="700">B = 0011 <tspan fill="var(--muted)" font-size="17">(3)</tspan></text>
@@ -1243,20 +1358,8 @@
     <defs><marker id="u2alu" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--accent)"/></marker></defs>
   </svg></div>
 
-  <!-- reveal 6: the select-line fix, spelled out -->
-  <div class="frag" style="display:flex; gap:28px; align-items:center; margin-top:2px">
-    <table class="ctrltab" style="font-size:21px">
-      <tr><th>S3 S2</th><th>output the MUX passes</th></tr>
-      <tr class="add"><td>00</td><td>Arithmetic (A+B, A−B, …)</td></tr>
-      <tr><td>01</td><td>Logic (A∧B, A∨B, …)</td></tr>
-      <tr><td>10</td><td>shift-right</td></tr>
-      <tr class="sub"><td>11</td><td>shift-left</td></tr>
-    </table>
-    <div style="font-size:21px; color:var(--text); max-width:560px">
-      The final MUX picks one of <b>four</b> → it needs only <b>2 select lines, S3 S2</b>. The other two, <b>S1 S0</b> (with <b>Cin</b>), choose the op <em>inside</em> the arithmetic and logic boxes — so the whole ALU select is <b>S3 S2 S1 S0 + Cin</b>.
-      <span class="muted">One such stage per bit; stack n → an n-bit ALU. ×, ÷ aren't a box — they're multi-step add/sub + shift sequences.</span>
-    </div>
-  </div>
+  <!-- reveal 6: the select-line fix, compact so the diagram stays large -->
+  <p class="frag" style="font-size:22px; color:var(--text); margin-top:6px"><b>select S3 S2:</b> 00→Arithmetic · 01→Logic · 10→shift-right · 11→shift-left. <span class="muted" style="font-size:20px">The final MUX needs only <b style="color:var(--text)">2 lines (S3 S2)</b>; <b style="color:var(--text)">S1 S0 + Cin</b> choose the op <em>inside</em> the arithmetic/logic boxes → full ALU select = <b style="color:var(--text)">S3 S2 S1 S0 + Cin</b>. One stage per bit; ×, ÷ are add/shift sequences, not a box.</span></p>
 </section>
 
 <!-- commit to memory -->
@@ -1294,28 +1397,32 @@
 <!-- the datapath -->
 <section class="slide" data-ch="Ch 3 · The processor datapath">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:6px">The <span class="em-a">datapath</span> — where operands flow</h2>
+  <h2 style="margin-bottom:4px">The <span class="em-a">datapath</span> — where operands flow</h2>
+  <p class="foothold"><span class="lbl">Where this fits ·</span> Chapter 2 built the ALU; now we ask <em>where operands physically sit</em> as an instruction runs. The <b>datapath</b> is the fixed lane of registers and wires data travels along. It introduces new <b>interstage registers</b> — RA, RB, RZ, RM, RY — each just <em>parks a value between one step and the next</em>. Watch the flow build, left to right.</p>
   <div class="animwrap"><svg viewBox="0 0 1150 340" preserveAspectRatio="xMidYMid meet">
     <g class="frag"><rect x="80" y="120" width="180" height="110" class="reg" style="stroke:var(--teal)"/>
       <text x="170" y="170" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Register file</text>
       <text x="170" y="200" text-anchor="middle" fill="var(--muted)" font-size="18">out A · out B · in C</text></g>
     <g class="frag"><rect x="330" y="120" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="375" y="150" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RA</text>
       <rect x="330" y="184" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="375" y="214" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RB</text>
-      <path d="M 260 150 L 328 150 M 260 200 L 328 205" stroke="var(--border)" stroke-width="2"/></g>
+      <path d="M 260 150 L 328 150 M 260 200 L 328 205" stroke="var(--border)" stroke-width="2"/>
+      <text x="328" y="256" fill="var(--muted)" font-size="15">the two operands, latched from the register file</text></g>
     <g class="frag"><polygon points="470,120 580,160 580,200 470,240" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/>
       <text x="510" y="185" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">ALU</text>
       <path d="M 420 143 L 468 158 M 420 207 L 468 200" stroke="var(--border)" stroke-width="2"/></g>
     <g class="frag"><rect x="620" y="157" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="665" y="187" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RZ</text>
-      <path d="M 580 180 L 618 180" stroke="var(--border)" stroke-width="2"/></g>
+      <path d="M 580 180 L 618 180" stroke="var(--border)" stroke-width="2"/>
+      <text x="620" y="146" fill="var(--muted)" font-size="15">the ALU result</text></g>
     <g class="frag"><rect x="620" y="230" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="665" y="260" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RM</text>
+      <text x="620" y="298" fill="var(--muted)" font-size="15">data to / from memory (Load / Store)</text>
       <rect x="760" y="157" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="805" y="187" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RY</text>
+      <text x="742" y="222" fill="var(--muted)" font-size="15">value to write back</text>
       <path d="M 710 180 L 758 180" stroke="var(--border)" stroke-width="2"/>
       <path d="M 805 157 C 805 60, 170 60, 170 118" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2c3w)"/>
       <text x="430" y="52" fill="var(--teal)" font-size="18">write-back to register file (in C)</text></g>
     <defs><marker id="u2c3w" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--teal)"/></marker></defs>
   </svg></div>
-  <p class="frag" style="font-size:24px">The <span class="em-t">register file</span> reads two operands (A, B) and writes one (C). Interstage registers
-     <span class="em-p">RA, RB, RZ, RM, RY</span> hold data as it moves stage to stage.</p>
+  <p class="frag" style="font-size:23px">Read it left→right: <span class="em-t">register file</span> → <span class="em-p">RA/RB</span> (operands) → <span class="em-a">ALU</span> → <span class="em-p">RZ</span> (result) → <span class="em-p">RY</span> → back to the register file (port C); <span class="em-p">RM</span> branches off for memory. Each interstage register simply <b>holds a value for one step</b> so the next step can use it.</p>
 </section>
 
 <!-- five step -->
@@ -1333,19 +1440,234 @@
   </div>
 </section>
 
+<!-- reconcile: fetch as several single-bus micro-steps vs one multi-bus beat -->
+<section class="slide" data-ch="Ch 3 · Fetch — micro-steps vs one beat">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Fetch: <span class="em-a">several micro-steps</span>, or <span class="em-a">one beat</span>?</h2>
+  <p class="foothold"><span class="lbl">A doubt to settle ·</span> In Unit 2 we fetched an instruction in several micro-steps — PC → MAR → memory → MDR → IR. Yet the five-beat slide calls Fetch <em>one</em> step. Both are right: it depends on the <b>datapath</b>. Same work, drawn two ways.</p>
+
+  <div class="animwrap" style="min-height:360px"><svg viewBox="0 0 1150 360" preserveAspectRatio="xMidYMid meet">
+    <!-- LEFT: single-bus, one transfer per clock -> several cycles -->
+    <g class="frag">
+      <text x="40" y="38" fill="var(--teal)" font-size="22" font-weight="800">Single-bus machine — one shared bus</text>
+      <line x1="78" y1="66" x2="78" y2="290" stroke="var(--border)" stroke-width="4"/>
+      <rect x="110" y="70" width="392" height="56" rx="10" class="reg" style="stroke:var(--purple)"/>
+      <text x="126" y="93" fill="var(--purple)" font-size="16" font-weight="800">Clock 1</text>
+      <text x="126" y="115" fill="var(--text)" font-size="19">MAR ← [PC], start Read</text>
+      <line x1="78" y1="98" x2="110" y2="98" stroke="var(--border)" stroke-width="2"/>
+      <rect x="110" y="138" width="392" height="56" rx="10" class="reg" style="stroke:var(--purple)"/>
+      <text x="126" y="161" fill="var(--purple)" font-size="16" font-weight="800">Clock 2</text>
+      <text x="126" y="183" fill="var(--text)" font-size="19">wait for memory → MDR;  PC ← PC + 4</text>
+      <line x1="78" y1="166" x2="110" y2="166" stroke="var(--border)" stroke-width="2"/>
+      <rect x="110" y="206" width="392" height="56" rx="10" class="reg" style="stroke:var(--purple)"/>
+      <text x="126" y="229" fill="var(--purple)" font-size="16" font-weight="800">Clock 3</text>
+      <text x="126" y="251" fill="var(--text)" font-size="19">IR ← [MDR]</text>
+      <line x1="78" y1="234" x2="110" y2="234" stroke="var(--border)" stroke-width="2"/>
+      <text x="110" y="300" fill="var(--muted)" font-size="15">one bus → one transfer per clock</text>
+      <text x="360" y="303" fill="var(--orange)" font-size="22" font-weight="800">= 3 clock cycles</text>
+    </g>
+
+    <!-- middle vs -->
+    <text x="556" y="180" text-anchor="middle" fill="var(--muted)" font-size="30" font-weight="800">vs</text>
+
+    <!-- RIGHT: dedicated paths in parallel -> one clock; same PC->MAR->mem->MDR->IR chain, done in a single beat -->
+    <g class="frag">
+      <text x="626" y="38" fill="var(--accent)" font-size="22" font-weight="800">Multi-bus datapath — dedicated paths</text>
+      <rect x="626" y="60" width="474" height="222" rx="12" class="reg" style="stroke:var(--green)"/>
+      <text x="646" y="86" fill="var(--green)" font-size="19" font-weight="800">Fetch — one clock (all transfers in parallel)</text>
+      <!-- the SAME micro-steps as the left, but dedicated paths let them overlap in one beat -->
+      <rect x="646" y="98" width="434" height="34" rx="8" class="reg" style="stroke:var(--teal)"/>
+      <text x="662" y="121" fill="var(--text)" font-size="18">MAR ← [PC]&#160;&#160;— address sent to memory</text>
+      <rect x="646" y="138" width="434" height="34" rx="8" class="reg" style="stroke:var(--teal)"/>
+      <text x="662" y="161" fill="var(--text)" font-size="18">memory read → MDR</text>
+      <rect x="646" y="178" width="434" height="34" rx="8" class="reg" style="stroke:var(--teal)"/>
+      <text x="662" y="201" fill="var(--text)" font-size="18">IR ← [MDR]</text>
+      <rect x="646" y="218" width="434" height="34" rx="8" class="reg" style="stroke:var(--purple)"/>
+      <text x="662" y="241" fill="var(--text)" font-size="18">PC ← PC + 4&#160;&#160;(separate adder, in parallel)</text>
+      <text x="626" y="308" fill="var(--green)" font-size="22" font-weight="800">= 1 clock cycle</text>
+    </g>
+  </svg></div>
+
+  <p class="frag" style="font-size:23px"><b>Same transfers either way</b> — the word still travels <span class="em-p">PC → MAR → memory → MDR → IR</span>. The <b>single shared bus</b> forces those steps into separate clocks; <b>dedicated paths</b> (a memory port + a PC adder) let them overlap and finish in one — <span class="muted">if memory answers in one cycle; a slow memory still stalls.</span></p>
+</section>
+
 <!-- trace a load -->
 <section class="slide" data-ch="Ch 3 · Trace — Load R2, A">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:8px">Trace one instruction: <span class="em-p">Load R2, A</span></h2>
-  <table class="frag" style="font-size:25px; margin-top:6px">
-    <tr><th>Step</th><th>Action</th></tr>
-    <tr class="frag"><td>1 Fetch</td><td>IR ← M[PC]; &nbsp; PC ← PC + 4</td></tr>
-    <tr class="frag"><td>2 Decode</td><td>recognise Load; read base register</td></tr>
-    <tr class="frag"><td>3 Compute</td><td>RZ ← address of A (via ALU)</td></tr>
-    <tr class="frag"><td>4 Memory</td><td>RY ← M[RZ] &nbsp;— the value of A</td></tr>
-    <tr class="frag"><td>5 Write-back</td><td>R2 ← [RY]</td></tr>
+  <h2 style="margin-bottom:4px">Trace one instruction: <span class="em-p">Load R2, A</span></h2>
+  <!-- foothold: read the instruction in words first, then unfold it into hardware beats -->
+  <p class="foothold" style="margin-bottom:8px"><span class="lbl">Read it as ·</span> &ldquo;Load into register <b>R2</b> the value stored at memory location <b>A</b>.&rdquo; Five beats turn that one line into hardware — each row shows the <b>register transfers</b>, then what they mean in plain words.</p>
+
+  <!-- three columns: the beat · the exact register transfers (RTN) · a plain-English gloss for scaffolding -->
+  <table class="frag" style="font-size:19px; margin-top:2px; width:100%; table-layout:fixed">
+    <tr>
+      <th style="width:118px">Step</th>
+      <th style="width:430px">Register transfers</th>
+      <th style="text-align:left">In plain words</th>
+    </tr>
+    <tr class="frag">
+      <td class="em-g"><b>1 Fetch</b></td>
+      <td style="font-size:18px">MAR ← [PC];&nbsp; MDR ← M[MAR];<br>IR ← [MDR];&nbsp; PC ← PC + 4</td>
+      <td style="text-align:left">Use the PC as the address, bring the instruction word back <b>through MDR</b> into IR so the control unit can read it. Bump PC to the next instruction.</td>
+    </tr>
+    <tr class="frag">
+      <td class="em-t"><b>2 Decode</b></td>
+      <td style="font-size:18px">control reads opcode in IR &rarr; &ldquo;Load&rdquo;;<br>read any source register named</td>
+      <td style="text-align:left">The control unit works out <em>which</em> operation this is, and reads out any register the instruction names. <span class="muted">Our <b>A</b> is a full address written in the instruction, so nothing is read from a base register here — see below.</span></td>
+    </tr>
+    <tr class="frag">
+      <td class="em-y"><b>3 Compute</b></td>
+      <td style="font-size:18px"><span class="muted">— no ALU work</span></td>
+      <td style="text-align:left">This is an <b>absolute</b> load: the address <b>A</b> is already written in the instruction, so the ALU has <b>nothing to compute</b> here. <span class="muted">(An indexed load <em>would</em> use the ALU — next slide.)</span></td>
+    </tr>
+    <tr class="frag">
+      <td class="em-o"><b>4 Memory</b></td>
+      <td style="font-size:18px">MAR ← A;&nbsp; MDR ← M[MAR];<br>RY ← [MDR]</td>
+      <td style="text-align:left">The address <b>A</b> goes straight to <b>MAR</b>; the <b>value of A</b> comes back <b>through MDR</b> and is latched in <b>RY</b>, ready for the last step.</td>
+    </tr>
+    <tr class="frag">
+      <td class="em-p"><b>5 Write-back</b></td>
+      <td style="font-size:18px">R2 ← [RY]</td>
+      <td style="text-align:left">Copy the fetched value from RY into the destination register. <b>R2 now holds [A].</b></td>
+    </tr>
   </table>
-  <p class="frag" style="margin-top:12px; font-size:24px">One assembly line → five ordered hardware steps, each one clock beat.</p>
+
+  <!-- the confusing bit made explicit: what a base register is, and why THIS load has none -->
+  <div class="card tint-teal frag" style="margin-top:14px; padding:12px 22px">
+    <p style="font-size:20px; line-height:1.4"><b class="em-t">What is a &ldquo;base register&rdquo;?</b> A register that holds a <b>starting address</b>. In an addressing mode like <span class="em-p">Load R2, 20(R5)</span>, R5 is the <b>base</b> and 20 the <b>offset</b>; step 3&rsquo;s ALU adds them: effective address = <span class="em-y">[R5] + 20</span>. &nbsp;Our <span class="em-p">Load R2, A</span> uses <b>absolute addressing</b> — A is the whole address, already in the instruction — so no base register is added and <b>the ALU does no address calculation at all</b> (the Compute beat is idle).</p>
+  </div>
+
+  <p class="frag" style="margin-top:10px; font-size:22px">One assembly line &rarr; five ordered hardware steps, each one clock beat.</p>
+</section>
+
+<!-- effective address = base + offset : the case the absolute-address trace never exercised -->
+<section class="slide" data-ch="Ch 3 · Effective address — base + offset">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">When A isn&rsquo;t the address: <span class="em-a">effective address = base + offset</span></h2>
+  <!-- foothold: contrast with the previous (absolute) trace; here the base register and the ALU-add finally do real work -->
+  <p class="foothold" style="margin-bottom:6px"><span class="lbl">Why a second example ·</span> Last slide, <span class="em-p">A</span> was the <em>whole</em> address (absolute) &mdash; so nothing was read from a base register. More often the address lives <b>in a register</b> (a <b>base</b>) and the instruction adds an <b>offset</b>. Now Step&nbsp;2&rsquo;s &ldquo;read base register&rdquo; and Step&nbsp;3&rsquo;s ALU-add finally do real work.</p>
+
+  <!-- the instruction under trace, read in words -->
+  <p class="frag" style="font-size:24px; margin:2px 0 6px"><span class="em-p"><b>Load R5, 20(R7)</b></span> &nbsp;=&nbsp; &ldquo;Load into <b>R5</b> the value stored at address <span class="em-g">( [R7] + 20 )</span>.&rdquo; &nbsp;<span class="muted">Here R7 = 1000 (base), offset = 20.</span></p>
+
+  <!-- worked diagram: (1) compute the address in the ALU, (2) read memory & write back -->
+  <div class="animwrap" style="min-height:250px"><svg viewBox="0 0 1150 270" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="u2ea" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--muted)"/></marker>
+      <marker id="u2eag" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker>
+    </defs>
+
+    <!-- ROW A : address computation -->
+    <text x="40" y="24" fill="var(--accent)" font-size="18" font-weight="800">Step 3 · the ALU computes the address</text>
+    <!-- base register R7 -->
+    <rect x="40" y="38" width="168" height="66" rx="10" class="reg" style="stroke:var(--teal)"/>
+    <text x="124" y="66" text-anchor="middle" fill="var(--teal)" font-size="22" font-weight="800">[R7] = 1000</text>
+    <text x="124" y="90" text-anchor="middle" fill="var(--muted)" font-size="16">base register</text>
+    <!-- plus -->
+    <text x="228" y="80" text-anchor="middle" fill="var(--yellow)" font-size="34" font-weight="800">+</text>
+    <!-- offset -->
+    <rect x="252" y="46" width="130" height="50" rx="10" class="reg" style="stroke:var(--yellow)"/>
+    <text x="317" y="70" text-anchor="middle" fill="var(--yellow)" font-size="21" font-weight="800">offset 20</text>
+    <text x="317" y="90" text-anchor="middle" fill="var(--muted)" font-size="14">from the instruction</text>
+    <!-- arrows into ALU -->
+    <path d="M 208 71 L 452 63" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2ea)"/>
+    <path d="M 384 78 L 452 82" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2ea)"/>
+    <!-- ALU -->
+    <polygon points="470,40 560,62 560,92 470,114" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/>
+    <text x="505" y="82" text-anchor="middle" fill="var(--accent)" font-size="20" font-weight="800">ALU +</text>
+    <!-- EA result -->
+    <path d="M 560 77 L 612 77" stroke="var(--green)" stroke-width="3" marker-end="url(#u2eag)"/>
+    <rect x="620" y="40" width="240" height="72" rx="10" class="reg" style="stroke:var(--green)"/>
+    <text x="740" y="70" text-anchor="middle" fill="var(--green)" font-size="24" font-weight="800">EA = 1020</text>
+    <text x="740" y="96" text-anchor="middle" fill="var(--muted)" font-size="16">RZ &larr; [R7] + 20 = 1000 + 20</text>
+
+    <!-- ROW B : memory read + write-back -->
+    <text x="40" y="158" fill="var(--accent)" font-size="18" font-weight="800">Steps 4&ndash;5 · read memory (through MDR), write back</text>
+    <!-- address into memory -->
+    <rect x="40" y="172" width="150" height="58" rx="10" class="reg" style="stroke:var(--green)"/>
+    <text x="115" y="207" text-anchor="middle" fill="var(--green)" font-size="20" font-weight="800">addr 1020</text>
+    <path d="M 190 201 L 250 201" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2ea)"/>
+    <!-- memory strip -->
+    <text x="258" y="168" fill="var(--muted)" font-size="15">memory</text>
+    <rect x="258" y="174" width="118" height="54" class="reg" style="stroke:var(--border)"/>
+    <text x="317" y="196" text-anchor="middle" fill="var(--muted)" font-size="15">1016</text>
+    <text x="317" y="218" text-anchor="middle" fill="var(--muted)" font-size="18">&hellip;</text>
+    <rect x="376" y="174" width="118" height="54" style="fill:#3FB95026; stroke:var(--green); stroke-width:3"/>
+    <text x="435" y="196" text-anchor="middle" fill="var(--muted)" font-size="15">1020</text>
+    <text x="435" y="219" text-anchor="middle" fill="var(--green)" font-size="22" font-weight="800">8</text>
+    <rect x="494" y="174" width="118" height="54" class="reg" style="stroke:var(--border)"/>
+    <text x="553" y="196" text-anchor="middle" fill="var(--muted)" font-size="15">1024</text>
+    <text x="553" y="218" text-anchor="middle" fill="var(--muted)" font-size="18">&hellip;</text>
+    <!-- value travels through MDR to R5 -->
+    <path d="M 612 201 L 812 201" stroke="var(--green)" stroke-width="3" marker-end="url(#u2eag)"/>
+    <text x="712" y="192" text-anchor="middle" fill="var(--muted)" font-size="15">value 8 &rarr; MDR &rarr; RY</text>
+    <rect x="820" y="172" width="160" height="58" rx="10" class="reg" style="stroke:var(--purple)"/>
+    <text x="900" y="207" text-anchor="middle" fill="var(--purple)" font-size="22" font-weight="800">R5 = 8</text>
+  </svg></div>
+
+  <!-- the take-away, made memorable and bright for the projector -->
+  <div class="card tint-green frag" style="margin-top:10px; padding:12px 22px">
+    <p style="font-size:21px; line-height:1.4"><b class="em-g">Commit to memory:</b> the <b>effective address</b> is what the ALU builds in the <b>Compute</b> beat &mdash; <span class="em-y">effective address = [base register] + offset</span>. Step&nbsp;2 reads the base (R7) out of the register file; Step&nbsp;3 adds the offset. <b>Absolute addressing is just the special case</b> where the instruction already carries the full address, so no register is added.</p>
+  </div>
+  <p class="frag" style="margin-top:8px; font-size:20px"><span class="muted">Why it matters:</span> this is how you walk an <b>array</b> &mdash; keep the array&rsquo;s start in the base register, change only the offset to reach each element &mdash; and how code stays <b>relocatable</b>.</p>
+</section>
+
+<!-- WHY RY + MuxY : the write-back merge, drawn -->
+<section class="slide" data-ch="Ch 3 · Why RY and the multiplexer">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Why <span class="em-p">RY</span> and that little <span class="em-a">multiplexer</span>?</h2>
+  <!-- the tension that forces the design: two result sources, one write port -->
+  <p class="foothold" style="margin-bottom:6px"><span class="lbl">The tension ·</span> Two different instructions must write a register &mdash; <span class="em-y">Add</span> makes its value in the <b>ALU</b>, <span class="em-o">Load</span> brings it from <b>memory</b>. But the register file has only <b>one write port</b>. How do both reach it? <em>They merge.</em></p>
+
+  <div class="animwrap" style="min-height:240px"><svg viewBox="0 0 1150 246" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="u2ry" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--muted)"/></marker>
+      <marker id="u2ryp" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker>
+    </defs>
+
+    <!-- source 1 : ALU result -->
+    <rect x="24" y="26" width="256" height="66" rx="10" class="reg" style="stroke:var(--yellow)"/>
+    <text x="152" y="55" text-anchor="middle" fill="var(--yellow)" font-size="21" font-weight="800">ALU result &rarr; RZ</text>
+    <text x="152" y="79" text-anchor="middle" fill="var(--muted)" font-size="15">arithmetic, e.g. Add R4, R2, R3</text>
+
+    <!-- source 2 : memory data -->
+    <rect x="24" y="150" width="256" height="66" rx="10" class="reg" style="stroke:var(--orange)"/>
+    <text x="152" y="179" text-anchor="middle" fill="var(--orange)" font-size="21" font-weight="800">Memory data &rarr; MDR</text>
+    <text x="152" y="203" text-anchor="middle" fill="var(--muted)" font-size="15">a load, e.g. Load R2, A</text>
+
+    <!-- arrows converging on the mux -->
+    <path d="M 280 59 L 392 96" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2ry)"/>
+    <path d="M 280 183 L 392 150" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2ry)"/>
+
+    <!-- multiplexer (trapezoid: wide inputs on the left, single output on the right) -->
+    <polygon points="398,78 470,104 470,142 398,168" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/>
+    <text x="426" y="119" text-anchor="middle" fill="var(--accent)" font-size="17" font-weight="800">Mux</text>
+    <text x="426" y="137" text-anchor="middle" fill="var(--accent)" font-size="17" font-weight="800">Y</text>
+    <!-- select control line -->
+    <path d="M 434 40 L 434 76" stroke="var(--teal)" stroke-width="2.5" marker-end="url(#u2ry)"/>
+    <text x="446" y="34" fill="var(--teal)" font-size="15">select &mdash; set by the decoded instruction</text>
+
+    <!-- output into RY -->
+    <path d="M 470 123 L 528 123" stroke="var(--purple)" stroke-width="3" marker-end="url(#u2ryp)"/>
+    <rect x="536" y="92" width="150" height="62" rx="10" class="reg" style="stroke:var(--purple)"/>
+    <text x="611" y="120" text-anchor="middle" fill="var(--purple)" font-size="24" font-weight="800">RY</text>
+    <text x="611" y="142" text-anchor="middle" fill="var(--muted)" font-size="14">value to write back</text>
+
+    <!-- RY into the register file's single write port -->
+    <path d="M 686 123 L 744 123" stroke="var(--purple)" stroke-width="3" marker-end="url(#u2ryp)"/>
+    <rect x="752" y="86" width="304" height="74" rx="10" class="reg" style="stroke:var(--teal)"/>
+    <text x="904" y="118" text-anchor="middle" fill="var(--teal)" font-size="21" font-weight="800">Register file</text>
+    <text x="904" y="144" text-anchor="middle" fill="var(--muted)" font-size="15">just ONE write port (in C)</text>
+  </svg></div>
+
+  <!-- the three reasons, as bright cards -->
+  <div class="row" style="margin-top:6px">
+    <div class="card tint-purple frag"><h3 style="font-size:23px">One uniform path</h3><p style="font-size:19px">Every instruction&rsquo;s write-back is just <b>RY &rarr; destination register</b>. The last beat never has to know where the value came from.</p></div>
+    <div class="card tint-teal frag"><h3 style="font-size:23px">The mux is the chooser</h3><p style="font-size:19px">It picks the <span class="em-y">ALU result</span> for arithmetic, the <span class="em-o">memory data</span> for a load. <b>RY holds the winner.</b></p></div>
+    <div class="card tint-yellow frag"><h3 style="font-size:23px">RY latches the beat</h3><p style="font-size:19px">RY also holds the value steady across the clock edge between the <b>Memory</b> beat and the <b>Write-back</b> beat, so each stage hands its result cleanly to the next.</p></div>
+  </div>
+
+  <p class="frag" style="margin-top:8px; font-size:20px"><span class="muted">Connect back:</span> on the <b>single-bus machine</b> (Unit 1) there is no MuxY or RY &mdash; the shared bus carries <b>MDR &rarr; register</b> directly, one transfer at a time. RY exists <em>only</em> because this datapath splits work into five fixed one-clock stages.</p>
 </section>
 
 <!-- trace whole program (ask) -->
@@ -1359,6 +1681,152 @@
 </section>
 
 <!-- commit -->
+<!-- ===== SEQUENTIAL WALKTHROUGH of C = A + B (one Load made indexed so the ALU computes an address) ===== -->
+<style>
+  /* scoped helpers for the sequential-execution grid */
+  .u2np{border-collapse:collapse; width:100%; table-layout:fixed; margin-top:6px}
+  .u2np th,.u2np td{border:1px solid var(--border); padding:5px 8px; font-size:13px;
+    text-align:left; vertical-align:top; line-height:1.24; color:var(--text)}
+  .u2np th{color:var(--accent); text-align:center; font-size:14px; text-transform:uppercase; letter-spacing:.4px}
+  .u2np td.instr{font-family:ui-monospace,Consolas,monospace; font-weight:800; font-size:14px; white-space:nowrap; color:var(--text)}
+  .u2np td.instr small{display:block; font-family:'Segoe UI',sans-serif; font-weight:600; color:var(--muted); font-size:12px}
+  .u2np .rtn{font-family:ui-monospace,Consolas,monospace}
+  .u2np .bt{display:inline-block; min-width:15px; text-align:center; background:var(--accentGlow);
+    color:#fff; border-radius:4px; padding:0 4px; font-size:11px; font-weight:800; margin-right:4px}
+  .u2np td.alu{background:#D2992226}                 /* ALU is busy this beat  */
+  .u2np td.alu .rtn{color:var(--yellow); font-weight:800}
+  .u2np td.idle{color:var(--muted); opacity:.55; text-align:center; font-style:italic}
+</style>
+<section class="slide" data-ch="Ch 3 · Run the program — one beat at a time">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:2px">Run <span class="em-p">C = A + B</span> <span class="em-a">one beat at a time</span></h2>
+  <p class="foothold" style="margin-bottom:4px"><span class="lbl">The rule here ·</span> each instruction walks <b>all five phases</b> before the next one&rsquo;s Fetch begins &mdash; nothing overlaps. Read the grid <b>beat by beat</b>, left&rarr;right then top&rarr;bottom; the small blue number is the clock beat. Fetch always runs the same <b>MAR&rarr;MDR&rarr;IR</b> chain. Only the <span class="em-y">indexed</span> load and the Add give the <b>ALU</b> real work in Compute &mdash; the two <b>absolute</b> ops have nothing to compute.</p>
+
+  <table class="u2np">
+    <tr><th style="width:150px">Instruction</th><th>&#9312; Fetch</th><th>&#9313; Decode</th><th>&#9314; Compute</th><th>&#9315; Memory</th><th>&#9316; Write-back</th></tr>
+
+    <tr class="frag">
+      <td class="instr">Load R2, A<small>absolute</small></td>
+      <td><span class="bt">1</span><span class="rtn">MAR&larr;[PC];<br>MDR&larr;M[MAR];<br>IR&larr;[MDR];<br>PC+=4</span></td>
+      <td><span class="bt">2</span><span class="rtn">decode Load;<br>dest = R2</span></td>
+      <td class="idle"><span class="bt">3</span>&mdash; no ALU work<br><small>A is already the address</small></td>
+      <td><span class="bt">4</span><span class="rtn">MAR&larr;A;<br>MDR&larr;M[MAR];<br>RY&larr;[MDR]</span></td>
+      <td><span class="bt">5</span><span class="rtn">R2&larr;[RY]</span></td>
+    </tr>
+
+    <tr class="frag">
+      <td class="instr">Load R3, 4(R7)<small>indexed &#9733;</small></td>
+      <td><span class="bt">6</span><span class="rtn">MAR&larr;[PC];<br>MDR&larr;M[MAR];<br>IR&larr;[MDR];<br>PC+=4</span></td>
+      <td><span class="bt">7</span><span class="rtn">RA&larr;[R7];<br>dest = R3</span></td>
+      <td class="alu"><span class="bt">8</span><span class="rtn">RZ&larr;[RA]+4<br>&laquo;ALU adds&raquo;</span></td>
+      <td><span class="bt">9</span><span class="rtn">MAR&larr;[RZ];<br>MDR&larr;M[MAR];<br>RY&larr;[MDR]</span></td>
+      <td><span class="bt">10</span><span class="rtn">R3&larr;[RY]</span></td>
+    </tr>
+
+    <tr class="frag">
+      <td class="instr">Add R4, R2, R3<small>register&ndash;register</small></td>
+      <td><span class="bt">11</span><span class="rtn">MAR&larr;[PC];<br>MDR&larr;M[MAR];<br>IR&larr;[MDR];<br>PC+=4</span></td>
+      <td><span class="bt">12</span><span class="rtn">RA&larr;[R2];<br>RB&larr;[R3];<br>dest = R4</span></td>
+      <td class="alu"><span class="bt">13</span><span class="rtn">RZ&larr;[RA]+[RB]</span></td>
+      <td><span class="bt">14</span><span class="rtn">RY&larr;[RZ]<br><small style="color:var(--muted)">no memory</small></span></td>
+      <td><span class="bt">15</span><span class="rtn">R4&larr;[RY]</span></td>
+    </tr>
+
+    <tr class="frag">
+      <td class="instr">Store R4, C<small>absolute</small></td>
+      <td><span class="bt">16</span><span class="rtn">MAR&larr;[PC];<br>MDR&larr;M[MAR];<br>IR&larr;[MDR];<br>PC+=4</span></td>
+      <td><span class="bt">17</span><span class="rtn">RM&larr;[R4];<br>addr = C</span></td>
+      <td class="idle"><span class="bt">18</span>&mdash; no ALU work<br><small>C is already the address</small></td>
+      <td><span class="bt">19</span><span class="rtn">MAR&larr;C;<br>MDR&larr;[RM];<br>M[MAR]&larr;[MDR]</span></td>
+      <td class="idle"><span class="bt">20</span>&mdash; idle</td>
+    </tr>
+  </table>
+
+  <p class="frag" style="margin-top:10px; font-size:20px">Beat <b>6</b> (load-2&rsquo;s Fetch) starts only after beat <b>5</b> (load-1&rsquo;s Write-back) &mdash; <b>no overlap</b>. Four instructions &times; five phases = <span class="em-o"><b>20 clock beats</b></span>. <span class="muted">Every instruction waits for the one before it to finish — a steady, predictable rhythm.</span></p>
+  <p class="frag" style="margin-top:14px"><a href="NonPipelined_Simulator.html" target="_blank" style="display:inline-block; text-decoration:none; font-size:21px; font-weight:800; color:#0D1117; background:var(--accent); border-radius:12px; padding:11px 22px">&#9654;&nbsp; Open the interactive datapath simulator</a> &nbsp;<span class="muted" style="font-size:17px">— step all 20 beats and watch the data flow live</span></p>
+</section>
+
+<!-- ===== DATAPATH WALK of the indexed load : the ALU builds the address, pictorially ===== -->
+<section class="slide" data-ch="Ch 3 · Datapath walk — indexed load">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:2px">Watch one instruction cross the datapath: <span class="em-p">Load R3, 4(R7)</span></h2>
+  <p class="foothold" style="margin-bottom:4px"><span class="lbl">Follow the numbers ·</span> the same five phases, now drawn on the datapath. &#9314; is the star &mdash; the <b>ALU adds base + offset</b> to build the address, the very same adder that does arithmetic. Every instruction crosses this path the same way, one after another.</p>
+
+  <div class="animwrap" style="min-height:280px"><svg viewBox="0 0 1150 296" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <marker id="u2w" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--muted)"/></marker>
+      <marker id="u2wt" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--teal)"/></marker>
+      <marker id="u2wg" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker>
+    </defs>
+
+    <!-- (1) FETCH strip on top -->
+    <rect x="36" y="26" width="1078" height="40" rx="8" style="fill:#3FB95012; stroke:var(--green)"/>
+    <circle cx="60" cy="46" r="13" style="fill:none; stroke:var(--green); stroke-width:2"/><text x="60" y="52" text-anchor="middle" fill="var(--green)" font-size="16" font-weight="800">1</text>
+    <text x="86" y="52" fill="var(--green)" font-size="16" font-weight="700">Fetch &mdash; bring the instruction into IR:&nbsp; MAR &larr; [PC];&nbsp; MDR &larr; M[MAR];&nbsp; IR &larr; [MDR];&nbsp; PC += 4</text>
+
+    <!-- write-back label along the top of the datapath -->
+    <text x="470" y="98" fill="var(--teal)" font-size="15" font-weight="700">&#9316; Write-back &mdash; R3 &larr; [RY]</text>
+
+    <!-- Register file -->
+    <rect x="36" y="120" width="160" height="96" rx="12" class="reg" style="stroke:var(--teal)"/>
+    <text x="116" y="158" text-anchor="middle" fill="var(--teal)" font-size="18" font-weight="800">Register file</text>
+    <text x="116" y="182" text-anchor="middle" fill="var(--muted)" font-size="13">reads R7 &middot; writes R3</text>
+    <circle cx="48" cy="112" r="12" style="fill:none; stroke:var(--purple); stroke-width:2"/><text x="48" y="117" text-anchor="middle" fill="var(--purple)" font-size="14" font-weight="800">2</text>
+
+    <!-- reg file -> RA -->
+    <path d="M 196 142 L 262 140" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2w)"/>
+    <rect x="266" y="120" width="80" height="42" rx="8" class="reg" style="stroke:var(--purple)"/>
+    <text x="306" y="147" text-anchor="middle" fill="var(--purple)" font-size="19" font-weight="800">RA</text>
+    <text x="306" y="178" text-anchor="middle" fill="var(--muted)" font-size="13">&larr; [R7]  (base)</text>
+
+    <!-- offset -->
+    <rect x="266" y="204" width="120" height="40" rx="8" class="reg" style="stroke:var(--yellow)"/>
+    <text x="326" y="230" text-anchor="middle" fill="var(--yellow)" font-size="17" font-weight="800">offset = 4</text>
+
+    <!-- ALU -->
+    <polygon points="412,116 500,146 500,184 412,214" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/>
+    <text x="450" y="170" text-anchor="middle" fill="var(--accent)" font-size="18" font-weight="800">ALU +</text>
+    <circle cx="412" cy="104" r="13" style="fill:none; stroke:var(--yellow); stroke-width:2.5"/><text x="412" y="110" text-anchor="middle" fill="var(--yellow)" font-size="15" font-weight="800">3</text>
+    <path d="M 346 141 L 410 148" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2w)"/>
+    <path d="M 386 224 L 410 194" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2w)"/>
+
+    <!-- ALU -> RZ -->
+    <path d="M 500 165 L 542 160" stroke="var(--green)" stroke-width="3" marker-end="url(#u2wg)"/>
+    <text x="510" y="126" fill="var(--green)" font-size="13" font-weight="700">EA = [R7]+4 = 1020</text>
+    <rect x="546" y="140" width="66" height="42" rx="8" class="reg" style="stroke:var(--purple)"/>
+    <text x="579" y="167" text-anchor="middle" fill="var(--purple)" font-size="18" font-weight="800">RZ</text>
+
+    <!-- RZ -> MAR : the address always parks in MAR before memory (same as fetch) -->
+    <path d="M 612 161 L 646 161" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2w)"/>
+    <rect x="650" y="140" width="72" height="42" rx="8" class="reg" style="stroke:var(--purple)"/>
+    <text x="686" y="167" text-anchor="middle" fill="var(--purple)" font-size="17" font-weight="800">MAR</text>
+
+    <!-- MAR -> Memory -->
+    <path d="M 722 158 L 758 150" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2w)"/>
+    <text x="724" y="134" fill="var(--muted)" font-size="12">address</text>
+    <rect x="762" y="120" width="130" height="56" rx="10" class="reg" style="stroke:var(--border)"/>
+    <text x="827" y="153" text-anchor="middle" fill="var(--text)" font-size="18" font-weight="800">Memory</text>
+    <circle cx="762" cy="110" r="13" style="fill:none; stroke:var(--orange); stroke-width:2.5"/><text x="762" y="116" text-anchor="middle" fill="var(--orange)" font-size="15" font-weight="800">4</text>
+
+    <!-- Memory -> MDR -->
+    <path d="M 827 176 L 827 200" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2w)"/>
+    <text x="836" y="196" fill="var(--muted)" font-size="12">data (=3)</text>
+    <rect x="782" y="210" width="90" height="40" rx="8" class="reg" style="stroke:var(--purple)"/>
+    <text x="827" y="236" text-anchor="middle" fill="var(--purple)" font-size="17" font-weight="800">MDR</text>
+
+    <!-- MDR -> RY -->
+    <path d="M 872 230 L 926 230" stroke="var(--muted)" stroke-width="2.5" marker-end="url(#u2w)"/>
+    <rect x="932" y="210" width="76" height="40" rx="8" class="reg" style="stroke:var(--purple)"/>
+    <text x="970" y="236" text-anchor="middle" fill="var(--purple)" font-size="18" font-weight="800">RY</text>
+    <circle cx="1020" cy="222" r="13" style="fill:none; stroke:var(--teal); stroke-width:2.5"/><text x="1020" y="228" text-anchor="middle" fill="var(--teal)" font-size="15" font-weight="800">5</text>
+
+    <!-- RY -> register file (write-back curve) -->
+    <path d="M 970 210 C 970 100, 116 96, 116 118" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2wt)"/>
+  </svg></div>
+
+  <p class="frag" style="margin-top:6px; font-size:20px"><span class="em-y">&#9314; is the beat that matters:</span> the ALU adds <b>[R7] + 4</b> to form the effective address in RZ &mdash; the <em>same adder</em> that computes <span class="rtn">[RA]+[RB]</span> for an Add. Absolute loads skip this add; the address is already in the instruction.</p>
+</section>
+
 <section class="slide memslide" data-ch="Ch 3 · Commit to memory">
   <div class="mhead"><div class="micon">🧠</div>
     <div><div class="mtitle">Get this into your memory</div>
