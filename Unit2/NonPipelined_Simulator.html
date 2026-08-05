@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<!--
+  NON-PIPELINED DATAPATH SIMULATOR  ·  COA Unit 2  (C = A + B)
+  ------------------------------------------------------------------
+  Teaching tool: steps the program C = A + B through the five-stage
+  datapath ONE PHASE AT A TIME, with NO overlap between instructions
+  (instruction k+1 fetches only after instruction k writes back).
+
+  It deliberately mixes two addressing modes so both paths are visible:
+    Load  R2, A        -> ABSOLUTE : address A is in the instruction,
+                                     so the ALU/Compute beat is IDLE.
+    Load  R3, 4(R7)    -> INDEXED  : the ALU computes  [R7] + 4  = EA.
+
+  HOW THE PIECES FIT TOGETHER
+  ---------------------------
+  * The SVG below IS the datapath. Every register is a <g class="node">
+    with a live value (<text class="val">), every wire is a <path class="wire">.
+  * steps[]  is the whole 20-beat script. Each entry says which nodes glow,
+    which wires carry data (animated), and which register values change.
+  * render(k) paints beat k: it recomputes the machine state from beat 0..k,
+    lights the active nodes/wires, drops value "bubbles" on the moving data,
+    and updates the side panels (program, phases, registers, memory, RTN).
+  Nothing here runs concurrently — that is the point of "non-pipelined".
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Non-pipelined datapath simulator — C = A + B</title>
+<style>
+  :root{
+    --bg:#0D1117; --panel:#111722; --card:#161B22;
+    --text:#F5F8FC; --muted:#C9D4E1; --border:#5A6472;
+    --accent:#58A6FF; --teal:#56D4DD; --purple:#D2A8FF;
+    --green:#56D364; --yellow:#F2C94C; --orange:#F0883E; --red:#FF7B72;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{background:var(--bg); color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif; height:100%}
+  body{display:flex; flex-direction:column; padding:14px 18px; gap:10px}
+
+  /* ---- top bar ---- */
+  .top{display:flex; align-items:center; gap:18px; flex-wrap:wrap}
+  .top h1{font-size:22px; font-weight:800}
+  .top h1 small{color:var(--muted); font-weight:600; font-size:15px}
+  .beat{margin-left:auto; font-size:20px; font-weight:800; color:var(--yellow);
+    background:#D2992218; border:1.5px solid var(--yellow); border-radius:10px; padding:4px 14px}
+  .phaserow{display:flex; gap:8px}
+  .chip{font-size:13px; font-weight:800; letter-spacing:.4px; padding:5px 12px;
+    border-radius:999px; border:1.5px solid var(--border); color:var(--muted); background:#1b2432}
+  .chip.on{color:#0D1117; background:var(--accent); border-color:var(--accent)}
+  .chip.idle.on{background:var(--muted); border-color:var(--muted)}
+
+  /* ---- main layout ---- */
+  .main{display:flex; gap:14px; flex:1; min-height:0}
+  .stage{flex:1; background:var(--panel); border:1px solid #223; border-radius:14px; padding:8px; min-width:0}
+  .stage svg{width:100%; height:100%; display:block}
+  .side{width:330px; display:flex; flex-direction:column; gap:10px; overflow:auto}
+
+  .box{background:var(--card); border:1px solid #263; border-radius:12px; padding:10px 12px}
+  .box h2{font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--accent); margin-bottom:8px}
+
+  /* program listing */
+  .prog{font-family:ui-monospace,Consolas,monospace; font-size:14px; line-height:1.5}
+  .prog .ln{display:flex; justify-content:space-between; padding:3px 8px; border-radius:6px; color:var(--muted)}
+  .prog .ln.cur{background:#58A6FF1e; color:var(--text); font-weight:800; box-shadow:inset 0 0 0 1px var(--accent)}
+  .prog .tag{font-size:11px; color:var(--yellow); font-weight:700}
+
+  /* register + memory tables */
+  table{width:100%; border-collapse:collapse; font-family:ui-monospace,Consolas,monospace; font-size:13px}
+  td{padding:3px 6px; border-bottom:1px solid #223}
+  td.k{color:var(--muted)} td.v{color:var(--teal); font-weight:800; text-align:right}
+  tr.hot td.v{color:#fff} tr.hot td{background:#F2C94C22}
+
+  /* micro-op readout */
+  .rtn{font-family:ui-monospace,Consolas,monospace; font-size:15px; line-height:1.6; color:var(--green); font-weight:700}
+  .note{font-size:13.5px; color:var(--muted); line-height:1.4; margin-top:8px}
+
+  /* controls */
+  .ctrls{display:flex; gap:10px; align-items:center}
+  button{font-size:15px; font-weight:800; padding:9px 16px; border-radius:10px; cursor:pointer;
+    border:1.5px solid var(--border); background:#1b2432; color:var(--text)}
+  button:hover{border-color:var(--accent)}
+  button.primary{background:var(--accent); color:#0D1117; border-color:var(--accent)}
+  button:disabled{opacity:.4; cursor:not-allowed}
+  .hint{font-size:12px; color:var(--muted); margin-left:auto}
+
+  /* ---- svg node + wire styling ---- */
+  .node rect{fill:#161B22; stroke:var(--border); stroke-width:2}
+  .node .lbl{font-weight:800; font-size:15px}
+  .node .val{fill:var(--teal); font-weight:800; font-size:14px}
+  .node.on rect{stroke:var(--accent); fill:#12202f; filter:drop-shadow(0 0 7px var(--accent))}
+  .node.on .val{fill:#fff}
+  .node.on polygon{stroke:var(--accent); filter:drop-shadow(0 0 7px var(--accent))}
+  .node.idle polygon{stroke:var(--muted); stroke-dasharray:6 4}
+  .node.idle rect{stroke:var(--muted); stroke-dasharray:6 4; filter:none}
+  .node.idle .lbl{fill:var(--muted)}
+  .wire{stroke:var(--border); stroke-width:2.5; fill:none; opacity:.32}
+  .wire.on{stroke:var(--accent); opacity:1; stroke-width:3.6;
+    stroke-dasharray:9 7; animation:flow .7s linear infinite;
+    filter:drop-shadow(0 0 4px var(--accent))}
+  @keyframes flow{to{stroke-dashoffset:-16}}
+  .bubble{fill:var(--yellow); font-family:ui-monospace,Consolas,monospace; font-weight:800; font-size:14px}
+  .bubble-bg{fill:#0D1117; opacity:.75}
+  /* register-file cells — highlight the one used this phase */
+  .rfcell{fill:#0d1520; stroke:#33415a; stroke-width:1.5}
+  .rfreg .rlbl{fill:var(--muted); font-size:12px; font-weight:800; font-family:ui-monospace,Consolas,monospace}
+  .rfreg .rval{fill:var(--teal); font-size:13px; font-weight:800; font-family:ui-monospace,Consolas,monospace}
+  .rfreg.hot .rfcell{fill:#F2C94C26; stroke:var(--yellow); stroke-width:2; filter:drop-shadow(0 0 5px var(--yellow))}
+  .rfreg.hot .rlbl,.rfreg.hot .rval{fill:#fff}
+  .rfreg.dest .rfcell{fill:#58A6FF1e; stroke:var(--accent); stroke-dasharray:5 3; stroke-width:2}
+  .rfreg.dest .rlbl,.rfreg.dest .rval{fill:var(--accent)}
+  /* memory map panel */
+  table.mem{font-size:13px; font-family:ui-monospace,Consolas,monospace}
+  table.mem td.a{color:var(--muted); text-align:right; width:42px; padding-right:12px; border-bottom:none}
+  table.mem td.c{color:var(--text); border-bottom:none}
+  table.mem .lab{color:var(--yellow); font-weight:800; font-size:11px; margin-left:6px}
+  table.mem tr.gap td{text-align:center; color:var(--border); padding:1px; font-size:15px; letter-spacing:3px}
+  table.mem tr.mrow.hit td{background:#58A6FF2e}
+  table.mem tr.mrow.hit td.a{color:#fff; font-weight:800}
+  table.mem tr.mrow.wr.hit td{background:#F2C94C33}
+  .memtag{font-size:11px;color:var(--muted);margin-bottom:6px}
+</style>
+</head>
+<body>
+
+  <div class="top">
+    <h1>Non-pipelined datapath &nbsp;<small>— running C = A + B, one beat at a time</small></h1>
+    <div class="phaserow" id="phaserow">
+      <span class="chip" data-ph="Fetch">Fetch</span>
+      <span class="chip" data-ph="Decode">Decode</span>
+      <span class="chip" data-ph="Compute">Compute</span>
+      <span class="chip" data-ph="Memory">Memory</span>
+      <span class="chip" data-ph="Write-back">Write-back</span>
+    </div>
+    <div class="beat" id="beat">Beat 0 / 20</div>
+  </div>
+
+  <div class="main">
+    <!-- ============ THE DATAPATH ============ -->
+    <div class="stage">
+      <svg viewBox="0 0 1080 600" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L7,3 L0,6 Z" fill="var(--border)"/>
+          </marker>
+        </defs>
+
+        <!-- ---------- WIRES (drawn first, under the boxes) ---------- -->
+        <path id="w-pc-mar"  class="wire" marker-end="url(#ah)" d="M138,94 L248,94"/>
+        <path id="w-mar-mem" class="wire" marker-end="url(#ah)" d="M348,94 L428,100"/>
+        <path id="w-mem-mdr" class="wire" marker-end="url(#ah)" d="M612,94 L688,94"/>
+        <path id="w-mdr-ir"  class="wire" marker-end="url(#ah)" d="M738,120 L738,150"/>
+        <path id="w-pc-inc"  class="wire" marker-end="url(#ah)" d="M60,120 L60,150 M96,168 C40,168 40,110 46,98"/>
+        <path id="w-ir-ctrl" class="wire" marker-end="url(#ah)" d="M842,172 L878,172"/>
+        <path id="w-rf-ra"   class="wire" marker-end="url(#ah)" d="M232,352 L298,352"/>
+        <path id="w-rf-rb"   class="wire" marker-end="url(#ah)" d="M232,418 L298,418"/>
+        <path id="w-rf-rm"   class="wire" marker-end="url(#ah)" d="M232,342 C430,250 540,300 618,300"/>
+        <path id="w-ra-alu"  class="wire" marker-end="url(#ah)" d="M392,352 L448,372"/>
+        <path id="w-rb-alu"  class="wire" marker-end="url(#ah)" d="M392,418 L448,420"/>
+        <path id="w-off-alu" class="wire" marker-end="url(#ah)" d="M422,486 L448,466"/>
+        <path id="w-alu-rz"  class="wire" marker-end="url(#ah)" d="M562,414 L618,398"/>
+        <path id="w-rz-mar"  class="wire" marker-end="url(#ah)" d="M664,372 C664,235 320,150 298,122"/>
+        <path id="w-imm-mar" class="wire" marker-end="url(#ah)" d="M764,172 C520,205 330,150 300,120"/>
+        <path id="w-rz-muxy"  class="wire" marker-end="url(#ah)" d="M712,395 L810,393"/>
+        <path id="w-mdr-muxy" class="wire" marker-end="url(#ah)" d="M786,104 C872,150 872,300 844,360"/>
+        <path id="w-muxy-ry"  class="wire" marker-end="url(#ah)" d="M856,385 L880,386"/>
+        <path id="w-rm-mdr"  class="wire" marker-end="url(#ah)" d="M660,278 C660,200 668,140 700,120"/>
+        <path id="w-mdr-mem"  class="wire" marker-end="url(#ah)" d="M688,104 L614,104"/>
+        <path id="w-ry-rf"   class="wire" marker-end="url(#ah)" d="M928,410 C928,552 150,552 136,482"/>
+
+        <!-- ---------- NODES ---------- -->
+        <!-- PC -->
+        <g class="node" id="n-PC"><rect x="40" y="70" width="96" height="48" rx="8"/>
+          <text class="lbl" x="88" y="90" text-anchor="middle" fill="var(--teal)">PC</text>
+          <text class="val" id="v-PC" x="88" y="109" text-anchor="middle">0</text></g>
+        <!-- +4 adder -->
+        <g class="node" id="n-ADD4"><rect x="30" y="150" width="60" height="30" rx="8"/>
+          <text class="lbl" x="60" y="170" text-anchor="middle" fill="var(--muted)" font-size="13">+4</text></g>
+        <!-- MAR -->
+        <g class="node" id="n-MAR"><rect x="250" y="70" width="96" height="48" rx="8"/>
+          <text class="lbl" x="298" y="90" text-anchor="middle" fill="var(--purple)">MAR</text>
+          <text class="val" id="v-MAR" x="298" y="109" text-anchor="middle">–</text></g>
+        <!-- Memory -->
+        <g class="node" id="n-MEM"><rect x="430" y="46" width="182" height="120" rx="10"/>
+          <text class="lbl" x="521" y="82" text-anchor="middle" fill="var(--yellow)">Memory</text>
+          <text x="521" y="106" text-anchor="middle" fill="var(--muted)" font-size="11">full map in the panel →</text>
+          <text id="memaccess" x="521" y="134" text-anchor="middle" fill="var(--teal)" font-size="13" font-weight="800" font-family="ui-monospace,Consolas,monospace">idle</text></g>
+        <!-- MDR -->
+        <g class="node" id="n-MDR"><rect x="690" y="70" width="96" height="48" rx="8"/>
+          <text class="lbl" x="738" y="89" text-anchor="middle" fill="var(--purple)">MDR</text>
+          <text class="val" id="v-MDR" x="738" y="108" text-anchor="middle" font-size="12">–</text></g>
+        <!-- IR -->
+        <g class="node" id="n-IR"><rect x="690" y="150" width="150" height="44" rx="8"/>
+          <text class="lbl" x="702" y="177" text-anchor="start" fill="var(--teal)">IR</text>
+          <text class="val" id="v-IR" x="828" y="177" text-anchor="end" font-size="12">–</text></g>
+        <!-- Control -->
+        <g class="node" id="n-CTRL"><rect x="878" y="150" width="160" height="44" rx="8"/>
+          <text class="lbl" x="958" y="177" text-anchor="middle" fill="var(--muted)" font-size="14">Control / decode</text></g>
+
+        <!-- Register file -->
+        <g class="node" id="n-RF"><rect x="40" y="330" width="192" height="152" rx="10"/>
+          <text class="lbl" x="136" y="354" text-anchor="middle" fill="var(--teal)">Register file</text>
+          <g class="rfreg" id="rf-R2"><rect class="rfcell" x="54" y="364" width="78" height="30" rx="5"/>
+            <text class="rlbl" x="62" y="384">R2</text><text class="rval" id="v-R2" x="124" y="384" text-anchor="end">–</text></g>
+          <g class="rfreg" id="rf-R3"><rect class="rfcell" x="140" y="364" width="78" height="30" rx="5"/>
+            <text class="rlbl" x="148" y="384">R3</text><text class="rval" id="v-R3" x="210" y="384" text-anchor="end">–</text></g>
+          <g class="rfreg" id="rf-R4"><rect class="rfcell" x="54" y="400" width="78" height="30" rx="5"/>
+            <text class="rlbl" x="62" y="420">R4</text><text class="rval" id="v-R4" x="124" y="420" text-anchor="end">–</text></g>
+          <g class="rfreg" id="rf-R7"><rect class="rfcell" x="140" y="400" width="78" height="30" rx="5"/>
+            <text class="rlbl" x="148" y="420">R7</text><text class="rval" id="v-R7" x="210" y="420" text-anchor="end">200</text></g>
+          <text x="136" y="450" text-anchor="middle" fill="var(--muted)" font-size="11">read → A,B · write ← C</text></g>
+
+        <!-- RA, RB, offset -->
+        <g class="node" id="n-RA"><rect x="300" y="330" width="92" height="44" rx="8"/>
+          <text class="lbl" x="346" y="350" text-anchor="middle" fill="var(--purple)" font-size="14">RA</text>
+          <text class="val" id="v-RA" x="346" y="368" text-anchor="middle" font-size="13">–</text></g>
+        <g class="node" id="n-RB"><rect x="300" y="396" width="92" height="44" rx="8"/>
+          <text class="lbl" x="346" y="416" text-anchor="middle" fill="var(--purple)" font-size="14">RB</text>
+          <text class="val" id="v-RB" x="346" y="434" text-anchor="middle" font-size="13">–</text></g>
+        <g class="node" id="n-OFF"><rect x="300" y="462" width="120" height="40" rx="8"/>
+          <text class="lbl" x="360" y="487" text-anchor="middle" fill="var(--yellow)" font-size="13">offset 4</text></g>
+
+        <!-- ALU -->
+        <g class="node" id="n-ALU">
+          <polygon points="448,336 560,374 560,452 448,490" fill="#161B22" stroke="var(--border)" stroke-width="2"/>
+          <text class="lbl" x="497" y="418" text-anchor="middle" fill="var(--accent)" font-size="16">ALU</text></g>
+
+        <!-- RZ, RM, MuxY, RY -->
+        <g class="node" id="n-RZ"><rect x="620" y="372" width="92" height="44" rx="8"/>
+          <text class="lbl" x="666" y="392" text-anchor="middle" fill="var(--purple)" font-size="14">RZ</text>
+          <text class="val" id="v-RZ" x="666" y="410" text-anchor="middle" font-size="13">–</text></g>
+        <g class="node" id="n-RM"><rect x="620" y="278" width="92" height="44" rx="8"/>
+          <text class="lbl" x="666" y="298" text-anchor="middle" fill="var(--purple)" font-size="14">RM</text>
+          <text class="val" id="v-RM" x="666" y="316" text-anchor="middle" font-size="13">–</text></g>
+        <g class="node" id="n-MUXY">
+          <polygon points="812,360 812,410 856,398 856,372" fill="#161B22" stroke="var(--border)" stroke-width="2"/>
+          <text class="lbl" x="831" y="390" text-anchor="middle" fill="var(--muted)" font-size="11">MuxY</text></g>
+        <g class="node" id="n-RY"><rect x="882" y="364" width="92" height="46" rx="8"/>
+          <text class="lbl" x="928" y="384" text-anchor="middle" fill="var(--purple)" font-size="14">RY</text>
+          <text class="val" id="v-RY" x="928" y="402" text-anchor="middle" font-size="13">–</text></g>
+
+        <!-- moving-value bubbles get injected here -->
+        <g id="bubbles"></g>
+      </svg>
+    </div>
+
+    <!-- ============ SIDE PANELS ============ -->
+    <div class="side">
+      <div class="box">
+        <h2>Program</h2>
+        <div class="prog" id="prog">
+          <div class="ln" data-ins="0"><span>0:&nbsp; Load&nbsp; R2, A</span><span class="tag">absolute</span></div>
+          <div class="ln" data-ins="1"><span>4:&nbsp; Load&nbsp; R3, 4(R7)</span><span class="tag">indexed ★</span></div>
+          <div class="ln" data-ins="2"><span>8:&nbsp; Add&nbsp;&nbsp; R4, R2, R3</span><span class="tag">reg–reg</span></div>
+          <div class="ln" data-ins="3"><span>12: Store R4, C</span><span class="tag">absolute</span></div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px;font-family:ui-monospace,Consolas,monospace">A=5 · B=3 · R7=200 → C = 8</div>
+      </div>
+
+      <div class="box">
+        <h2>Memory</h2>
+        <div class="memtag">addresses climb top→bottom · ⋮ = many locations in between</div>
+        <table class="mem">
+          <tr class="mrow" data-addr="0"><td class="a">0</td><td class="c">Load&nbsp; R2, A</td></tr>
+          <tr class="mrow" data-addr="4"><td class="a">4</td><td class="c">Load&nbsp; R3, 4(R7)</td></tr>
+          <tr class="mrow" data-addr="8"><td class="a">8</td><td class="c">Add&nbsp;&nbsp; R4, R2, R3</td></tr>
+          <tr class="mrow" data-addr="12"><td class="a">12</td><td class="c">Store R4, C</td></tr>
+          <tr class="gap"><td colspan="2">⋮</td></tr>
+          <tr class="mrow" data-addr="100"><td class="a">100</td><td class="c">5<span class="lab">A</span></td></tr>
+          <tr class="gap"><td colspan="2">⋮</td></tr>
+          <tr class="mrow" data-addr="108"><td class="a">108</td><td class="c"><span id="m-108">–</span><span class="lab">C</span></td></tr>
+          <tr class="gap"><td colspan="2">⋮</td></tr>
+          <tr class="mrow" data-addr="204"><td class="a">204</td><td class="c">3<span class="lab">B</span></td></tr>
+        </table>
+      </div>
+
+      <div class="box">
+        <h2>This beat</h2>
+        <div class="rtn" id="rtn">Press <b>Next</b> (or →) to fetch the first instruction.</div>
+        <div class="note" id="note"></div>
+      </div>
+
+      <div class="box">
+        <h2>Registers &amp; memory</h2>
+        <table id="regtab">
+          <tr id="r-PC"><td class="k">PC</td><td class="v">0</td><td class="k">IR</td><td class="v">–</td></tr>
+          <tr id="r-RA"><td class="k">RA</td><td class="v">–</td><td class="k">RB</td><td class="v">–</td></tr>
+          <tr id="r-RZ"><td class="k">RZ</td><td class="v">–</td><td class="k">RY</td><td class="v">–</td></tr>
+          <tr id="r-RM"><td class="k">RM</td><td class="v">–</td><td class="k">MAR</td><td class="v">–</td></tr>
+          <tr id="r-C"><td class="k">mem C</td><td class="v">–</td><td class="k">MDR</td><td class="v">–</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctrls">
+    <button id="reset">⟲ Reset</button>
+    <button id="prev">← Prev</button>
+    <button id="next" class="primary">Next →</button>
+    <button id="play">▶ Play</button>
+    <span class="hint">Non-pipelined: each instruction finishes all 5 beats before the next one's Fetch. 4 × 5 = 20 beats.</span>
+  </div>
+
+<script>
+/* ============================================================
+   THE 20-BEAT SCRIPT
+   Each step: which instruction, phase, the RTN lines, a plain
+   note, the nodes/wires that light up, value "bubbles" on the
+   moving data, and the register updates that beat commits.
+   ============================================================ */
+const F = ['MAR ← [PC]','MDR ← M[MAR]','IR ← [MDR]','PC ← PC + 4'];
+const fetchWires = ['w-pc-mar','w-mar-mem','w-mem-mdr','w-mdr-ir','w-pc-inc'];
+const fetchNodes = ['n-PC','n-MAR','n-MEM','n-MDR','n-IR','n-ADD4'];
+
+const steps = [
+/* 1 */ {ins:0, ph:'Fetch', rtn:F, note:'Fetch the instruction at address 0. Its bits travel Memory → MDR → IR so Control can read it; PC advances to 4.',
+         nodes:fetchNodes, wires:fetchWires,
+         bub:[[190,84,'addr 0'],[648,84,'Load R2,A'],[738,140,'→IR']],
+         set:{MAR:'0', MDR:'Load R2,A', IR:'Load R2,A', PC:'4'}},
+/* 2 */ {ins:0, ph:'Decode', rtn:['decode Load','dest = R2'], note:'Control recognises an absolute Load. The address A is written in the instruction itself, so no source register is read.',
+         nodes:['n-IR','n-CTRL'], wires:['w-ir-ctrl'], bub:[], set:{}},
+/* 3 */ {ins:0, ph:'Compute', idle:true, rtn:['— no ALU work'], note:'Absolute addressing: the address A is already known, so the ALU has nothing to compute. The Compute beat is idle.',
+         nodes:['n-ALU'], wires:[], bub:[], set:{}},
+/* 4 */ {ins:0, ph:'Memory', rtn:['MAR ← A','MDR ← M[MAR]','RY ← [MDR]'], note:'The address A (=100) goes straight to MAR; memory returns 5 through MDR, latched into RY.',
+         nodes:['n-MAR','n-MEM','n-MDR','n-MUXY','n-RY','n-CTRL'], wires:['w-imm-mar','w-mar-mem','w-mem-mdr','w-mdr-muxy','w-muxy-ry'],
+         bub:[[300,60,'A=100'],[648,84,'5'],[862,250,'5']],
+         set:{MAR:'100', MDR:'5', RY:'5'}},
+/* 5 */ {ins:0, ph:'Write-back', rtn:['R2 ← [RY]'], note:'RY (=5) is written into R2 through the register-file write port. R2 = 5.',
+         nodes:['n-RY','n-RF'], wires:['w-ry-rf'], bub:[[500,545,'5 → R2']], set:{R2:'5'}},
+
+/* 6 */ {ins:1, ph:'Fetch', rtn:F, note:'Fetch the next instruction at address 4 (the indexed load). PC advances to 8.',
+         nodes:fetchNodes, wires:fetchWires,
+         bub:[[190,84,'addr 4'],[648,84,'Load R3,4(R7)']],
+         set:{MAR:'4', MDR:'Load R3,4(R7)', IR:'Load R3,4(R7)', PC:'8'}},
+/* 7 */ {ins:1, ph:'Decode', rtn:['RA ← [R7]','dest = R3'], note:'Indexed mode: Control reads the BASE register R7 (=200) into RA. The offset 4 comes from the instruction.',
+         nodes:['n-IR','n-CTRL','n-RF','n-RA'], wires:['w-ir-ctrl','w-rf-ra'], bub:[[262,344,'200']], set:{RA:'200'}},
+/* 8 */ {ins:1, ph:'Compute', alu:true, rtn:['RZ ← [RA] + 4'], note:'The ALU adds base 200 + offset 4 = 204 — the effective address — and parks it in RZ.',
+         nodes:['n-RA','n-OFF','n-ALU','n-RZ'], wires:['w-ra-alu','w-off-alu','w-alu-rz'],
+         bub:[[590,404,'EA=204']], set:{RZ:'204'}},
+/* 9 */ {ins:1, ph:'Memory', rtn:['MAR ← [RZ]','MDR ← M[MAR]','RY ← [MDR]'], note:'The effective address 204 → MAR; memory returns 3 through MDR, latched into RY.',
+         nodes:['n-RZ','n-MAR','n-MEM','n-MDR','n-MUXY','n-RY'], wires:['w-rz-mar','w-mar-mem','w-mem-mdr','w-mdr-muxy','w-muxy-ry'],
+         bub:[[470,205,'204'],[648,84,'3'],[862,250,'3']],
+         set:{MAR:'204', MDR:'3', RY:'3'}},
+/*10 */ {ins:1, ph:'Write-back', rtn:['R3 ← [RY]'], note:'RY (=3) is written into R3. R3 = 3.',
+         nodes:['n-RY','n-RF'], wires:['w-ry-rf'], bub:[[500,545,'3 → R3']], set:{R3:'3'}},
+
+/*11 */ {ins:2, ph:'Fetch', rtn:F, note:'Fetch the Add at address 8. PC advances to 12.',
+         nodes:fetchNodes, wires:fetchWires, bub:[[190,84,'addr 8'],[648,84,'Add R4,R2,R3']],
+         set:{MAR:'8', MDR:'Add R4,R2,R3', IR:'Add R4,R2,R3', PC:'12'}},
+/*12 */ {ins:2, ph:'Decode', rtn:['RA ← [R2]','RB ← [R3]','dest = R4'], note:'Read both source registers: R2 (=5) → RA, R3 (=3) → RB.',
+         nodes:['n-IR','n-CTRL','n-RF','n-RA','n-RB'], wires:['w-ir-ctrl','w-rf-ra','w-rf-rb'],
+         bub:[[262,344,'5'],[262,410,'3']], set:{RA:'5', RB:'3'}},
+/*13 */ {ins:2, ph:'Compute', alu:true, rtn:['RZ ← [RA] + [RB]'], note:'The ALU adds 5 + 3 = 8 into RZ — the same adder that built the address for the indexed load.',
+         nodes:['n-RA','n-RB','n-ALU','n-RZ'], wires:['w-ra-alu','w-rb-alu','w-alu-rz'],
+         bub:[[590,404,'8']], set:{RZ:'8'}},
+/*14 */ {ins:2, ph:'Memory', rtn:['RY ← [RZ]','(no memory access)'], note:'Arithmetic touches no memory. The result simply moves RZ → RY, ready for write-back.',
+         nodes:['n-RZ','n-MUXY','n-RY'], wires:['w-rz-muxy','w-muxy-ry'], bub:[[762,384,'8']], set:{RY:'8'}},
+/*15 */ {ins:2, ph:'Write-back', rtn:['R4 ← [RY]'], note:'RY (=8) is written into R4. R4 = 8.',
+         nodes:['n-RY','n-RF'], wires:['w-ry-rf'], bub:[[500,545,'8 → R4']], set:{R4:'8'}},
+
+/*16 */ {ins:3, ph:'Fetch', rtn:F, note:'Fetch the Store at address 12. PC advances to 16.',
+         nodes:fetchNodes, wires:fetchWires, bub:[[190,84,'addr 12'],[648,84,'Store R4,C']],
+         set:{MAR:'12', MDR:'Store R4,C', IR:'Store R4,C', PC:'16'}},
+/*17 */ {ins:3, ph:'Decode', rtn:['RM ← [R4]','addr = C'], note:'Store reads the data to be written, R4 (=8), into RM. C is absolute — its address is in the instruction.',
+         nodes:['n-IR','n-CTRL','n-RF','n-RM'], wires:['w-ir-ctrl','w-rf-rm'], bub:[[430,290,'8']], set:{RM:'8'}},
+/*18 */ {ins:3, ph:'Compute', idle:true, rtn:['— no ALU work'], note:'Absolute store: the address C is already known, so again the ALU/Compute beat is idle.',
+         nodes:['n-ALU'], wires:[], bub:[], set:{}},
+/*19 */ {ins:3, ph:'Memory', rtn:['MAR ← C','MDR ← [RM]','M[MAR] ← [MDR]'], note:'The address C (=108) → MAR. The store data in RM (=8) moves through MDR, then MDR is written to memory at 108 — every memory access goes through MDR. Now C = 8.',
+         nodes:['n-MAR','n-RM','n-MDR','n-MEM','n-CTRL'], wires:['w-imm-mar','w-mar-mem','w-rm-mdr','w-mdr-mem'],
+         bub:[[300,60,'C=108'],[672,206,'8'],[648,90,'8→M']], set:{MAR:'108', MDR:'8', memC:'8'}},
+/*20 */ {ins:3, ph:'Write-back', idle:true, rtn:['— idle'], note:'A Store writes nothing back to a register, so the Write-back beat is idle. Program done: C = A + B = 8.',
+         nodes:[], wires:[], bub:[], set:{}},
+];
+
+/* ---- initial machine state ---- */
+const INIT = {PC:'0', MAR:'–', MDR:'–', IR:'–', RA:'–', RB:'–', RZ:'–', RM:'–', RY:'–',
+              R2:'–', R3:'–', R4:'–', R7:'200', memC:'–'};
+
+/* state after beat k (0 = initial), computed by replaying updates */
+function stateAt(k){
+  const s = Object.assign({}, INIT);
+  for(let i=0;i<k;i++) Object.assign(s, steps[i].set||{});
+  return s;
+}
+
+/* which register-file register is read/written each beat */
+const regHits = {5:['R2'], 7:['R7'], 10:['R3'], 12:['R2','R3'], 15:['R4'], 17:['R4']};
+const regDest = {2:['R2'], 7:['R3'], 12:['R4']};  // dest identified in Decode (dashed)
+/* which memory location each beat touches (fetch = read a program word) */
+const memHits = {1:{a:0,k:'fetch'}, 4:{a:100,k:'read'}, 6:{a:4,k:'fetch'}, 9:{a:204,k:'read'},
+                 11:{a:8,k:'fetch'}, 16:{a:12,k:'fetch'}, 19:{a:108,k:'write'}};
+const memMap = {0:'Load R2,A', 4:'Load R3,4(R7)', 8:'Add R4,R2,R3', 12:'Store R4,C', 100:'5', 204:'3'};
+function memValAt(a, st){ if(a===108) return st.memC==='–' ? '?' : st.memC; return memMap[a]||'?'; }
+
+let cur = 0;                       // 0 = nothing done yet; 1..20 = beat shown
+const $ = id => document.getElementById(id);
+
+function clearHighlights(){
+  document.querySelectorAll('.node').forEach(n=>n.classList.remove('on','idle'));
+  document.querySelectorAll('.wire').forEach(w=>w.classList.remove('on'));
+  $('bubbles').innerHTML='';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on','idle'));
+  document.querySelectorAll('#prog .ln').forEach(l=>l.classList.remove('cur'));
+  document.querySelectorAll('#regtab tr').forEach(r=>r.classList.remove('hot'));
+  document.querySelectorAll('.rfreg').forEach(g=>g.classList.remove('hot','dest'));
+  document.querySelectorAll('.mrow').forEach(r=>r.classList.remove('hit','wr'));
+  $('memaccess').textContent='idle';
+}
+
+function paintValues(st){
+  // SVG live values
+  ['PC','MAR','MDR','IR','RA','RB','RZ','RM','RY','R2','R3','R4','R7'].forEach(k=>{
+    const el=$('v-'+k); if(el) el.textContent = st[k];
+  });
+  var m8=$('m-108'); if(m8) m8.textContent = st.memC;
+  // side table
+  const T=$('regtab').rows;
+  T[0].cells[1].textContent=st.PC;  T[0].cells[3].textContent=st.IR;
+  T[1].cells[1].textContent=st.RA;  T[1].cells[3].textContent=st.RB;
+  T[2].cells[1].textContent=st.RZ;  T[2].cells[3].textContent=st.RY;
+  T[3].cells[1].textContent=st.RM;  T[3].cells[3].textContent=st.MAR;
+  T[4].cells[1].textContent=st.memC;T[4].cells[3].textContent=st.MDR;
+}
+
+function bubble(x,y,txt){
+  const NS='http://www.w3.org/2000/svg';
+  const w=txt.length*8.4+10;
+  const bg=document.createElementNS(NS,'rect');
+  bg.setAttribute('class','bubble-bg'); bg.setAttribute('x',x-w/2); bg.setAttribute('y',y-14);
+  bg.setAttribute('width',w); bg.setAttribute('height',20); bg.setAttribute('rx',5);
+  const t=document.createElementNS(NS,'text');
+  t.setAttribute('class','bubble'); t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('text-anchor','middle');
+  t.textContent=txt;
+  $('bubbles').appendChild(bg); $('bubbles').appendChild(t);
+}
+
+function render(){
+  clearHighlights();
+  $('beat').textContent = 'Beat '+cur+' / 20';
+  const st = stateAt(cur);
+  paintValues(st);
+
+  if(cur===0){
+    $('rtn').innerHTML = 'Press <b>Next</b> (or →) to fetch the first instruction.';
+    $('note').textContent = '';
+    $('prev').disabled=true; $('next').disabled=false;
+    return;
+  }
+  const s = steps[cur-1];
+
+  // program + phase chips
+  document.querySelector('#prog .ln[data-ins="'+s.ins+'"]').classList.add('cur');
+  const chip=[...document.querySelectorAll('.chip')].find(c=>c.dataset.ph===s.ph);
+  if(chip){ chip.classList.add('on'); if(s.idle) chip.classList.add('idle'); }
+
+  // nodes + wires
+  s.nodes.forEach(id=>{ const n=$(id); if(n){ n.classList.add(s.idle&&id==='n-ALU'?'idle':'on'); }});
+  s.wires.forEach(id=>{ const w=$(id); if(w) w.classList.add('on'); });
+  (s.bub||[]).forEach(b=>bubble(b[0],b[1],b[2]));
+
+  // highlight the register-file register in use this phase
+  (regHits[cur]||[]).forEach(r=>{ const g=document.getElementById('rf-'+r); if(g) g.classList.add('hot'); });
+  (regDest[cur]||[]).forEach(r=>{ const g=document.getElementById('rf-'+r); if(g && !g.classList.contains('hot')) g.classList.add('dest'); });
+  // highlight the memory location touched + show the access
+  const mh = memHits[cur];
+  if(mh){
+    const row=document.querySelector('.mrow[data-addr="'+mh.a+'"]');
+    if(row){ row.classList.add('hit'); if(mh.k==='write') row.classList.add('wr'); }
+    const v=memValAt(mh.a, st);
+    $('memaccess').textContent = mh.k==='fetch' ? ('fetch M['+mh.a+']')
+        : mh.k==='write' ? ('write M['+mh.a+'] ⇐ '+v) : ('read M['+mh.a+'] = '+v);
+  }
+
+  // highlight the register row that just changed (memC/MAR/etc. shown in table)
+  const changed = Object.keys(s.set||{});
+  const rowFor = {PC:'r-PC',IR:'r-PC',RA:'r-RA',RB:'r-RA',RZ:'r-RZ',RY:'r-RZ',RM:'r-RM',MAR:'r-RM',MDR:'r-C',memC:'r-C'};
+  changed.forEach(k=>{ const r=$(rowFor[k]); if(r) r.classList.add('hot'); });
+
+  // readout
+  $('rtn').innerHTML = s.rtn.map(x=>x.replace(/</g,'&lt;')).join('<br>');
+  $('note').textContent = s.note;
+
+  $('prev').disabled=false; $('next').disabled=(cur===steps.length);
+}
+
+/* ---- controls ---- */
+function next(){ if(cur<steps.length){cur++; render();} }
+function prev(){ if(cur>0){cur--; render();} }
+function reset(){ cur=0; stopPlay(); render(); }
+
+let timer=null;
+function stopPlay(){ if(timer){clearInterval(timer); timer=null; $('play').textContent='▶ Play';} }
+function togglePlay(){
+  if(timer){ stopPlay(); return; }
+  if(cur>=steps.length) cur=0;
+  $('play').textContent='⏸ Pause';
+  timer=setInterval(()=>{ if(cur>=steps.length){stopPlay(); return;} next(); }, 1500);
+}
+
+$('next').onclick=()=>{ stopPlay(); next(); };
+$('prev').onclick=()=>{ stopPlay(); prev(); };
+$('reset').onclick=reset;
+$('play').onclick=togglePlay;
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'){ stopPlay(); next(); }
+  else if(e.key==='ArrowLeft'){ stopPlay(); prev(); }
+  else if(e.key.toLowerCase()==='r'){ reset(); }
+  else if(e.key===' '){ e.preventDefault(); togglePlay(); }
+});
+
+render();   // initial paint
+</script>
+</body>
+</html>
