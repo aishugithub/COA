@@ -1857,22 +1857,74 @@
      Can we re-wire the datapath to do more per beat?</p>
 </section>
 
+<!-- ▸ ADDED (layman zoom-in): Unit-1 system bus (outside) → internal datapath bus (inside) -->
+<section class="slide" data-ch="Ch 4 · Zoom in — outside to inside">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">Same word, closer look — we <span class="em-a">zoom in</span></h2>
+  <!-- foothold framing: say it in plain words before the picture -->
+  <p class="foothold" style="margin-bottom:10px"><span class="lbl">Read it as ·</span> In Unit&nbsp;1 the bus was the road <b>between</b> the big boxes — CPU, memory, I/O. Now we open the processor lid and look at the little roads <b>inside</b> it.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
+    <!-- LEFT PANEL · Unit-1 system bus wiring the three boxes together -->
+    <text x="235" y="30" text-anchor="middle" fill="var(--muted)" font-size="18" font-weight="800">UNIT 1 · between the boxes</text>
+    <rect x="70"  y="66" width="110" height="48" class="reg" style="stroke:var(--teal)"/><text x="125" y="96"  text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">CPU</text>
+    <rect x="290" y="66" width="110" height="48" class="reg"/><text x="345" y="96"  text-anchor="middle" class="reg-lbl">Memory</text>
+    <rect x="180" y="188" width="110" height="48" class="reg"/><text x="235" y="218" text-anchor="middle" class="reg-lbl">I/O</text>
+    <!-- the shared system bus (address · data · control) and the drop-lines to each box -->
+    <line x1="40" y1="150" x2="430" y2="150" stroke="var(--accent)" stroke-width="6"/>
+    <text x="235" y="142" text-anchor="middle" fill="var(--accent)" font-size="16" font-weight="700">system bus · address · data · control</text>
+    <line x1="125" y1="114" x2="125" y2="150" stroke="var(--accent)" stroke-width="4"/>
+    <line x1="345" y1="114" x2="345" y2="150" stroke="var(--accent)" stroke-width="4"/>
+    <line x1="235" y1="150" x2="235" y2="188" stroke="var(--accent)" stroke-width="4"/>
+    <!-- the zoom arrow into the CPU -->
+    <g class="frag"><path d="M 470 150 L 610 150" stroke="var(--yellow)" stroke-width="5" marker-end="url(#u2zoom)"/><text x="540" y="138" text-anchor="middle" fill="var(--yellow)" font-size="18" font-weight="800">zoom into the CPU</text></g>
+    <defs><marker id="u2zoom" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker></defs>
+    <!-- RIGHT PANEL · the same CPU opened up: registers + ALU wired by an internal bus -->
+    <g class="frag">
+      <text x="870" y="30" text-anchor="middle" fill="var(--muted)" font-size="18" font-weight="800">NOW · inside the CPU</text>
+      <rect x="650" y="56" width="440" height="200" rx="14" fill="none" stroke="var(--teal)" stroke-width="2" stroke-dasharray="6 5"/>
+      <rect x="690" y="92" width="120" height="46" class="reg" style="stroke:var(--teal)"/><text x="750" y="121" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Registers</text>
+      <rect x="930" y="92" width="120" height="46" class="reg" style="stroke:var(--purple)"/><text x="990" y="121" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">ALU</text>
+      <line x1="668" y1="200" x2="1072" y2="200" stroke="var(--green)" stroke-width="6"/>
+      <text x="870" y="228" text-anchor="middle" fill="var(--green)" font-size="16" font-weight="700">internal bus · registers ↔ ALU</text>
+      <line x1="750" y1="138" x2="750" y2="200" stroke="var(--border)" stroke-width="2"/>
+      <line x1="990" y1="138" x2="990" y2="200" stroke="var(--border)" stroke-width="2"/>
+    </g>
+  </svg></div>
+  <p class="frag" style="font-size:23px"><span class="muted">What is new here (Unit 1 never asked this):</span> <b>how many</b> of these inside-lanes do we build — <b>one</b> or <b>three</b> — and how does that change the number of clock-ticks one operation takes?</p>
+</section>
+
 <!-- single bus -->
 <section class="slide" data-ch="Ch 4 · Single-bus organization">
   <div class="badge b-core"><span class="dot"></span>Core</div>
   <h2 style="margin-bottom:6px">Single-bus — one shared highway</h2>
-  <div class="animwrap"><svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
-    <line x1="120" y1="150" x2="1000" y2="150" stroke="var(--accent)" stroke-width="6"/>
-    <text x="560" y="135" text-anchor="middle" fill="var(--accent)" font-size="22" font-weight="700">single common bus</text>
+  <p class="foothold"><span class="lbl">Read it as ·</span> Everything <em>inside</em> the processor — registers, the ALU, MDR and MAR — hangs off <b>one</b> shared bus. Main memory is <b>outside</b>; the processor reaches it only through <b>MAR</b> (address) and <b>MDR</b> (data), never straight onto the internal bus.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 340" preserveAspectRatio="xMidYMid meet">
+    <!-- the internal processor bus -->
+    <line x1="120" y1="130" x2="1000" y2="130" stroke="var(--accent)" stroke-width="6"/>
+    <text x="470" y="114" text-anchor="middle" fill="var(--accent)" font-size="22" font-weight="700">single internal processor bus</text>
     <g font-size="18">
-      <rect x="150" y="60" width="120" height="46" class="reg" style="stroke:var(--teal)"/><text x="210" y="90" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Registers</text><line x1="210" y1="106" x2="210" y2="150" stroke="var(--border)" stroke-width="2"/>
-      <rect x="360" y="60" width="120" height="46" class="reg" style="stroke:var(--purple)"/><text x="420" y="90" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">ALU</text><line x1="420" y1="106" x2="420" y2="150" stroke="var(--border)" stroke-width="2"/>
-      <rect x="570" y="60" width="120" height="46" class="reg"/><text x="630" y="90" text-anchor="middle" class="reg-lbl">MDR</text><line x1="630" y1="106" x2="630" y2="150" stroke="var(--border)" stroke-width="2"/>
-      <rect x="780" y="60" width="140" height="46" class="reg"/><text x="850" y="90" text-anchor="middle" class="reg-lbl">Memory</text><line x1="850" y1="106" x2="850" y2="150" stroke="var(--border)" stroke-width="2"/>
+      <rect x="150" y="44" width="120" height="46" class="reg" style="stroke:var(--teal)"/><text x="210" y="74" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Registers</text><line x1="210" y1="90" x2="210" y2="130" stroke="var(--border)" stroke-width="2"/>
+      <rect x="330" y="44" width="120" height="46" class="reg" style="stroke:var(--purple)"/><text x="390" y="74" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">ALU</text><line x1="390" y1="90" x2="390" y2="130" stroke="var(--border)" stroke-width="2"/>
+      <rect x="560" y="44" width="120" height="46" class="reg" style="stroke:var(--yellow)"/><text x="620" y="74" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">MDR</text><line x1="620" y1="90" x2="620" y2="130" stroke="var(--border)" stroke-width="2"/>
+      <rect x="760" y="44" width="120" height="46" class="reg" style="stroke:var(--yellow)"/><text x="820" y="74" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">MAR</text><line x1="820" y1="90" x2="820" y2="130" stroke="var(--border)" stroke-width="2"/>
     </g>
-    <text class="frag" x="560" y="235" text-anchor="middle" fill="var(--yellow)" font-size="24" font-weight="700">only ONE value can sit on the bus per clock</text>
+    <!-- MAR/MDR bridge the internal bus to EXTERNAL main memory -->
+    <g class="frag">
+      <path d="M 620 130 L 620 252" stroke="var(--yellow)" stroke-width="3" fill="none" marker-start="url(#u2sbA)" marker-end="url(#u2sbA)"/>
+      <text x="604" y="196" text-anchor="end" fill="var(--yellow)" font-size="16" font-weight="700">data</text>
+      <path d="M 820 130 L 820 252" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2sbT)"/>
+      <text x="836" y="196" fill="var(--teal)" font-size="16" font-weight="700">address</text>
+      <rect x="560" y="252" width="320" height="62" class="reg" style="stroke:var(--red)"/>
+      <text x="720" y="280" text-anchor="middle" class="reg-lbl" style="fill:var(--red)">Main Memory</text>
+      <text x="720" y="302" text-anchor="middle" fill="var(--muted)" font-size="15">external — NOT a box on the internal bus</text>
+    </g>
+    <text class="frag" x="290" y="210" text-anchor="middle" fill="var(--yellow)" font-size="22" font-weight="700">only ONE value on the bus per clock</text>
+    <defs>
+      <marker id="u2sbA" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto-start-reverse"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker>
+      <marker id="u2sbT" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--teal)"/></marker>
+    </defs>
   </svg></div>
-  <p class="frag" style="font-size:25px">Cheap and simple — but adding two numbers means shuttling operands across the bus <b>one at a time</b>, so an ALU op spreads over several clocks.</p>
+  <p class="frag" style="font-size:24px">Cheap and simple — but adding two numbers means shuttling operands across the bus <b>one at a time</b>, so an ALU op spreads over several clocks. And memory access always goes <b>register → MDR → memory</b>, addressed by <b>MAR</b>.</p>
 </section>
 
 <!-- three bus -->
@@ -1898,6 +1950,32 @@
      On a <span class="em-g">three-bus</span> datapath, how many?</div>
   <div class="qans frag"><b>One.</b> R2 on Bus A, R3 on Bus B, ALU adds, result on Bus C into R4 — all in a single step.
      More buses = fewer clocks per instruction, at the cost of more wiring.</div>
+</section>
+
+<!-- ▸ ADDED (the distinction the class needs): "one step" (datapath) vs "write-back is beat 5" (five-beat view) -->
+<section class="slide" data-ch="Ch 4 · One step vs. the five beats">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">&ldquo;But write-back was <span class="em-o">beat&nbsp;5</span>&hellip; how is it <span class="em-g">one step</span>?&rdquo;</h2>
+  <!-- name the doubt out loud — the class has lived in the five-beat model all chapter -->
+  <p class="foothold" style="margin-bottom:10px"><span class="lbl">The doubt ·</span> All chapter we split every instruction into <b>five beats</b>, and write-back sat at the very end. Now the three-bus slide says read + add + store happen in <b>one</b>. Both are true — they describe <b>two different machines</b>.</p>
+  <div class="row">
+    <!-- LEFT: the five-beat assembly line — WB is a separate beat ON PURPOSE -->
+    <div class="card tint-orange frag"><h3>The five-beat assembly line</h3><p>Fetch · Decode · Compute · <b>Memory</b> · Write-back. Five stations, kept separate <em>on purpose</em> so many instructions flow at once. Write-back is its <b>own</b> beat because the <b>Memory</b> station sits in front of it — a <b>Load</b>&rsquo;s data (through <b>MDR</b>) isn&rsquo;t ready until then, so <em>every</em> instruction waits and writes last, to keep one steady rhythm.</p></div>
+    <!-- RIGHT: inside the datapath — read + ALU are just wires settling; only the final latch needs a clock edge -->
+    <div class="card tint-green frag"><h3>Inside the datapath — one tick</h3><p>Putting a register onto a bus and the ALU adding are <b>just wires settling</b> — no clock needed. The <b>only</b> clock edge is the final <b>latch</b> into the destination register. So read &rarr; add &rarr; write fits in <b>one</b> tick. There is <em>no separate</em> write-back beat here — the write <b>is</b> the tail of the same tick.</p></div>
+  </div>
+  <p class="frag big" style="margin-top:16px; text-align:center">Same operation — the <span class="em-o">assembly line</span> splits it for throughput; the <span class="em-g">lone craftsman</span> does it in one motion.</p>
+</section>
+
+<!-- ▸ ADDED: who actually builds each design (ties the trade-off to real machines + IoT) -->
+<section class="slide" data-ch="Ch 4 · Who builds it which way">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">So who actually builds each one?</h2>
+  <div class="row">
+    <div class="card tint-teal frag"><h3>One-step bus datapath</h3><p><b>Older micro-programmed CISC</b> (8086, 68000, VAX) and <b>today&rsquo;s simple microcontrollers</b> (8051-class chips inside <span class="em-t">IoT nodes</span>). Chosen when <b>cost, chip area and power</b> matter more than raw speed.</p></div>
+    <div class="card tint-purple frag"><h3>Five-beat RISC pipeline</h3><p>The RISC machines you already know. They take this <em>same</em> one-step datapath, chop it into five fixed stages, and <b>overlap</b> many instructions to raise <b>throughput</b>.</p></div>
+  </div>
+  <p class="frag" style="margin-top:16px; font-size:23px"><span class="muted">The punch line:</span> it is not old vs. new. The bus datapath is the <b>building block</b>; the five-beat pipeline is a <b>speed wrapper</b> built around that same block.</p>
 </section>
 
 <!-- commit -->
@@ -1934,76 +2012,329 @@
 <!-- the job of control -->
 <section class="slide" data-ch="Ch 5 · What control does">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:8px">The control unit's one job</h2>
-  <p class="frag big">Each clock, raise the exact <span class="em-y">control signals</span> the current step needs.</p>
+  <h2 style="margin-bottom:6px">The control unit's one job</h2>
+  <p class="foothold"><span class="lbl">Where this fits ·</span> Chapters 3–4 built the <b>datapath</b> and the <b>buses</b> — the muscles. But muscles do nothing until a nerve fires. This chapter builds the <em>nerve</em>: the unit that raises every load line and bus enable at exactly the right instant.</p>
+  <p class="frag big">Each clock, raise the exact <span class="em-y">control signals</span> the current step needs — no more, no less.</p>
   <div class="row" style="margin-top:10px">
-    <div class="card tint-teal frag"><h3>Inputs</h3><p>the <b>IR</b> (which instruction), a <b>step counter</b> (which beat), and <b>condition flags</b> (Z, N, C, V).</p></div>
-    <div class="card tint-purple frag"><h3>Outputs</h3><p>the <b>control points</b>: register loads, bus enables, ALU function, memory read/write.</p></div>
+    <div class="card tint-teal frag"><h3>Inputs it reads</h3><p>the <b>IR</b> (which instruction), a <b>step counter</b> (which beat, T1…T5), and <b>condition flags</b> (Z, N, C, V).</p></div>
+    <div class="card tint-purple frag"><h3>Signals it drives</h3><p>the <b>control points</b>: register loads (MARin, MDRin…), bus enables (PCout…), the <b>ALU function</b>, memory <b>Read / Write</b>.</p></div>
   </div>
-  <p class="frag big em-a" style="margin-top:20px">Two ways to build it: <b>hardwired</b> or <b>microprogrammed</b>.</p>
+  <p class="frag big em-a" style="margin-top:18px">One job, <b>two ways to build the box</b>: <span class="em-a">hardwired</span> or <span class="em-p">microprogrammed</span>.</p>
 </section>
 
-<!-- hardwired -->
-<section class="slide" data-ch="Ch 5 · Hardwired control">
+<!-- fork: two philosophies -->
+<section class="slide" data-ch="Ch 5 · Two ways to build it">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:6px"><span class="em-a">Hardwired</span> — signals from logic gates</h2>
-  <div class="animwrap"><svg viewBox="0 0 1120 280" preserveAspectRatio="xMidYMid meet">
-    <rect x="90" y="60" width="150" height="50" class="reg"/><text x="165" y="92" text-anchor="middle" class="reg-lbl">IR</text>
-    <rect x="90" y="130" width="150" height="50" class="reg"/><text x="165" y="162" text-anchor="middle" class="reg-lbl">Step counter</text>
-    <rect x="90" y="200" width="150" height="50" class="reg"/><text x="165" y="232" text-anchor="middle" class="reg-lbl">Flags</text>
-    <g class="frag"><rect x="360" y="90" width="300" height="130" class="reg" style="stroke:var(--accent)"/>
-      <text x="510" y="150" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">Combinational</text>
-      <text x="510" y="180" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">logic circuit</text>
-      <path d="M 240 85 L 358 120 M 240 155 L 358 155 M 240 225 L 358 190" stroke="var(--border)" stroke-width="2"/></g>
-    <g class="frag"><path d="M 660 155 L 850 155" stroke="var(--yellow)" stroke-width="5" marker-end="url(#u2c5h)"/>
-      <text x="880" y="150" fill="var(--yellow)" font-size="22" font-weight="700">control</text><text x="880" y="176" fill="var(--yellow)" font-size="22" font-weight="700">signals</text></g>
-    <defs><marker id="u2c5h" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--yellow)"/></marker></defs>
-  </svg></div>
-  <p class="frag" style="font-size:25px">A fixed circuit maps (IR + step + flags) straight to signals. <b>Fast</b>, but changing the instruction set means <b>re-wiring the hardware</b>.</p>
+  <h2 style="margin-bottom:6px">Same job — <span class="em-y">two philosophies</span></h2>
+  <p class="foothold"><span class="lbl">The fork ·</span> The job never changes: raise the right signals each beat. What changes is <em>how the machine decides which signals</em> — freeze the decision into <b>wires</b>, or store it as a <b>program</b>.</p>
+  <div class="row" style="margin-top:18px">
+    <div class="card tint-teal frag"><h3 class="em-a">① Hardwired</h3><p>The decision is <b>frozen into logic gates</b>. Inputs (IR, step, flags) go in; signals fall out at the speed of a circuit. Change the design → <b>rewire the chip</b>.</p></div>
+    <div class="card tint-purple frag"><h3 class="em-p">② Microprogrammed</h3><p>The decision is <b>written as microcode</b> in a tiny on-chip memory. Each beat <b>reads one stored word</b> . Change the design → <b>rewrite the memory</b>.</p></div>
+  </div>
+  <p class="frag big" style="margin-top:20px">Gates are <span class="em-a">fast but fixed</span>; microcode is <span class="em-p">slower but flexible</span>. Every slide that follows is that <b>one trade-off</b>.</p>
 </section>
 
-<!-- microprogrammed -->
+<!-- ═════ HARDWIRED ═════ -->
+
+<!-- hardwired: the three parts -->
+<section class="slide" data-ch="Ch 5 · Hardwired — inside the box">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px"><span class="em-a">Hardwired</span> — three parts, one combinational box</h2>
+  <p class="foothold"><span class="lbl">Open the box ·</span> "A fixed circuit" is vague. Inside it are exactly three pieces: something that says <b>which beat</b>, something that says <b>which instruction</b>, and the gate-logic that turns those into <b>signals</b>.</p>
+  <div class="animwrap"><svg viewBox="0 0 1120 320" preserveAspectRatio="xMidYMid meet">
+    <!-- inputs (always visible — the standing knowledge) -->
+    <rect x="40" y="40" width="150" height="52" class="reg"/><text x="115" y="72" text-anchor="middle" class="reg-lbl">IR</text>
+    <rect x="40" y="140" width="150" height="60" class="reg"/><text x="115" y="165" text-anchor="middle" class="reg-lbl">Step counter</text><text x="115" y="188" text-anchor="middle" fill="var(--muted)" font-size="16">T1 · T2 · T3 · T4 · T5</text>
+    <rect x="40" y="248" width="150" height="52" class="reg"/><text x="115" y="280" text-anchor="middle" class="reg-lbl">Flags Z N C V</text>
+
+    <!-- (1) instruction decoder -->
+    <g class="frag">
+      <path d="M 190 66 L 288 66" stroke="var(--border)" stroke-width="2" marker-end="url(#u2c5ha)"/>
+      <rect x="290" y="38" width="185" height="56" class="reg" style="stroke:var(--teal)"/>
+      <text x="382" y="63" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Instruction</text>
+      <text x="382" y="84" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">decoder</text>
+      <text x="382" y="115" text-anchor="middle" fill="var(--muted)" font-size="15">reads the OP-code</text>
+    </g>
+
+    <!-- (2) control signal generator -->
+    <g class="frag">
+      <rect x="560" y="70" width="270" height="185" class="reg" style="stroke:var(--accent)"/>
+      <text x="695" y="150" text-anchor="middle" class="reg-lbl" style="fill:var(--accent); font-size:22px">Control signal</text>
+      <text x="695" y="178" text-anchor="middle" class="reg-lbl" style="fill:var(--accent); font-size:22px">generator</text>
+      <text x="695" y="212" text-anchor="middle" fill="var(--muted)" font-size="16">(combinational logic)</text>
+      <!-- feeds in: decoded opcode, timing steps, flags -->
+      <path d="M 475 66  C 520 66, 520 110, 558 110" stroke="var(--teal)" stroke-width="2.5" fill="none" marker-end="url(#u2c5ht)"/>
+      <path d="M 190 170 L 558 165" stroke="var(--border)" stroke-width="2.5" marker-end="url(#u2c5ha)"/>
+      <path d="M 190 274 C 360 274, 400 220, 558 218" stroke="var(--border)" stroke-width="2.5" fill="none" marker-end="url(#u2c5ha)"/>
+    </g>
+
+    <!-- (3) the control signals out -->
+    <g class="frag">
+      <path d="M 830 120 L 940 120 M 830 150 L 940 150 M 830 180 L 940 180 M 830 210 L 940 210"
+            stroke="var(--yellow)" stroke-width="4" marker-end="url(#u2c5hy)"/>
+      <text x="952" y="118" fill="var(--yellow)" font-size="18" font-weight="700">Read / Write</text>
+      <text x="952" y="150" fill="var(--yellow)" font-size="18" font-weight="700">PCout · MARin</text>
+      <text x="952" y="180" fill="var(--yellow)" font-size="18" font-weight="700">MDRin · Zin</text>
+      <text x="952" y="210" fill="var(--yellow)" font-size="18" font-weight="700">ALU function…</text>
+    </g>
+    <defs>
+      <marker id="u2c5ha" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--border)"/></marker>
+      <marker id="u2c5ht" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--teal)"/></marker>
+      <marker id="u2c5hy" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--yellow)"/></marker>
+    </defs>
+  </svg></div>
+  <p class="frag" style="font-size:23px"><span class="em-t">Decoder</span> says <em>which</em> instruction, the <span class="em-a">step counter</span> says <em>which beat</em>, and the <span class="em-a">generator</span> ANDs/ORs them into the signals. <span class="muted" style="font-size:20px">(Hamacher: a modulo-5 counter T1–T5 · Mano: a 4-bit sequence counter SC, 0–15.)</span></p>
+</section>
+
+<!-- hardwired: the mechanism, clock by clock -->
+<section class="slide" data-ch="Ch 5 · Hardwired — a signal is a Boolean equation">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:4px">Every control signal is just a <span class="em-a">Boolean equation</span></h2>
+  <p class="foothold"><span class="lbl">Concretely ·</span> "Combinational logic" means each signal line is the OR of the steps that need it. Read a line as: <em>"go high on beat T<sub>i</sub>, or on beat T<sub>j</sub> when the opcode is X."</em> This is the whole trick of hardwired control.</p>
+  <div class="animwrap" style="max-height:230px"><svg viewBox="0 0 1120 230" preserveAspectRatio="xMidYMid meet">
+    <!-- step terms on the left -->
+    <g class="frag">
+      <rect x="40" y="40" width="120" height="46" class="reg"/><text x="100" y="69" text-anchor="middle" class="reg-lbl">T1</text>
+      <rect x="40" y="150" width="230" height="46" class="reg"/><text x="155" y="179" text-anchor="middle" class="reg-lbl">T4 · LOAD</text>
+    </g>
+    <!-- OR gate -->
+    <g class="frag">
+      <path d="M 320 30 Q 470 30 520 105 Q 470 180 320 180 Q 370 105 320 30 Z"
+            fill="#58A6FF14" stroke="var(--accent)" stroke-width="3"/>
+      <text x="405" y="115" text-anchor="middle" fill="var(--accent)" font-size="34" font-weight="800">≥1</text>
+      <path d="M 160 63  L 320 70" stroke="var(--yellow)" stroke-width="3"/>
+      <path d="M 270 173 L 320 140" stroke="var(--yellow)" stroke-width="3"/>
+    </g>
+    <!-- output signal -->
+    <g class="frag">
+      <path d="M 512 105 L 660 105" stroke="var(--green)" stroke-width="5" marker-end="url(#u2c5eq)"/>
+      <text x="690" y="98" fill="var(--green)" font-size="26" font-weight="800">Read = 1</text>
+      <text x="690" y="128" fill="var(--muted)" font-size="18">this line drives memory</text>
+    </g>
+    <defs><marker id="u2c5eq" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker></defs>
+  </svg></div>
+  <p class="frag" style="font-size:26px; text-align:center"><span class="bin em-a">Read = T1 &nbsp;+&nbsp; T4·LOAD</span></p>
+  <p class="frag" style="font-size:23px">Fetch always reads on <b>T1</b>; a <b>Load</b> also reads its operand on <b>T4</b>. Same idea sizes every other line — e.g. <span class="bin">MARin = T1 + T4·(LOAD+STORE)</span>. Wire up one such gate per signal and the control unit is <em>built</em>.</p>
+</section>
+
+<!-- hardwired: characteristics -->
+<section class="slide" data-ch="Ch 5 · Hardwired — the trade-off">
+  <div class="badge b-sup"><span class="dot"></span>Supporting</div>
+  <h2 style="margin-bottom:6px">What the wires buy — and cost</h2>
+  <p class="foothold"><span class="lbl">Score it ·</span> Now that we've seen the gates, the three headline properties fall straight out of "it's fixed logic."</p>
+  <div class="row" style="margin-top:16px">
+    <div class="card tint-green frag"><h3 class="em-g">Fast</h3><p>Signals appear in one gate delay — no memory to consult. Best possible speed.</p></div>
+    <div class="card tint-red frag"><h3 class="em-o">Rigid</h3><p>A new or changed instruction means <b>redesigning the logic</b> and re-fabricating the chip.</p></div>
+    <div class="card tint-teal frag"><h3 class="em-t">RISC-friendly</h3><p>RISC keeps its signals simple, so the gate-logic stays small — which is why modern RISC CPUs are hardwired.</p></div>
+  </div>
+  <p class="frag big" style="margin-top:20px">Rule of thumb: <span class="em-a">simple, regular instruction set → hardwired wins.</span></p>
+</section>
+
+<!-- ═════ MICROPROGRAMMED ═════ -->
+
+<!-- microprogrammed: the big idea -->
 <section class="slide" data-ch="Ch 5 · Microprogrammed control">
   <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:6px"><span class="em-p">Microprogrammed</span> — signals stored in memory</h2>
+  <h2 style="margin-bottom:4px"><span class="em-p">Microprogrammed</span> — store the signals in memory</h2>
+  <p class="foothold"><span class="lbl">Flip the idea ·</span> Instead of <em>computing</em> the signals with gates, <b>look them up</b>. Keep one word per step in a tiny fast memory; a counter walks through the words, and each word's bits <em>are</em> the control signals.</p>
   <div class="animwrap"><svg viewBox="0 0 1120 290" preserveAspectRatio="xMidYMid meet">
-    <g class="frag"><rect x="90" y="110" width="150" height="60" class="reg" style="stroke:var(--purple)"/><text x="165" y="138" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">μPC / CAR</text><text x="165" y="160" text-anchor="middle" fill="var(--muted)" font-size="16">next address</text></g>
-    <g class="frag"><rect x="330" y="80" width="300" height="120" class="reg" style="stroke:var(--accent)"/>
-      <text x="480" y="128" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">Control memory</text>
-      <text x="480" y="158" text-anchor="middle" fill="var(--muted)" font-size="18">(control store, μ-memory)</text>
-      <path d="M 240 140 L 328 140" stroke="var(--border)" stroke-width="2" marker-end="url(#u2c5m1)"/></g>
-    <g class="frag"><rect x="700" y="80" width="330" height="55" class="reg" style="stroke:var(--yellow)"/><text x="865" y="114" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">control word → signals</text>
-      <rect x="700" y="145" width="330" height="55" class="reg" style="stroke:var(--green)"/><text x="865" y="179" text-anchor="middle" class="reg-lbl" style="fill:var(--green)">sequencing word → next address</text>
-      <path d="M 630 120 L 698 110 M 630 160 L 698 172" stroke="var(--border)" stroke-width="2"/>
-      <path d="M 865 200 C 865 250, 165 250, 165 172" stroke="var(--green)" stroke-width="3" fill="none" marker-end="url(#u2c5m2)"/></g>
+    <g class="frag"><rect x="70" y="110" width="160" height="66" class="reg" style="stroke:var(--purple)"/><text x="150" y="140" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">μPC / CAR</text><text x="150" y="163" text-anchor="middle" fill="var(--muted)" font-size="16">holds next address</text></g>
+    <g class="frag"><rect x="330" y="78" width="300" height="128" class="reg" style="stroke:var(--accent)"/>
+      <text x="480" y="128" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">Control store</text>
+      <text x="480" y="160" text-anchor="middle" fill="var(--muted)" font-size="18">(control memory / μ-memory)</text>
+      <path d="M 230 143 L 328 143" stroke="var(--purple)" stroke-width="3" marker-end="url(#u2c5m1)"/></g>
+    <g class="frag"><rect x="700" y="78" width="340" height="55" class="reg" style="stroke:var(--yellow)"/><text x="870" y="112" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">control word → the signals</text>
+      <rect x="700" y="150" width="340" height="55" class="reg" style="stroke:var(--green)"/><text x="870" y="184" text-anchor="middle" class="reg-lbl" style="fill:var(--green)">sequencing word → next address</text>
+      <path d="M 630 120 L 698 108 M 630 165 L 698 176" stroke="var(--border)" stroke-width="2"/>
+      <path d="M 870 205 C 870 258, 150 258, 150 178" stroke="var(--green)" stroke-width="3" fill="none" marker-end="url(#u2c5m2)"/></g>
+    <!-- packet: the address glides μPC → store when this step reveals -->
+    <g class="frag"><rect class="dpk pur" width="46" height="26" rx="5" style="offset-path:path('M 150 143 L 480 143')"/></g>
     <defs>
-      <marker id="u2c5m1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--border)"/></marker>
+      <marker id="u2c5m1" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker>
       <marker id="u2c5m2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--green)"/></marker>
     </defs>
   </svg></div>
-  <p class="frag" style="font-size:24px">Each step is a <b>microinstruction</b> = <span class="em-y">control word</span> (the signals) + <span class="em-g">sequencing word</span> (the next address). The <b>μPC</b> walks through a microroutine in the control store.</p>
+  <p class="frag" style="font-size:23px">Each step is a <b>microinstruction</b> = <span class="em-y">control word</span> (the signal bits) + <span class="em-g">sequencing word</span> (the next address). The <b>μPC</b> feeds an address in; the store hands one microinstruction back; the green loop sets the μPC for the next beat.</p>
+</section>
+
+<!-- microprogrammed: microroutines in control memory (animated walkthrough) -->
+<section class="slide heroslide" data-ch="Ch 5 · Microroutines in control memory">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 class="herotitle" style="margin-bottom:2px">Inside control memory — <span class="em-p">one microroutine per opcode</span></h2>
+  <p class="foothold"><span class="lbl">Watch it run ·</span> The address generator turns the <b>opcode in IR</b> into a start address; the <b>μPC</b> walks the routine one word per beat; each word's bits are the control signals; the <b>End bit</b> = 1 on the last word sends us back to fetch. <span class="muted">(bits shown are illustrative)</span></p>
+  <div class="animwrap"><svg viewBox="0 0 1120 400" preserveAspectRatio="xMidYMid meet">
+    <g class="frag">
+      <rect x="246" y="16" width="772" height="318" rx="14" class="reg" style="stroke:var(--accent)"/>
+      <text x="632" y="40" text-anchor="middle" fill="var(--accent)" font-size="20" font-weight="800">Control Memory · on-chip</text>
+      <text x="262" y="64" fill="var(--purple)" font-size="18" font-weight="800">LOAD microroutine <tspan fill="var(--muted)" font-weight="400">— the words for opcode LOAD</tspan></text>
+      <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" fill="var(--muted)" text-anchor="middle" font-weight="700">
+        <text x="285" y="86">addr</text>
+        <text x="341" y="86">PCout</text>
+        <text x="387" y="86">MARin</text>
+        <text x="433" y="86">Read</text>
+        <text x="479" y="86">MDRout</text>
+        <text x="525" y="86">ALU</text>
+        <text x="571" y="86">Rin</text>
+        <text x="621" y="86" fill="var(--orange)">End</text>
+      </g>
+      <g font-family="ui-monospace,Menlo,Consolas,monospace" font-weight="800" text-anchor="middle">
+        <rect x="260" y="94" width="50" height="28" rx="6" class="reg" style="stroke:var(--teal)"/><text x="285" y="114" fill="var(--teal)" font-size="17">40</text>
+        <rect x="318" y="94" width="44" height="28" rx="5" class="reg" style="stroke:var(--green)" fill="#3FB95026"/><text x="340" y="115" fill="var(--green)" font-size="19">1</text>
+        <rect x="364" y="94" width="44" height="28" rx="5" class="reg" style="stroke:var(--green)" fill="#3FB95026"/><text x="386" y="115" fill="var(--green)" font-size="19">1</text>
+        <rect x="410" y="94" width="44" height="28" rx="5" class="reg" style="stroke:var(--green)" fill="#3FB95026"/><text x="432" y="115" fill="var(--green)" font-size="19">1</text>
+        <rect x="456" y="94" width="44" height="28" rx="5" class="reg"/><text x="478" y="115" fill="var(--muted)" font-size="19">0</text>
+        <rect x="502" y="94" width="44" height="28" rx="5" class="reg"/><text x="524" y="115" fill="var(--muted)" font-size="19">0</text>
+        <rect x="548" y="94" width="44" height="28" rx="5" class="reg"/><text x="570" y="115" fill="var(--muted)" font-size="19">0</text>
+        <rect x="594" y="94" width="52" height="28" rx="5" class="reg"/><text x="620" y="115" fill="var(--muted)" font-size="19">0</text>
+        <rect x="260" y="128" width="50" height="28" rx="6" class="reg" style="stroke:var(--teal)"/><text x="285" y="148" fill="var(--teal)" font-size="17">41</text>
+        <rect x="318" y="128" width="44" height="28" rx="5" class="reg"/><text x="340" y="149" fill="var(--muted)" font-size="19">0</text>
+        <rect x="364" y="128" width="44" height="28" rx="5" class="reg"/><text x="386" y="149" fill="var(--muted)" font-size="19">0</text>
+        <rect x="410" y="128" width="44" height="28" rx="5" class="reg"/><text x="432" y="149" fill="var(--muted)" font-size="19">0</text>
+        <rect x="456" y="128" width="44" height="28" rx="5" class="reg" style="stroke:var(--green)" fill="#3FB95026"/><text x="478" y="149" fill="var(--green)" font-size="19">1</text>
+        <rect x="502" y="128" width="44" height="28" rx="5" class="reg"/><text x="524" y="149" fill="var(--muted)" font-size="19">0</text>
+        <rect x="548" y="128" width="44" height="28" rx="5" class="reg"/><text x="570" y="149" fill="var(--muted)" font-size="19">0</text>
+        <rect x="594" y="128" width="52" height="28" rx="5" class="reg"/><text x="620" y="149" fill="var(--muted)" font-size="19">0</text>
+        <rect x="260" y="162" width="50" height="28" rx="6" class="reg" style="stroke:var(--teal)"/><text x="285" y="182" fill="var(--teal)" font-size="17">42</text>
+        <rect x="318" y="162" width="44" height="28" rx="5" class="reg"/><text x="340" y="183" fill="var(--muted)" font-size="19">0</text>
+        <rect x="364" y="162" width="44" height="28" rx="5" class="reg"/><text x="386" y="183" fill="var(--muted)" font-size="19">0</text>
+        <rect x="410" y="162" width="44" height="28" rx="5" class="reg"/><text x="432" y="183" fill="var(--muted)" font-size="19">0</text>
+        <rect x="456" y="162" width="44" height="28" rx="5" class="reg"/><text x="478" y="183" fill="var(--muted)" font-size="19">0</text>
+        <rect x="502" y="162" width="44" height="28" rx="5" class="reg" style="stroke:var(--green)" fill="#3FB95026"/><text x="524" y="183" fill="var(--green)" font-size="19">1</text>
+        <rect x="548" y="162" width="44" height="28" rx="5" class="reg"/><text x="570" y="183" fill="var(--muted)" font-size="19">0</text>
+        <rect x="594" y="162" width="52" height="28" rx="5" class="reg"/><text x="620" y="183" fill="var(--muted)" font-size="19">0</text>
+        <rect x="260" y="196" width="50" height="28" rx="6" class="reg" style="stroke:var(--teal)"/><text x="285" y="216" fill="var(--teal)" font-size="17">43</text>
+        <rect x="318" y="196" width="44" height="28" rx="5" class="reg"/><text x="340" y="217" fill="var(--muted)" font-size="19">0</text>
+        <rect x="364" y="196" width="44" height="28" rx="5" class="reg" style="stroke:var(--green)" fill="#3FB95026"/><text x="386" y="217" fill="var(--green)" font-size="19">1</text>
+        <rect x="410" y="196" width="44" height="28" rx="5" class="reg" style="stroke:var(--green)" fill="#3FB95026"/><text x="432" y="217" fill="var(--green)" font-size="19">1</text>
+        <rect x="456" y="196" width="44" height="28" rx="5" class="reg"/><text x="478" y="217" fill="var(--muted)" font-size="19">0</text>
+        <rect x="502" y="196" width="44" height="28" rx="5" class="reg"/><text x="524" y="217" fill="var(--muted)" font-size="19">0</text>
+        <rect x="548" y="196" width="44" height="28" rx="5" class="reg"/><text x="570" y="217" fill="var(--muted)" font-size="19">0</text>
+        <rect x="594" y="196" width="52" height="28" rx="5" class="reg"/><text x="620" y="217" fill="var(--muted)" font-size="19">0</text>
+        <rect x="260" y="230" width="50" height="28" rx="6" class="reg" style="stroke:var(--teal)"/><text x="285" y="250" fill="var(--teal)" font-size="17">44</text>
+        <rect x="318" y="230" width="44" height="28" rx="5" class="reg"/><text x="340" y="251" fill="var(--muted)" font-size="19">0</text>
+        <rect x="364" y="230" width="44" height="28" rx="5" class="reg"/><text x="386" y="251" fill="var(--muted)" font-size="19">0</text>
+        <rect x="410" y="230" width="44" height="28" rx="5" class="reg"/><text x="432" y="251" fill="var(--muted)" font-size="19">0</text>
+        <rect x="456" y="230" width="44" height="28" rx="5" class="reg" style="stroke:var(--green)" fill="#3FB95026"/><text x="478" y="251" fill="var(--green)" font-size="19">1</text>
+        <rect x="502" y="230" width="44" height="28" rx="5" class="reg"/><text x="524" y="251" fill="var(--muted)" font-size="19">0</text>
+        <rect x="548" y="230" width="44" height="28" rx="5" class="reg" style="stroke:var(--green)" fill="#3FB95026"/><text x="570" y="251" fill="var(--green)" font-size="19">1</text>
+        <rect x="594" y="230" width="52" height="28" rx="5" class="reg" style="stroke:var(--orange)" fill="#F0883E26"/><text x="620" y="251" fill="var(--orange)" font-size="19">1</text>
+      </g>
+      <rect x="690" y="92" width="316" height="50" rx="10" fill="none" stroke="var(--border)" stroke-width="2" stroke-dasharray="7 6"/><text x="848" y="122" text-anchor="middle" fill="var(--muted)" font-size="17" font-weight="700">ADD microroutine · · ·</text>
+      <rect x="690" y="150" width="316" height="50" rx="10" fill="none" stroke="var(--border)" stroke-width="2" stroke-dasharray="7 6"/><text x="848" y="180" text-anchor="middle" fill="var(--muted)" font-size="17" font-weight="700">STORE microroutine · · ·</text>
+      <text x="848" y="226" text-anchor="middle" fill="var(--muted)" font-size="15">one microroutine per opcode — all live here</text>
+      <rect x="690" y="246" width="316" height="72" rx="12" class="reg" style="stroke:var(--teal)" fill="#39D0D814"/><text x="848" y="278" text-anchor="middle" fill="var(--teal)" font-size="18" font-weight="800">Control signals →</text><text x="848" y="302" text-anchor="middle" fill="var(--muted)" font-size="15">to the datapath (this beat's 1-bits go high)</text>
+    </g>
+    <g class="frag">
+      <rect x="24" y="28" width="188" height="58" rx="10" class="reg"/><text x="118" y="52" text-anchor="middle" class="reg-lbl">IR</text><text x="118" y="74" text-anchor="middle" fill="var(--muted)" font-size="15">opcode = LOAD</text>
+      <rect x="24" y="126" width="188" height="74" rx="10" class="reg" style="stroke:var(--yellow)"/><text x="118" y="158" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">Address generator</text><text x="118" y="182" text-anchor="middle" fill="var(--muted)" font-size="15">opcode → start address</text>
+      <rect x="24" y="228" width="188" height="58" rx="10" class="reg" style="stroke:var(--purple)"/><text x="118" y="262" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">μPC</text>
+      <path d="M 118 86 L 118 124" stroke="var(--border)" stroke-width="2" marker-end="url(#u2c5rb)"/>
+      <path d="M 118 200 L 118 226" stroke="var(--border)" stroke-width="2" marker-end="url(#u2c5rb)"/>
+      <path d="M 212 150 C 250 150, 250 108, 254 108" stroke="var(--yellow)" stroke-width="2.5" fill="none" marker-end="url(#u2c5ry)"/>
+      <text x="235" y="98" fill="var(--yellow)" font-size="14" font-weight="700">LOAD → 40</text>
+    </g>
+    <g class="frag"><g class="pkt">
+      <rect x="256" y="91" width="398" height="34" rx="7" fill="#58A6FF22" stroke="var(--accent)" stroke-width="2.5"/>
+      <path d="M 214 257 C 236 257, 234 108, 252 108" stroke="var(--purple)" stroke-width="3" fill="none" marker-end="url(#u2c5rp)"/>
+      <text x="118" y="308" text-anchor="middle" fill="var(--purple)" font-size="15" font-weight="800">points to addr 40</text>
+      <path d="M 656 108 C 676 108, 674 282, 688 282" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2c5rs)"/>
+      <text x="632" y="360" text-anchor="middle" fill="var(--text)" font-size="17" font-weight="600">Beat 1 · μPC = 40 → the FIRST microinstruction is read.</text><text x="632" y="384" text-anchor="middle" fill="var(--muted)" font-size="16" font-weight="600">Its 1-bits raise the control signals. End = 0 → more to come.</text>
+    </g></g>
+    <g class="frag"><g class="pkt">
+      <rect x="256" y="125" width="398" height="34" rx="7" fill="#58A6FF22" stroke="var(--accent)" stroke-width="2.5"/>
+      <path d="M 214 257 C 236 257, 234 142, 252 142" stroke="var(--purple)" stroke-width="3" fill="none" marker-end="url(#u2c5rp)"/>
+      <text x="118" y="308" text-anchor="middle" fill="var(--purple)" font-size="15" font-weight="800">points to addr 41</text>
+      <path d="M 656 142 C 676 142, 674 282, 688 282" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2c5rs)"/>
+      <text x="632" y="360" text-anchor="middle" fill="var(--text)" font-size="17" font-weight="600">Beat 2 · μPC = 41 → the NEXT word of the SAME routine is read.</text><text x="632" y="384" text-anchor="middle" fill="var(--muted)" font-size="16" font-weight="600">Its control signals are sent this beat. End = 0.</text>
+    </g></g>
+    <g class="frag"><g class="pkt">
+      <rect x="256" y="159" width="398" height="34" rx="7" fill="#58A6FF22" stroke="var(--accent)" stroke-width="2.5"/>
+      <path d="M 214 257 C 236 257, 234 176, 252 176" stroke="var(--purple)" stroke-width="3" fill="none" marker-end="url(#u2c5rp)"/>
+      <text x="118" y="308" text-anchor="middle" fill="var(--purple)" font-size="15" font-weight="800">points to addr 42</text>
+      <path d="M 656 176 C 676 176, 674 282, 688 282" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2c5rs)"/>
+      <text x="632" y="360" text-anchor="middle" fill="var(--text)" font-size="17" font-weight="600">Beat 3 · μPC = 42 → next microinstruction of the routine.</text><text x="632" y="384" text-anchor="middle" fill="var(--muted)" font-size="16" font-weight="600">Its control signals are sent. End = 0.</text>
+    </g></g>
+    <g class="frag"><g class="pkt">
+      <rect x="256" y="193" width="398" height="34" rx="7" fill="#58A6FF22" stroke="var(--accent)" stroke-width="2.5"/>
+      <path d="M 214 257 C 236 257, 234 210, 252 210" stroke="var(--purple)" stroke-width="3" fill="none" marker-end="url(#u2c5rp)"/>
+      <text x="118" y="308" text-anchor="middle" fill="var(--purple)" font-size="15" font-weight="800">points to addr 43</text>
+      <path d="M 656 210 C 676 210, 674 282, 688 282" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2c5rs)"/>
+      <text x="632" y="360" text-anchor="middle" fill="var(--text)" font-size="17" font-weight="600">Beat 4 · μPC = 43 → next microinstruction of the routine.</text><text x="632" y="384" text-anchor="middle" fill="var(--muted)" font-size="16" font-weight="600">Its control signals are sent. End = 0.</text>
+    </g></g>
+    <g class="frag"><g class="pkt">
+      <rect x="256" y="227" width="398" height="34" rx="7" fill="#58A6FF22" stroke="var(--accent)" stroke-width="2.5"/>
+      <path d="M 214 257 C 236 257, 234 244, 252 244" stroke="var(--purple)" stroke-width="3" fill="none" marker-end="url(#u2c5rp)"/>
+      <text x="118" y="308" text-anchor="middle" fill="var(--purple)" font-size="15" font-weight="800">points to addr 44</text>
+      <path d="M 656 244 C 676 244, 674 282, 688 282" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2c5rs)"/>
+      <rect x="591" y="226" width="58" height="36" rx="6" fill="none" stroke="var(--orange)" stroke-width="3"/>
+      <text x="632" y="360" text-anchor="middle" fill="var(--text)" font-size="17" font-weight="600">Beat 5 · μPC = 44 → the LAST word. End = 1.</text><text x="632" y="384" text-anchor="middle" fill="var(--muted)" font-size="16" font-weight="600">Microroutine ends → return to fetch the next instruction.</text>
+    </g></g>
+    <defs>
+      <marker id="u2c5rb" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--border)"/></marker>
+      <marker id="u2c5ry" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--yellow)"/></marker>
+      <marker id="u2c5rp" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker>
+      <marker id="u2c5rs" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--teal)"/></marker>
+    </defs>
+  </svg></div>
+</section>
+
+<!-- microprogrammed: the execution loop -->
+<section class="slide" data-ch="Ch 5 · How a microroutine runs">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">Running one machine instruction as a <span class="em-p">microprogram</span></h2>
+  <p class="foothold"><span class="lbl">The loop ·</span> A whole machine instruction is carried out by <em>running a small program of microinstructions</em>. Follow the five moves — the last one loops back to the start.</p>
+  <div class="row" style="margin-top:12px">
+    <div class="card tint-teal frag"><h3>① Fetch</h3><p>the machine instruction is loaded into the <b>IR</b>.</p></div>
+    <div class="card tint-yellow frag"><h3>② Map</h3><p>the <b>address generator</b> decodes the opcode → <b>start address</b> of that instruction's microroutine.</p></div>
+    <div class="card tint-purple frag"><h3>③ Load μPC</h3><p>that start address is loaded into the <b>μPC</b>.</p></div>
+  </div>
+  <div class="row" style="margin-top:20px">
+    <div class="card tint-green frag"><h3>④ Step</h3><p>read one microinstruction per clock; its bits raise the signals; μPC increments (or branches).</p></div>
+    <div class="card tint-red frag"><h3>⑤ End</h3><p>the <b>End bit</b> = 1 ends the routine → jump back to <b>① Fetch</b> for the next instruction.</p></div>
+    <div class="card frag" style="border-color:var(--accent); background:#58A6FF10"><h3 class="em-a">The payoff</h3><p>a CPU is a small computer running <b>microcode</b> underneath your assembly.</p></div>
+  </div>
 </section>
 
 <!-- microinstruction sequencing -->
 <section class="slide" data-ch="Ch 5 · Microinstruction sequencing">
-  <div class="badge b-core"><span class="dot"></span>Core</div>
-  <h2 style="margin-bottom:8px">How the μPC picks the next microinstruction</h2>
-  <div class="row">
-    <div class="card tint-green frag"><h3>In-line</h3><p>increment the control address register (CAR).</p></div>
-    <div class="card tint-yellow frag"><h3>Branch</h3><p>unconditional or <b>conditional</b> (test Z, N, C, V).</p></div>
-    <div class="card tint-teal frag"><h3>Map</h3><p>the instruction's <b>opcode</b> maps to its microroutine's start address.</p></div>
+  <div class="badge b-sup"><span class="dot"></span>Supporting</div>
+  <h2 style="margin-bottom:4px">How the μPC picks the <em>next</em> microinstruction</h2>
+  <p class="foothold"><span class="lbl">Step ④, zoomed in ·</span> "μPC increments (or branches)" hides four cases — the sequencing word chooses which one applies this beat.</p>
+  <div class="row" style="margin-top:14px">
+    <div class="card tint-green frag"><h3>In-line</h3><p>increment the control address register (CAR) — the usual next step.</p></div>
+    <div class="card tint-yellow frag"><h3>Branch</h3><p>unconditional or <b>conditional</b> — test a flag (Z, N, C, V) and jump.</p></div>
   </div>
-  <p class="frag" style="margin-top:16px; font-size:25px">So a machine instruction is executed by <em>running a small microprogram</em> — fetch routine, then the routine its opcode maps to.</p>
+  <div class="row" style="margin-top:20px">
+    <div class="card tint-teal frag"><h3>Map</h3><p>the instruction's <b>opcode</b> maps to its microroutine's start address (step ② above).</p></div>
+    <div class="card tint-red frag"><h3>End</h3><p>the <b>End bit</b> forces a jump back to the shared <b>fetch</b> microroutine.</p></div>
+  </div>
+  <p class="frag" style="margin-top:16px; font-size:24px">So sequencing = <span class="em-g">increment</span>, <span class="em-y">branch / conditional branch</span>, <span class="em-t">opcode map</span>, <span class="em-o">End</span>. Four moves, and the whole instruction set is expressible as microcode.</p>
 </section>
 
-<!-- contrast -->
+<!-- side-by-side comparison -->
+<section class="slide" data-ch="Ch 5 · Head to head">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 style="margin-bottom:6px">Hardwired vs microprogrammed — side by side</h2>
+  <p class="foothold"><span class="lbl">Exam table ·</span> Both make the same signals; they differ on <em>where the decision lives</em>. Everything below follows from that one line.</p>
+  <table style="margin-top:8px; width:100%; font-size:25px">
+    <tr><th style="text-align:left; padding-left:24px">Property</th><th class="em-a">Hardwired</th><th class="em-p">Microprogrammed</th></tr>
+    <tr><td style="text-align:left; padding-left:24px; color:var(--muted)">Decision lives in</td><td>fixed logic gates</td><td>a control store (memory)</td></tr>
+    <tr><td style="text-align:left; padding-left:24px; color:var(--muted)">Speed</td><td class="em-g">faster — one gate delay</td><td>slower — a memory read per step</td></tr>
+    <tr><td style="text-align:left; padding-left:24px; color:var(--muted)">Flexibility</td><td>rigid — rewire to change</td><td class="em-g">flexible — rewrite microcode</td></tr>
+    <tr><td style="text-align:left; padding-left:24px; color:var(--muted)">Complex instruction sets</td><td>hard (huge logic)</td><td class="em-g">easy (just more microcode)</td></tr>
+    <tr><td style="text-align:left; padding-left:24px; color:var(--muted)">Best fit</td><td class="em-a">RISC (simple, regular)</td><td class="em-p">CISC (rich, complex)</td></tr>
+  </table>
+  <p class="frag big em-y" style="margin-top:18px">One sentence: <b>hardwired trades flexibility for speed; microprogrammed trades speed for flexibility.</b></p>
+</section>
+
+<!-- contrast question -->
 <section class="slide qslide" data-ch="Ch 5 · Hardwired vs microprogrammed">
   <div class="qmark">?</div>
   <div class="qlabel">Weigh them up</div>
-  <div class="q">You need to <span class="em-y">add a new instruction</span> after the chip is designed.
-     Which control style makes that easy — and what do you pay?</div>
-  <div class="qans frag"><b>Microprogrammed</b>: just edit the control store (rewrite microcode) — flexible, but slower (an extra memory read per step).
-     <b>Hardwired</b> is faster but rigid — a new instruction means redesigning the logic.</div>
+  <div class="q">You must <span class="em-y">add a new instruction</span> after the chip is already designed.
+     Which control style makes that easy — and what do you pay for it?</div>
+  <div class="qans frag"><b>Microprogrammed</b>: just edit the control store (rewrite microcode) — flexible, but slower (an extra memory read every step).
+     <b>Hardwired</b> is faster but rigid — a new instruction means redesigning the gate logic and re-fabricating the chip.</div>
 </section>
 
 <!-- commit -->
@@ -2013,11 +2344,11 @@
     <div class="msub">Control unit — hardwired vs microprogrammed.</div></div></div>
   <div class="memcard">
     <ul>
-      <li><span class="term">Control unit</span> — turns (IR + step + flags) into control signals each clock.</li>
-      <li><span class="term">Hardwired</span> — combinational logic + step counter; fast, rigid.</li>
-      <li><span class="term">Microprogrammed</span> — microinstructions in a <b>control store</b>; a <b>μPC/CAR</b> sequences them.</li>
-      <li><span class="term">Microinstruction</span> = control word (signals) + sequencing word (next address).</li>
-      <li>Sequencing — increment, branch, conditional branch, opcode mapping.</li>
+      <li><span class="term">Control unit</span> — turns (IR + step counter + flags) into control signals, every clock.</li>
+      <li><span class="term">Hardwired</span> = instruction decoder + step counter + <b>control-signal generator</b> (combinational logic); each signal is a Boolean equation such as <b>Read = T1 + T4·LOAD</b>. Fast, rigid → RISC.</li>
+      <li><span class="term">Microprogrammed</span> = microinstructions in a <b>control store</b>; the <b>μPC/CAR</b> and an <b>address generator</b> sequence them. Flexible, slower → CISC.</li>
+      <li><span class="term">Microinstruction</span> = control word (signal bits) + sequencing word (next address); the <b>End bit</b> ends a microroutine.</li>
+      <li><span class="term">Sequencing</span> — increment, branch / conditional branch, opcode map, End.</li>
     </ul>
   </div>
 </section>
@@ -2026,7 +2357,7 @@
 <section class="slide keyslide" data-ch="Ch 5 · Key insight">
   <div class="kicon">🔑</div>
   <div class="keybox frag"><span class="k">Control is just: which signals, in which order.</span><br>
-    Wire that decision into gates, or store it as a microprogram — either way, it's what turns a datapath into a processor.</div>
+    Freeze that decision into gates, or store it as a microprogram — either way, it is what turns a lifeless datapath into a processor.</div>
 </section>
 
 <!-- ════════════════ UNIT 2 · MAP ════════════════ -->
