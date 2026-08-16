@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  COA · UNIT 1 · EXAM READY RECKONER & QUESTION BANK
+  Course: CSE23CT201 — Computer Organization & Architecture
+  ----------------------------------------------------------------------------
+  WHAT THIS FILE IS
+  -----------------
+  A single, self-contained HTML document (no external files, no internet
+  needed) that a student can open on any laptop/phone the night before the
+  exam. It is NOT a teaching deck — it is a "reckoner": it first shows only
+  the QUESTIONS (all the different ways an examiner can phrase each topic),
+  and reveals the EXAM-READY ANSWER only when the student clicks the question.
+
+  HOW THE PIECES FIT TOGETHER (the "architecture" of this page)
+  -------------------------------------------------------------
+  1. <head><style>  — the whole look-and-feel lives here. We reuse the exact
+                      "Foothold" dark palette + the .reg / .reg-lbl / .reg-val
+                      SVG classes from Unit1_Deck.html, so the pictures we
+                      paste in from the classroom deck render identically.
+  2. <header>       — sticky bar (title + Expand-all / Collapse-all buttons).
+  3. <nav>          — a row of chips; each chip jumps to one topic section.
+  4. <main>         — eight <section> blocks, one per syllabus topic. Inside
+                      each section every question is a native <details> element
+                      (the browser's built-in accordion) so "click to reveal"
+                      works with ZERO JavaScript and even offline.
+  5. <script>       — only two small conveniences: (a) Expand-all/Collapse-all,
+                      (b) highlight the nav chip of the section you are reading.
+                      The reveal itself does NOT depend on this script.
+
+  WHY <details>/<summary> INSTEAD OF CUSTOM JS?
+  ---------------------------------------------
+  <details> is a native HTML element: the <summary> is always visible (the
+  question), and the rest is hidden until the user clicks. It is keyboard
+  accessible, needs no libraries, and cannot "break" if the script fails —
+  perfect for a last-minute revision tool that must just work.
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COA · Unit 1 · Exam Ready Reckoner &amp; Question Bank</title>
+<style>
+  /* ========================================================================
+     1) PALETTE  — copied verbatim from Unit1_Deck.html so every reused SVG
+        (buses, endianness, etc.) keeps the exact same colours it had in class.
+        CSS custom properties (variables) let every rule below say e.g.
+        color:var(--accent) instead of repeating the hex code everywhere.
+     ======================================================================== */
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#56D364; --yellow:#F2C94C; --purple:#D2A8FF;
+    --red:#FF7B72; --orange:#F0883E; --teal:#56D4DD;
+    --text:#F5F8FC; --muted:#B9C4D0; --border:#5A6472;
+    --maxw:1000px;                 /* one place to control the reading width */
+  }
+
+  /* Global reset: kill default margins/padding, use border-box so padding
+     never makes a box wider than we asked for. */
+  *{box-sizing:border-box; margin:0; padding:0}
+
+  /* The document scrolls normally (unlike the deck, which was one screen).
+     scroll-behavior:smooth makes the nav-chip jumps glide instead of snap. */
+  html{scroll-behavior:smooth}
+  body{background:var(--bg); color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    line-height:1.55; padding-bottom:80px}
+
+  /* ========================================================================
+     2) STICKY HEADER  — stays pinned to the top while the student scrolls,
+        so the Expand-all / Collapse-all buttons are always reachable.
+     ======================================================================== */
+  header{position:sticky; top:0; z-index:50; background:#0D1117F2;
+    backdrop-filter:blur(6px); border-bottom:1px solid var(--border);
+    padding:16px 26px}
+  .htop{display:flex; align-items:center; justify-content:space-between;
+    gap:18px; flex-wrap:wrap; max-width:var(--maxw); margin:0 auto}
+  header h1{font-size:26px; line-height:1.2}
+  header .sub{font-size:14px; color:var(--muted); font-weight:600;
+    letter-spacing:1px; text-transform:uppercase; margin-top:2px}
+  /* the two control buttons on the right of the header */
+  .btns{display:flex; gap:10px}
+  .btn{cursor:pointer; border:1px solid var(--border); background:var(--card);
+    color:var(--text); font-size:13px; font-weight:700; padding:8px 14px;
+    border-radius:999px; transition:.15s}
+  .btn:hover{border-color:var(--accent); color:var(--accent)}
+
+  /* ========================================================================
+     3) NAV CHIPS  — quick-jump links to each topic. These are ordinary
+        anchor links (<a href="#s3">) so they work without JavaScript too.
+     ======================================================================== */
+  nav{max-width:var(--maxw); margin:18px auto 0; padding:0 26px;
+    display:flex; gap:10px; flex-wrap:wrap}
+  nav a{font-size:13px; font-weight:700; text-decoration:none;
+    color:var(--muted); background:var(--surface);
+    border:1px solid var(--border); padding:7px 13px; border-radius:999px;
+    transition:.15s}
+  nav a:hover{color:var(--text); border-color:var(--accent)}
+  /* .active is added by the scrollspy script to the chip of the section
+     currently on screen, so the student always knows where they are. */
+  nav a.active{color:var(--bg); background:var(--accent);
+    border-color:var(--accent)}
+
+  /* ========================================================================
+     4) LAYOUT OF THE READING COLUMN + SECTION HEADINGS
+     ======================================================================== */
+  main{max-width:var(--maxw); margin:0 auto; padding:0 26px}
+
+  /* "How to use" banner right under the nav. */
+  .howto{margin:22px 0 8px; background:#58A6FF12;
+    border:1px solid var(--accent); border-radius:14px; padding:16px 20px;
+    font-size:15px; color:var(--muted)}
+  .howto b{color:var(--text)}
+
+  /* Each topic is a <section>. scroll-margin-top pushes the anchor target
+     DOWN by the header height, so when a nav chip jumps here the heading is
+     not hidden underneath the sticky header. */
+  section.topic{margin-top:40px; scroll-margin-top:150px}
+  .topic > h2{font-size:23px; display:flex; align-items:baseline; gap:12px;
+    padding-bottom:10px; border-bottom:2px solid var(--border)}
+  /* the big translucent number badge before each section title */
+  .topic > h2 .n{font-size:34px; font-weight:800; color:var(--accentGlow)}
+  /* short italic line under each heading: "how examiners phrase this" */
+  .askline{font-size:14px; color:var(--yellow); font-style:italic;
+    margin:10px 0 4px}
+
+  /* ========================================================================
+     5) THE ACCORDION  — one question = one <details class="q"> block.
+        <summary> is the clickable question; the div.ans is the hidden answer.
+     ======================================================================== */
+  .q{background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; margin-top:12px; overflow:hidden}
+  .q[open]{border-color:var(--accent)}      /* highlight an opened question */
+
+  /* summary = the always-visible question row. list-style:none hides the
+     default triangle so we can draw our own "▸" that rotates when open. */
+  .q > summary{cursor:pointer; list-style:none; padding:15px 18px;
+    display:flex; gap:12px; align-items:flex-start; font-size:16px;
+    font-weight:600; color:var(--text)}
+  .q > summary::-webkit-details-marker{display:none} /* Safari/Chrome marker */
+  /* our custom caret: a ▸ that turns 90° into ▾ when the <details> is open */
+  .q > summary::before{content:"▸"; color:var(--accent); font-size:15px;
+    line-height:1.5; transition:transform .2s; flex:none}
+  .q[open] > summary::before{transform:rotate(90deg)}
+  .q > summary:hover{background:var(--card)}
+  /* small "marks" tag on the right of a question, e.g. [5 marks] */
+  .marks{margin-left:auto; font-size:11px; font-weight:700; color:var(--muted);
+    border:1px solid var(--border); border-radius:999px; padding:2px 9px;
+    white-space:nowrap; flex:none}
+
+  /* the revealed answer body */
+  .ans{padding:2px 20px 20px 42px; font-size:15px; color:var(--muted)}
+  .ans p{margin:10px 0}
+  .ans b, .ans strong{color:var(--text)}
+  .ans ul, .ans ol{margin:10px 0 10px 22px}
+  .ans li{margin:6px 0}
+  /* inline code / mnemonics look monospace so Load R2,A reads like code */
+  code, .mono{font-family:Consolas,'Courier New',monospace; color:var(--teal);
+    background:#56D4DD14; padding:1px 6px; border-radius:5px; font-size:.94em}
+
+  /* colour-coded left rail on the answer to echo the deck's card tints */
+  .ans.g{border-left:3px solid var(--green)}
+  .ans.y{border-left:3px solid var(--yellow)}
+  .ans.p{border-left:3px solid var(--purple)}
+  .ans.t{border-left:3px solid var(--teal)}
+  .ans.o{border-left:3px solid var(--orange)}
+
+  /* "Write exactly this in the exam" highlight box */
+  .tip{margin:12px 0; background:#3FB95012; border:1px solid var(--green);
+    border-left:4px solid var(--green); border-radius:0 10px 10px 0;
+    padding:12px 16px; color:var(--text); font-size:14.5px}
+  .tip b{color:var(--green)}
+  /* a "one-liner to memorise" pill */
+  .oneliner{color:var(--green); font-weight:700}
+
+  /* ========================================================================
+     6) TABLES  — used for classification / addressing-mode / comparison
+        answers. Kept compact and readable on dark background.
+     ======================================================================== */
+  table.tbl{width:100%; border-collapse:collapse; margin:12px 0; font-size:14px}
+  table.tbl th{background:var(--card); color:var(--text); text-align:left;
+    padding:9px 12px; border:1px solid var(--border); font-size:13px}
+  table.tbl td{padding:9px 12px; border:1px solid var(--border);
+    vertical-align:top; color:var(--muted)}
+  table.tbl td b{color:var(--text)}
+
+  /* ========================================================================
+     7) SVG PICTURE FRAME  — .pic wraps every diagram we reuse from the deck.
+        The inner classes (.reg, .reg-lbl, .reg-val) are the SAME names the
+        deck used, so the pasted SVGs style themselves automatically.
+     ======================================================================== */
+  .pic{background:#0D111780; border:1px solid var(--border);
+    border-radius:12px; padding:12px; margin:14px 0}
+  .pic svg{width:100%; height:auto; display:block}
+  .pic .cap{font-size:13px; color:var(--muted); text-align:center;
+    margin-top:6px; font-style:italic}
+  .reg{fill:var(--card); stroke:var(--border); stroke-width:2}      /* boxes */
+  .reg-lbl{fill:var(--text); font-size:23px; font-weight:700}       /* labels */
+  .reg-val{fill:var(--teal); font-size:22px; font-weight:700}       /* values */
+
+  /* A "deferred to Unit 2" note style (Section 5). */
+  .defer{background:#F0883E12; border:1px solid var(--orange);
+    border-radius:14px; padding:18px 22px; margin-top:14px}
+  .defer h3{color:var(--orange); font-size:17px; margin-bottom:8px}
+  .defer p{font-size:15px; color:var(--muted); margin:8px 0}
+
+  footer{max-width:var(--maxw); margin:60px auto 0; padding:22px 26px;
+    border-top:1px solid var(--border); color:var(--muted); font-size:13px;
+    text-align:center}
+
+  /* ========================================================================
+     8) RESPONSIVE  — shrink type a touch on phones so it stays comfortable.
+     ======================================================================== */
+  @media(max-width:640px){
+    header h1{font-size:20px}
+    .topic > h2{font-size:19px}
+    .q > summary{font-size:15px}
+    .ans{padding-left:20px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ==========================================================================
+     STICKY HEADER : title on the left, the two accordion controls on the right
+     ========================================================================== -->
+<header>
+  <div class="htop">
+    <div>
+      <h1>Unit&nbsp;1 · Exam Ready Reckoner &amp; Question Bank</h1>
+      <div class="sub">CSE23CT201 · Computer Organization &amp; Architecture · Basic Structure of Computers</div>
+    </div>
+    <div class="btns">
+      <!-- These buttons call functions defined in the <script> at the bottom.
+           They are a convenience only; each question can still be opened by
+           clicking it directly. -->
+      <button class="btn" onclick="toggleAll(true)">＋ Expand all</button>
+      <button class="btn" onclick="toggleAll(false)">－ Collapse all</button>
+    </div>
+  </div>
+</header>
+
+<!-- ==========================================================================
+     NAV CHIPS : quick jump to any of the eight topics. The href="#sN" values
+     match the id="sN" on each <section> below.
+     ========================================================================== -->
+<nav id="nav">
+  <a href="#s1">1 · Functional Units</a>
+  <a href="#s2">2 · Registers</a>
+  <a href="#s3">3 · Buses</a>
+  <a href="#s4">4 · Memory Organisation</a>
+  <a href="#s5">5 · Read / Write</a>
+  <a href="#s6">6 · Instructions</a>
+  <a href="#s7">7 · Addressing Modes</a>
+  <a href="#s8">8 · Sequencing</a>
+</nav>
+
+<main>
+
+  <!-- Short instructions so a first-time reader knows the "click to reveal" idea -->
+  <div class="howto">
+    <b>How to use this reckoner.</b> Every box below is a way an examiner can ask the question —
+    read the question first and try to answer it in your head. <b>Click a question to reveal the exam-ready answer.</b>
+    Answers are written to be <b>reproduced</b> in the exam, not to teach the topic from scratch —
+    keep the classroom deck for understanding, keep this for the last-minute revision.
+  </div>
+
+  <!-- ======================================================================
+       SECTION 1 · THE FIVE FUNCTIONAL UNITS  (+ Control unit, + Memory unit)
+       ====================================================================== -->
+  <section class="topic" id="s1">
+    <h2><span class="n">1</span> The Five Functional Units &amp; their Roles</h2>
+    <div class="askline">Ways this is asked → “List / explain the functional units”, “With a neat block diagram…”, “Role of each unit”, “What is a processor?”</div>
+
+    <!-- Q1.1 : the single big explanation the user asked for -->
+    <details class="q">
+      <summary>Explain the five functional units of a computer and the role of each. <span class="marks">5–10 marks</span></summary>
+      <div class="ans t">
+        <p>A computer is built from <b>five functionally independent main units</b> that exchange information over an <b>interconnection network (bus)</b>:</p>
+        <table class="tbl">
+          <tr><th>Unit</th><th>Role (what it does)</th></tr>
+          <tr><td><b>Input unit</b></td><td>Accepts coded information from the user / other computers (keyboard, mouse, mic, camera) and converts it to binary for the processor.</td></tr>
+          <tr><td><b>Memory unit</b></td><td>Stores the <b>programs</b> (lists of instructions) and the <b>data</b>. Split into primary/main memory, cache and secondary storage.</td></tr>
+          <tr><td><b>ALU</b> (Arithmetic &amp; Logic Unit)</td><td>Performs all arithmetic (add, subtract…) and logic (AND, OR, compare) operations on operands held in <b>registers</b>.</td></tr>
+          <tr><td><b>Output unit</b></td><td>Sends processed results back to the outside world (printer, display).</td></tr>
+          <tr><td><b>Control unit</b></td><td>The <b>“nerve centre”</b> — coordinates every other unit by issuing timing and control signals.</td></tr>
+        </table>
+        <div class="tip"><b>Key definition (worth a mark):</b> the <b>ALU + Control unit + registers</b> together are called the <b>Processor (CPU)</b>. Input and Output are often together called <b>I/O units</b>.</div>
+        <p class="oneliner">One-liner to memorise: Input → Memory → ALU (via registers) → Output, all orchestrated by Control.</p>
+      </div>
+    </details>
+
+    <!-- Q1.2 : Control unit functions + WHY it controls everything -->
+    <details class="q">
+      <summary>What are the functions of the Control unit? Why do we say the Control unit “controls” all the other units? <span class="marks">5 marks</span></summary>
+      <div class="ans y">
+        <p>The Control unit reads the instruction sitting in the <b>IR</b>, decodes it, and then drives every other unit at exactly the right instant. It “controls” the whole machine because it is the only unit that issues <b>two kinds of signal</b> that tell every other unit <em>when</em> and <em>what</em> to do:</p>
+        <table class="tbl">
+          <tr><th>Signal</th><th>Answers…</th><th>Meaning</th></tr>
+          <tr><td><b>① Clock (timing) signals</b> — the clock pulse</td><td><b>WHEN?</b></td><td>The steady beat. Every unit acts on the tick, then waits for the next one.</td></tr>
+          <tr><td><b>② Control signals</b></td><td><b>WHAT?</b></td><td>“Latch this register”, “put that value on the bus”, “tell the ALU to add”.</td></tr>
+        </table>
+        <div class="tip"><b>Answer in one line:</b> the Control unit controls all other units because it supplies the <b>clock (timing) signals</b> and the <b>control signals</b> — <b>WHEN</b> + <b>WHAT</b> — that every other unit obeys. Its circuitry is physically <b>distributed</b> throughout the machine, not sitting in one spot.</p></div>
+      </div>
+    </details>
+
+    <!-- Q1.3 : Memory unit — kept short & simple as the user requested -->
+    <details class="q">
+      <summary>Explain the Memory unit / the three kinds of memory in brief. <span class="marks">3–5 marks</span></summary>
+      <div class="ans g">
+        <p>The Memory unit stores the <b>programs</b> and the <b>data</b>. It has three tiers:</p>
+        <ul>
+          <li><b>Primary (main) memory</b> — fast semiconductor <b>RAM</b>, used while a program is running; any location is reached in a fixed time (random access). Data is handled in <b>words</b>, each with a distinct <b>address</b>.</li>
+          <li><b>Cache</b> — a small, even-faster RAM close to the processor holding the currently-used instructions/data, to speed execution.</li>
+          <li><b>Secondary storage</b> — cheap, large, <b>permanent</b> (keeps data with power off): magnetic disk, optical disk, flash memory.</li>
+        </ul>
+        <p class="oneliner">Remember the trade-off: as you go cache → main → secondary, it gets bigger and cheaper but slower.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 2 · REGISTERS  (how a program – just numbers in memory – works)
+       ====================================================================== -->
+  <section class="topic" id="s2">
+    <h2><span class="n">2</span> Registers — the Special &amp; General Purpose Registers</h2>
+    <div class="askline">Ways this is asked → “What are registers?”, “Explain PC and IR”, “Special- vs general-purpose registers”, “What is a register file?”</div>
+
+    <!-- Q2.0 : the motivating idea -->
+    <details class="q">
+      <summary>A program in memory is just numbers. How does the processor actually run it — where do registers come in? <span class="marks">3 marks</span></summary>
+      <div class="ans p">
+        <p>By the <b>stored-program concept</b>, the program (a list of instructions) and its data both sit in memory as numbers. The processor <b>fetches</b> instructions one by one and <b>executes</b> them. To do this at high speed it keeps a handful of small, very fast storage cells inside itself called <b>registers</b> — some with a fixed special job, some for holding operands. Registers are faster than cache, which is faster than main memory.</p>
+      </div>
+    </details>
+
+    <!-- Q2.1 : the four special-purpose registers -->
+    <details class="q">
+      <summary>Explain the special-purpose registers (PC, IR, MAR, MDR). <span class="marks">4–5 marks</span></summary>
+      <div class="ans t">
+        <table class="tbl">
+          <tr><th>Register</th><th>Full name</th><th>Holds…</th></tr>
+          <tr><td><b>PC</b></td><td>Program Counter</td><td>the memory <b>address of the NEXT</b> instruction to be fetched — it “points” to the next instruction.</td></tr>
+          <tr><td><b>IR</b></td><td>Instruction Register</td><td>the instruction <b>CURRENTLY</b> being executed (its bits drive the control signals).</td></tr>
+          <tr><td><b>MAR</b></td><td>Memory Address Register</td><td>the <b>address</b> of the memory location to be accessed.</td></tr>
+          <tr><td><b>MDR</b></td><td>Memory Data Register</td><td>the <b>data</b> being written to, or just read from, memory.</td></tr>
+        </table>
+        <div class="tip"><b>MAR + MDR are the processor’s gateway to memory.</b> These four one-liners are a guaranteed 4 marks — write them exactly as above.</div>
+      </div>
+    </details>
+
+    <!-- Q2.2 : general purpose registers / register file -->
+    <details class="q">
+      <summary>What are general-purpose registers and the register file? <span class="marks">3 marks</span></summary>
+      <div class="ans g">
+        <p><b>General-purpose registers (GPRs)</b>, written <code>R0, R1, … R(n−1)</code>, are fast storage cells that hold the <b>operands</b> brought in from memory for immediate processing (and the results). Unlike PC/IR/MAR/MDR they have <b>no fixed special job</b> — the program may use any of them for any value.</p>
+        <p>The whole set of general-purpose registers, addressed by number, is called the <b>register file</b>. In a RISC machine the ALU takes its inputs from, and writes its result back to, the register file — which is why an instruction can finish in about one clock cycle.</p>
+      </div>
+    </details>
+
+    <!-- Q2.3 : difference question (very common) -->
+    <details class="q">
+      <summary>Distinguish special-purpose registers from general-purpose registers. <span class="marks">2 marks</span></summary>
+      <div class="ans y">
+        <p><b>Special-purpose</b> registers (PC, IR, MAR, MDR) each have <b>one fixed role</b> the hardware assigns. <b>General-purpose</b> registers (R0…Rn−1, the register file) are <b>freely usable</b> by the program to hold any operand or result.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 3 · BUSES  (the interconnection between the functional units)
+       ====================================================================== -->
+  <section class="topic" id="s3">
+    <h2><span class="n">3</span> Bus Structures — connecting the Functional Units</h2>
+    <div class="askline">Ways this is asked → “What is a bus?”, “Single-bus vs multiple-bus”, “Advantages/disadvantages of single bus”, “Explain address/data/control bus”.</div>
+
+    <!-- Q3.1 : what is a bus -->
+    <details class="q">
+      <summary>What is a bus? <span class="marks">2 marks</span></summary>
+      <div class="ans t">
+        <p>A <b>bus</b> is a <b>shared set of wires</b> that transfers data and control information between the functional units (processor, memory, I/O). Because it is shared, <b>only one source may drive it at a time</b>. It is built using <b>multiplexers</b> or <b>tri-state (three-state) buffers</b> so that many units can share the one physical path without interfering.</p>
+      </div>
+    </details>
+
+    <!-- Q3.2 : single bus advantages / disadvantages + why move to more -->
+    <details class="q">
+      <summary>Explain single-bus organisation: its advantages, its disadvantage, and why we move to a dual / multiple-bus structure. <span class="marks">5 marks</span></summary>
+      <div class="ans y">
+        <p>In a <b>single-bus organisation</b> all units connect to <b>one</b> common bus, which is the <b>sole path</b> for every transfer.</p>
+        <!-- Reused "one transfer at a time" picture from the classroom deck (SMIL
+             animation auto-plays in the browser; no slide script needed). -->
+        <div class="pic">
+          <svg viewBox="0 0 1160 430" preserveAspectRatio="xMidYMid meet">
+            <line x1="60" y1="250" x2="1100" y2="250" stroke="var(--accent)" stroke-width="8" stroke-linecap="round"/>
+            <text x="1100" y="290" text-anchor="end" fill="var(--accent)" font-size="20">the bus (shared wires)</text>
+            <g font-size="20">
+              <rect x="80"  y="90" width="200" height="90" rx="12" class="reg" style="stroke:var(--purple)"/><text x="180" y="145" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">PROCESSOR</text><line x1="180" y1="180" x2="180" y2="246" stroke="var(--border)" stroke-width="4"/>
+              <rect x="330" y="90" width="200" height="90" rx="12" class="reg" style="stroke:var(--teal)"/><text x="430" y="145" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">MEMORY</text><line x1="430" y1="180" x2="430" y2="246" stroke="var(--border)" stroke-width="4"/>
+              <rect x="620" y="90" width="200" height="90" rx="12" class="reg" style="stroke:var(--green)"/><text x="720" y="145" text-anchor="middle" class="reg-lbl" style="fill:var(--green)">INPUT</text><line x1="720" y1="180" x2="720" y2="246" stroke="var(--border)" stroke-width="4"/>
+              <rect x="900" y="90" width="200" height="90" rx="12" class="reg" style="stroke:var(--orange)"/><text x="1000" y="145" text-anchor="middle" class="reg-lbl" style="fill:var(--orange)">OUTPUT</text><line x1="1000" y1="180" x2="1000" y2="246" stroke="var(--border)" stroke-width="4"/>
+            </g>
+            <!-- four packets share an 8-second loop; each is visible only in its
+                 own 2s slot, so the bus never carries more than one at a time. -->
+            <g style="opacity:0">
+              <animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;1;1;0;0" keyTimes="0;0.01;0.23;0.25;1"/>
+              <animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.25;1" path="M 180 250 L 430 250"/>
+              <rect x="-45" y="-17" width="90" height="34" rx="6" fill="var(--yellow)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="18" font-weight="800">word</text>
+            </g>
+            <g style="opacity:0">
+              <animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;0.25;0.26;0.48;0.5;1"/>
+              <animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;1" keyTimes="0;0.25;0.5;1" path="M 430 250 L 180 250"/>
+              <rect x="-45" y="-17" width="90" height="34" rx="6" fill="var(--teal)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="18" font-weight="800">data</text>
+            </g>
+            <g style="opacity:0">
+              <animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;0.5;0.51;0.73;0.75;1"/>
+              <animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;1" keyTimes="0;0.5;0.75;1" path="M 720 250 L 180 250"/>
+              <rect x="-62" y="-17" width="124" height="34" rx="6" fill="var(--green)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="18" font-weight="800">keystroke</text>
+            </g>
+            <g style="opacity:0">
+              <animate attributeName="opacity" dur="8s" repeatCount="indefinite" values="0;0;1;1;0" keyTimes="0;0.75;0.76;0.99;1"/>
+              <animateMotion dur="8s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;1" keyTimes="0;0.75;0.999;1" path="M 180 250 L 1000 250"/>
+              <rect x="-48" y="-17" width="96" height="34" rx="6" fill="var(--orange)"/><text x="0" y="6" text-anchor="middle" fill="#0D1117" font-size="18" font-weight="800">result</text>
+            </g>
+            <text x="580" y="400" text-anchor="middle" fill="var(--muted)" font-size="19">Only one transfer at a time — every other unit must wait its turn on the shared wires.</text>
+          </svg>
+          <div class="cap">Single bus — one shared highway, taken in turns.</div>
+        </div>
+        <table class="tbl">
+          <tr><th>✔ Advantages</th><th>✘ Disadvantage</th></tr>
+          <tr><td>Low cost · simple to design · easy to add a new device (just tap the bus).</td><td>Only <b>one transfer at a time</b> — the single bus becomes the <b>bottleneck</b>.</td></tr>
+        </table>
+        <p><b>Why move to dual / multiple buses?</b> To remove that bottleneck. With <b>two buses</b> (one for instructions, one for data) a fetch and a data move can happen <b>at the same time</b>. With <b>multiple buses</b> each bus runs at the speed of what it joins (a fast processor–cache bus, the system bus to memory, a slower expansion bus for peripherals). The gain is <b>more parallelism</b>; the cost is <b>more wiring / complexity</b>.</p>
+      </div>
+    </details>
+
+    <!-- Q3.3 : the three groups of lines — full depth, with mem read/write -->
+    <details class="q">
+      <summary>Every bus is really three groups of lines — explain the address bus, data bus and control bus, and state what travels on each during a memory READ and a memory WRITE. <span class="marks">5–10 marks</span></summary>
+      <div class="ans t">
+        <p>Any bus is actually <b>three groups of lines</b>, each answering a different question:</p>
+        <!-- Reused three-bus picture from the deck (address = one-way, data = both
+             ways, control = Read/Write). Animation auto-plays. -->
+        <div class="pic">
+          <svg viewBox="0 0 1160 300" preserveAspectRatio="xMidYMid meet">
+            <rect x="40" y="70" width="190" height="170" rx="12" class="reg" style="stroke:var(--purple);stroke-width:2.5"/><text x="135" y="162" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)" font-size="21">PROCESSOR</text>
+            <rect x="930" y="70" width="190" height="170" rx="12" class="reg" style="stroke:var(--teal);stroke-width:2.5"/><text x="1025" y="162" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)" font-size="21">MEMORY</text>
+            <!-- address bus : one-way processor -> memory -->
+            <line x1="230" y1="105" x2="930" y2="105" stroke="var(--teal)" stroke-width="6"/>
+            <text x="580" y="93" text-anchor="middle" fill="var(--teal)" font-size="17" font-weight="700">ADDRESS BUS — WHERE? (one-way →)</text>
+            <g><animateMotion dur="2.2s" repeatCount="indefinite" path="M 236 105 L 924 105"/><rect x="-28" y="-13" width="56" height="26" rx="5" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">100</text></g>
+            <!-- data bus : both ways -->
+            <line x1="230" y1="160" x2="930" y2="160" stroke="var(--green)" stroke-width="6"/>
+            <text x="580" y="148" text-anchor="middle" fill="var(--green)" font-size="17" font-weight="700">DATA BUS — WHAT? (both ways ↔)</text>
+            <g><animateMotion dur="2.2s" repeatCount="indefinite" path="M 924 160 L 236 160"/><rect x="-28" y="-13" width="56" height="26" rx="5" fill="var(--green)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">data</text></g>
+            <!-- control bus -->
+            <line x1="230" y1="215" x2="930" y2="215" stroke="var(--yellow)" stroke-width="6"/>
+            <text x="580" y="203" text-anchor="middle" fill="var(--yellow)" font-size="17" font-weight="700">CONTROL BUS — WHEN / which way?</text>
+            <g><animateMotion dur="2.2s" repeatCount="indefinite" path="M 236 215 L 924 215"/><rect x="-32" y="-13" width="64" height="26" rx="5" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">Read</text></g>
+          </svg>
+          <div class="cap">The three line-groups: address (where), data (what), control (when / which way).</div>
+        </div>
+        <table class="tbl">
+          <tr><th>Bus</th><th>Carries</th><th>Direction</th></tr>
+          <tr><td><b>Address bus</b> — WHERE?</td><td>the address to be accessed; <b>k lines → 2<sup>k</sup></b> locations.</td><td>usually <b>one-way</b> (processor → memory)</td></tr>
+          <tr><td><b>Data bus</b> — WHAT?</td><td>the data / instruction word.</td><td><b>both ways</b> (bidirectional)</td></tr>
+          <tr><td><b>Control bus</b> — WHEN / which way?</td><td>Read/Write line, timing and status signals.</td><td>as needed</td></tr>
+        </table>
+        <div class="tip"><b>What goes where during READ vs WRITE (examiners love this):</b>
+          <ul>
+            <li><b>Memory READ:</b> processor puts the <b>address on the address bus</b> and asserts <b>Read on the control bus</b>; memory returns the <b>word on the data bus</b> (memory → processor). Original memory contents stay <b>unchanged</b>.</li>
+            <li><b>Memory WRITE:</b> processor puts the <b>address on the address bus</b>, the <b>data on the data bus</b>, and asserts <b>Write on the control bus</b>; memory <b>overwrites</b> that location.</li>
+          </ul>
+          Notice: on both, the <b>address bus is one-way</b>; only the <b>direction of the data bus</b> flips, decided by the <b>control bus</b> (Read vs Write).</p>
+        </div>
+      </div>
+    </details>
+
+    <!-- Q3.4 : single vs multiple in one line (2 mark) -->
+    <details class="q">
+      <summary>Differentiate single-bus and multiple-bus structures in one line. <span class="marks">2 marks</span></summary>
+      <div class="ans g">
+        <p><b>Single</b> = one shared path — cheap, simple, but one transfer at a time. <b>Multiple</b> = several parallel paths — faster (overlapping transfers) but costlier and more wiring.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 4 · MEMORY ORGANISATION (byte-addressability, alignment, endian)
+       ====================================================================== -->
+  <section class="topic" id="s4">
+    <h2><span class="n">4</span> How Memory is Organised</h2>
+    <div class="askline">Ways this is asked → “Byte addressability”, “Aligned vs unaligned words”, “Big-endian vs little-endian (with example)”, “k-bit address → how many locations?”.</div>
+
+    <!-- Q4.1 : bit/byte/word + byte addressability -->
+    <details class="q">
+      <summary>What is byte-addressability? Define bit, byte and word, and give the addresses of successive words. <span class="marks">4 marks</span></summary>
+      <div class="ans t">
+        <ul>
+          <li><b>Bit</b> — the smallest unit of information, a 0 or a 1.</li>
+          <li><b>Byte</b> — a group of <b>8 bits</b>.</li>
+          <li><b>Word</b> — the <b>n-bit</b> unit the processor handles in one operation (word length is typically 16 / 32 / 64 bits).</li>
+        </ul>
+        <p><b>Byte-addressable</b> means <b>every 8-bit byte has its own distinct address</b> (0, 1, 2, 3, …). A 32-bit word is any four consecutive bytes, so <b>successive words sit at addresses 0, 4, 8, 12 …</b> — four bytes apart.</p>
+        <div class="tip"><b>Address-space formula:</b> a <b>k-bit</b> address can name <b>2<sup>k</sup></b> locations (e.g. 32-bit address → 2<sup>32</sup> = 4G locations).</div>
+      </div>
+    </details>
+
+    <!-- Q4.2 : word alignment -->
+    <details class="q">
+      <summary>What is word alignment? When is a word aligned or not aligned? <span class="marks">3 marks</span></summary>
+      <div class="ans y">
+        <p>A word is <b>aligned</b> if it <b>begins at a byte address that is a multiple of the number of bytes in a word</b>. For a 32-bit (4-byte) word, aligned addresses are <b>0, 4, 8, 12 …</b></p>
+        <p>So a word starting at address <b>8 is aligned</b> (8 is a multiple of 4), but one starting at address <b>6 is NOT aligned</b>. Unaligned access still works but is <b>less efficient / slower</b> for the processor.</p>
+      </div>
+    </details>
+
+    <!-- Q4.3 : endianness with the reused picture -->
+    <details class="q">
+      <summary>Explain big-endian and little-endian byte ordering with an example. <span class="marks">5 marks</span></summary>
+      <div class="ans p">
+        <p>Endianness is the order in which the <b>bytes of one word</b> are placed into successive byte addresses:</p>
+        <ul>
+          <li><b>Big-endian</b> — the <b>most-significant byte (MSB)</b> goes to the <b>lowest</b> address.</li>
+          <li><b>Little-endian</b> — the <b>least-significant byte (LSB)</b> goes to the <b>lowest</b> address.</li>
+        </ul>
+        <!-- Reused endianness picture from the deck; the .frag classes were
+             removed so all cells show immediately (no slide script here). -->
+        <div class="pic">
+          <svg viewBox="0 0 1160 300" preserveAspectRatio="xMidYMid meet">
+            <text x="580" y="34" text-anchor="middle" fill="var(--text)" font-size="22">Store the word <tspan fill="var(--yellow)" font-weight="700">12 34 56 78</tspan> (MSB → LSB) into addresses 0–3</text>
+            <!-- big endian -->
+            <g><text x="290" y="90" text-anchor="middle" fill="var(--accent)" font-size="22" font-weight="700">Big-endian</text>
+              <text x="290" y="118" text-anchor="middle" fill="var(--muted)" font-size="17">MSB at the lowest address</text>
+              <g font-size="24">
+                <rect x="120" y="138" width="90" height="80" class="reg"/><text x="165" y="186" text-anchor="middle" class="reg-val">12</text><text x="165" y="240" text-anchor="middle" fill="var(--muted)" font-size="20">0</text>
+                <rect x="212" y="138" width="90" height="80" class="reg"/><text x="257" y="186" text-anchor="middle" class="reg-val">34</text><text x="257" y="240" text-anchor="middle" fill="var(--muted)" font-size="20">1</text>
+                <rect x="304" y="138" width="90" height="80" class="reg"/><text x="349" y="186" text-anchor="middle" class="reg-val">56</text><text x="349" y="240" text-anchor="middle" fill="var(--muted)" font-size="20">2</text>
+                <rect x="396" y="138" width="90" height="80" class="reg"/><text x="441" y="186" text-anchor="middle" class="reg-val">78</text><text x="441" y="240" text-anchor="middle" fill="var(--muted)" font-size="20">3</text>
+              </g></g>
+            <!-- little endian -->
+            <g><text x="870" y="90" text-anchor="middle" fill="var(--orange)" font-size="22" font-weight="700">Little-endian</text>
+              <text x="870" y="118" text-anchor="middle" fill="var(--muted)" font-size="17">LSB at the lowest address</text>
+              <g font-size="24">
+                <rect x="700" y="138" width="90" height="80" class="reg"/><text x="745" y="186" text-anchor="middle" class="reg-val">78</text><text x="745" y="240" text-anchor="middle" fill="var(--muted)" font-size="20">0</text>
+                <rect x="792" y="138" width="90" height="80" class="reg"/><text x="837" y="186" text-anchor="middle" class="reg-val">56</text><text x="837" y="240" text-anchor="middle" fill="var(--muted)" font-size="20">1</text>
+                <rect x="884" y="138" width="90" height="80" class="reg"/><text x="929" y="186" text-anchor="middle" class="reg-val">34</text><text x="929" y="240" text-anchor="middle" fill="var(--muted)" font-size="20">2</text>
+                <rect x="976" y="138" width="90" height="80" class="reg"/><text x="1021" y="186" text-anchor="middle" class="reg-val">12</text><text x="1021" y="240" text-anchor="middle" fill="var(--muted)" font-size="20">3</text>
+              </g></g>
+          </svg>
+          <div class="cap">Same word, same address 0 — only the byte order differs. Intel x86 is little-endian.</div>
+        </div>
+        <div class="tip"><b>Exam tip:</b> the word address (0, 4, 8…) is the same in both systems — only the <b>order of the bytes inside</b> the word changes. Intel x86 = little-endian.</div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 5 · READ / WRITE A WORD  (deferred-to-Unit-2 NOTE, as instructed)
+       ====================================================================== -->
+  <section class="topic" id="s5">
+    <h2><span class="n">5</span> Reading &amp; Writing a Word from Memory</h2>
+    <div class="askline">Ways this is asked → “Explain memory Read and Write operations”, “Describe a Read/Write cycle using MAR and MDR”.</div>
+
+    <!-- Not a normal accordion: a clear NOTE that this is split Unit1/Unit2 -->
+    <div class="defer">
+      <h3>⚠ Important — this question spans Unit 1 and Unit 2. Full answer is in Unit 2.</h3>
+      <p><b>In Unit 1</b> the Read/Write story is told only at the level of the <b>three buses</b> — which is already covered in Section 3 above:</p>
+      <ul class="ans" style="border:none;padding-left:20px">
+        <li><b>Read</b> = address on the <b>address bus</b> + <b>Read</b> on the control bus → word returns on the <b>data bus</b> (memory unchanged).</li>
+        <li><b>Write</b> = address on the <b>address bus</b> + data on the <b>data bus</b> + <b>Write</b> on the control bus → location is overwritten.</li>
+      </ul>
+      <p><b>In Unit 2</b> we will answer the <em>same</em> question at full depth using <b>Register Transfer Language (RTL)</b> and the <b>MAR / MDR</b> registers — e.g. a Read is <code>MAR ← [PC]; Read; MDR ← [M[MAR]]</code> and a Write is <code>M[MAR] ← [MDR]; Write</code>. Because the RTL description belongs to the processing-unit topic, we will take the <b>complete Read/Write cycle (Unit 1 bus view + Unit 2 RTL view) together in Unit 2</b>.</p>
+      <p class="ans o" style="border:none"><b>Revision reminder:</b> this is a high-frequency question — do not skip it. Just study it from the Unit 2 reckoner where both halves are combined.</p>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 6 · INSTRUCTIONS  (opcode+operand, 3 classifications, examples)
+       ====================================================================== -->
+  <section class="topic" id="s6">
+    <h2><span class="n">6</span> Instructions — Opcode, Operands &amp; Classification</h2>
+    <div class="askline">Ways this is asked → “Parts of an instruction”, “Classify instructions by function / operand count / format”, “Zero-, one-, two-, three-address instructions with example”.</div>
+
+    <!-- Q6.1 : anatomy -->
+    <details class="q">
+      <summary>What are the parts of a machine instruction? (opcode + operand) <span class="marks">2–3 marks</span></summary>
+      <div class="ans t">
+        <p>Every instruction has two parts:</p>
+        <ul>
+          <li><b>Opcode (operation code)</b> — <em>what to do</em> (e.g. <code>Load</code>, <code>Add</code>, <code>Store</code>).</li>
+          <li><b>Operand(s)</b> — <em>what to do it on</em>: a register, a memory address, or a constant (an operand may also be <b>implied</b> and not written).</li>
+        </ul>
+        <p><b>Examples:</b> <code>Load R2, A</code> → opcode <code>Load</code>, destination <code>R2</code>, source address <code>A</code>. &nbsp; <code>Add R4, R2, R3</code> → three operands: destination R4, sources R2 and R3.</p>
+        <div class="tip">The <b>assembler</b> translates these symbolic mnemonics into the binary <b>object program</b> the hardware runs.</div>
+      </div>
+    </details>
+
+    <!-- Q6.2 : classification by function -->
+    <details class="q">
+      <summary>Classify instructions by functionality (the job they do), with examples. <span class="marks">5 marks</span></summary>
+      <div class="ans g">
+        <table class="tbl">
+          <tr><th>Type</th><th>What it does</th><th>Examples</th></tr>
+          <tr><td><b>Data transfer</b></td><td>move/copy data, don’t change it</td><td><code>Load · Store · Move</code></td></tr>
+          <tr><td><b>Arithmetic &amp; logic</b></td><td>compute a result in the ALU</td><td><code>Add · Sub · AND · OR · Shift</code></td></tr>
+          <tr><td><b>Control transfer</b></td><td>change which instruction runs next</td><td><code>Branch · Jump · Call · Return</code></td></tr>
+          <tr><td><b>Input / Output</b></td><td>talk to a device outside the CPU</td><td><code>In · Out</code></td></tr>
+          <tr><td><b>Machine control</b></td><td>manage the processor itself</td><td><code>Halt · No-op</code></td></tr>
+        </table>
+      </div>
+    </details>
+
+    <!-- Q6.3 : classification by number of operands (0/1/2/3-address) -->
+    <details class="q">
+      <summary>Classify instructions by number of operands (three-, two-, one-, zero-address) using C = A + B. <span class="marks">5 marks</span></summary>
+      <div class="ans y">
+        <p>The <b>same job</b> <code>C = A + B</code> can be written four ways, depending on how many addresses the instruction names:</p>
+        <table class="tbl">
+          <tr><th>Type</th><th>Example</th><th>What is implied</th><th>CPU it suits</th></tr>
+          <tr><td><b>3-address</b></td><td><code>Add C, A, B</code></td><td>nothing — all three named</td><td>general-register</td></tr>
+          <tr><td><b>2-address</b></td><td><code>Add C, A</code></td><td>destination doubles as a source</td><td>classic CISC</td></tr>
+          <tr><td><b>1-address</b></td><td><code>Add B</code></td><td>the accumulator: <code>AC ← [AC] + [B]</code></td><td>accumulator machine</td></tr>
+          <tr><td><b>0-address</b></td><td><code>Add</code></td><td>the top two <b>stack</b> entries</td><td>stack machine</td></tr>
+        </table>
+        <div class="tip"><b>Trade-off:</b> fewer addresses → <b>shorter</b> instructions, but you need <b>more</b> of them to do the same work.</div>
+      </div>
+    </details>
+
+    <!-- Q6.4 : classification by format -->
+    <details class="q">
+      <summary>Classify instructions by format (where the operand lives), with examples. <span class="marks">3–5 marks</span></summary>
+      <div class="ans t">
+        <table class="tbl">
+          <tr><th>Format</th><th>Where the operand is</th><th>Examples</th></tr>
+          <tr><td><b>Memory-reference</b></td><td>a memory address — acts on a memory operand</td><td><code>Load R2, A · Store R4, C</code> (Mano: <code>LDA · STA · ADD</code>)</td></tr>
+          <tr><td><b>Register-reference</b></td><td>inside the CPU — no memory address</td><td><code>Add R4, R2, R3 · Increment R1 · Halt</code> (Mano: <code>CLA · CMA · INC · HLT</code>)</td></tr>
+          <tr><td><b>Input–Output</b></td><td>an I/O device — no memory address</td><td><code>In · Out</code> (Mano: <code>INP · OUT · SKI · ION</code>)</td></tr>
+        </table>
+      </div>
+    </details>
+
+    <!-- Q6.5 : RISC vs CISC (commonly clubbed here) -->
+    <details class="q">
+      <summary>Differentiate RISC and CISC. <span class="marks">5 marks</span></summary>
+      <div class="ans p">
+        <p><b>RISC (Reduced Instruction Set Computer)</b> — a small, simple set; each instruction fits in <b>one word</b> and runs in about one clock cycle; <b>load/store architecture</b> (only Load/Store touch memory).</p>
+        <p><b>CISC (Complex Instruction Set Computer)</b> — a large, rich set; instructions vary in length and can span <b>multiple words</b>; arithmetic may act <b>directly on memory</b> operands.</p>
+        <table class="tbl">
+          <tr><th></th><th>RISC</th><th>CISC</th></tr>
+          <tr><td><b>Instruction set</b></td><td>few &amp; simple</td><td>many, memory-to-memory</td></tr>
+          <tr><td><b>Execution</b></td><td>one cycle → easy to pipeline</td><td>variable length → multi-cycle</td></tr>
+          <tr><td><b>Burden on</b></td><td>the compiler (software)</td><td>the hardware</td></tr>
+          <tr><td><b>Examples</b></td><td>ARM, RISC-V (mobile, IoT)</td><td>x86 / Intel, AMD (desktops, servers)</td></tr>
+        </table>
+        <div class="tip"><b>One-line trade-off:</b> CISC does more per instruction; RISC does less per instruction but runs them faster and more predictably.</div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 7 · ADDRESSING MODES  (each mode + a proper example)
+       ====================================================================== -->
+  <section class="topic" id="s7">
+    <h2><span class="n">7</span> Addressing Modes</h2>
+    <div class="askline">Ways this is asked → “Explain addressing modes with examples”, “Give the effective address for each mode”, “Which mode is best for arrays?”.</div>
+
+    <!-- Q7.1 : the full explanation with examples -->
+    <details class="q">
+      <summary>Explain the different addressing modes with an example and the effective address (EA) of each. <span class="marks">10 marks</span></summary>
+      <div class="ans t">
+        <p>An <b>addressing mode</b> is the rule that tells the processor <b>where to find the operand</b>. The <b>effective address (EA)</b> is the actual address finally used.</p>
+        <table class="tbl">
+          <tr><th>Mode</th><th>Notation / Example</th><th>Effective address / meaning</th></tr>
+          <tr><td><b>Immediate</b></td><td><code>Move R2, #5</code></td><td>operand is <b>inside the instruction</b> → <code>R2 ← 5</code>; no memory access.</td></tr>
+          <tr><td><b>Register</b></td><td><code>Add R4, R2, R3</code></td><td>operand is <b>in a register</b>; EA is the register itself — the fastest mode.</td></tr>
+          <tr><td><b>Absolute / Direct</b></td><td><code>Load R2, A</code></td><td>instruction holds the address → <b>EA = A</b>; <code>R2 ← [A]</code>. One memory access.</td></tr>
+          <tr><td><b>Indirect</b></td><td><code>Load R2, (R5)</code></td><td>the register/location holds the <b>address of the address</b> → <b>EA = [R5]</b>; a pointer. <code>R2 ← [[R5]]</code>.</td></tr>
+          <tr><td><b>Index</b></td><td><code>Load R2, 20(R5)</code></td><td><b>EA = 20 + [R5]</b> — a base register plus an offset. Made for <b>arrays</b>.</td></tr>
+          <tr><td><b>Relative</b></td><td><code>Branch&gt;0 LOOP</code></td><td>index mode with the <b>PC</b> as base → <b>EA = X + [PC]</b>; used to jump to instructions (position-independent code).</td></tr>
+          <tr><td><b>Autoincrement</b></td><td><code>(R5)+</code></td><td>use <b>[R5]</b> as the address, <b>then R5 ← R5 + 1</b>. Step forward through an array.</td></tr>
+          <tr><td><b>Autodecrement</b></td><td><code>−(R5)</code></td><td><b>R5 ← R5 − 1 first</b>, then use <b>[R5]</b>. Natural for a stack (push/pop).</td></tr>
+        </table>
+        <div class="tip"><b>Worked example for Index:</b> if <code>R5 = 1000</code>, then <code>20(R5)</code> reaches address <b>1020</b>. Fix the base at the array start, change the offset to step to any element.</div>
+        <p class="oneliner">Fastest → slowest to reach the operand: Immediate / Register (no memory) → Absolute (1 access) → Indirect (2 accesses).</p>
+      </div>
+    </details>
+
+    <!-- Q7.2 : why keep operands in registers -->
+    <details class="q">
+      <summary>Why keep operands in registers (register mode)? <span class="marks">2 marks</span></summary>
+      <div class="ans g">
+        <p>A register read is a tiny fraction of the time of a memory read. RISC machines keep operands in registers precisely so that an arithmetic instruction can finish in about <b>one clock cycle</b>, with <b>no memory access</b>.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 8 · INSTRUCTION SEQUENCING  (straight-line, jumps)
+       ====================================================================== -->
+  <section class="topic" id="s8">
+    <h2><span class="n">8</span> Instruction Sequencing</h2>
+    <div class="askline">Ways this is asked → “Straight-line vs branching”, “Unconditional vs conditional branch”, “How does a conditional branch decide?”, “Branch target vs offset”.</div>
+
+    <!-- Q8.1 : straight-line -->
+    <details class="q">
+      <summary>What is straight-line sequencing? <span class="marks">3 marks</span></summary>
+      <div class="ans t">
+        <p>By default the processor executes instructions in <b>order of increasing addresses</b>. After each fetch the <b>PC is auto-incremented by the word length</b> (e.g. <code>PC ← PC + 4</code> for 4-byte words), so it points to the next instruction. This default flow is called <b>straight-line sequencing</b>.</p>
+        <!-- reused straight-line picture, .frag removed so it shows fully -->
+        <div class="pic">
+          <svg viewBox="0 0 1160 320" preserveAspectRatio="xMidYMid meet">
+            <text x="250" y="30" text-anchor="middle" fill="var(--teal)" font-size="20" font-weight="700">MEMORY</text>
+            <g font-size="22">
+              <rect x="120" y="50"  width="360" height="52" class="reg"/><text x="150" y="84" fill="var(--muted)">100</text><text x="460" y="84" text-anchor="end" class="reg-val">Load R2, A</text>
+              <rect x="120" y="106" width="360" height="52" class="reg"/><text x="150" y="140" fill="var(--muted)">104</text><text x="460" y="140" text-anchor="end" class="reg-val">Add  R2, B</text>
+              <rect x="120" y="162" width="360" height="52" class="reg"/><text x="150" y="196" fill="var(--muted)">108</text><text x="460" y="196" text-anchor="end" class="reg-val">Store R2, C</text>
+              <rect x="120" y="218" width="360" height="52" class="reg"/><text x="150" y="252" fill="var(--muted)">112</text><text x="460" y="252" text-anchor="end" class="reg-val">…</text>
+            </g>
+            <g><rect x="640" y="106" width="170" height="52" rx="8" class="reg" style="stroke:var(--purple)"/><text x="725" y="140" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">PC=104</text><path d="M 560 132 L 630 132" stroke="var(--purple)" stroke-width="4" marker-end="url(#ahz)"/></g>
+            <text x="900" y="130" fill="var(--yellow)" font-size="26" font-weight="700">PC ← PC + 4</text><text x="900" y="166" fill="var(--muted)" font-size="20">after every fetch</text>
+            <defs><marker id="ahz" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker></defs>
+          </svg>
+          <div class="cap">Each fetch adds the word length to the PC, so instructions run in address order.</div>
+        </div>
+        <p>There are only <b>two kinds</b> of sequencing: <b>straight-line</b> (PC just steps on) and <b>branching</b> (a new address is loaded into the PC).</p>
+      </div>
+    </details>
+
+    <!-- Q8.2 : unconditional jump -->
+    <details class="q">
+      <summary>What is an unconditional branch (jump)? <span class="marks">3 marks</span></summary>
+      <div class="ans y">
+        <p>An <b>unconditional branch</b> (a <b>jump</b>) loads a <b>fixed target address into the PC every time</b>, with no test — e.g. <code>Branch 100</code> does <code>PC ← 100</code> always. It is used to <b>loop back</b> to the top of a block or to skip ahead.</p>
+        <p>It is the <b>same kind of PC move</b> as straight-line — both just load an address — the only difference is straight-line loads <code>PC+4</code> while the jump loads a written target. On its own a jump-back loops <b>forever</b>; to <b>decide</b> whether to jump you need a conditional branch.</p>
+      </div>
+    </details>
+
+    <!-- Q8.3 : conditional branch -->
+    <details class="q">
+      <summary>What is a conditional branch, and how does it decide whether to jump? <span class="marks">5 marks</span></summary>
+      <div class="ans p">
+        <p>A <b>conditional branch</b> jumps <b>only if a tested condition is true</b> — e.g. <code>Branch&gt;0 116</code>.</p>
+        <p><b>How it knows:</b> the preceding instruction (a <code>Compare</code> or arithmetic op) stores its outcome in the processor’s <b>condition-code flags</b> — a small status register recording <em>was the result zero? negative? …</em>. The conditional branch simply <b>reads those flags</b>. That is why a conditional branch always sits <b>right after</b> an instruction that sets the flags.</p>
+        <p>Then, exactly like a jump, it either loads the new address into the PC (<b>taken</b>) or lets the PC step on to the next instruction (<b>not taken</b>).</p>
+        <div class="tip"><b>Worked example — put the larger of A, B into MAX:</b><br>
+          <code>Load R1, A · Compare R1, B · Branch&gt;0 116 · Load R1, B · Store R1, MAX</code><br>
+          If A=5, B=3 → 5&gt;3 is YES → branch taken, skip the reload → MAX = 5.<br>
+          If A=3, B=5 → 3&gt;5 is NO → not taken, PC steps on, R1 reloaded with B → MAX = 5.</div>
+      </div>
+    </details>
+
+    <!-- Q8.4 : target vs offset -->
+    <details class="q">
+      <summary>Differentiate branch target and branch offset. <span class="marks">2 marks</span></summary>
+      <div class="ans g">
+        <p><b>Branch target</b> = the destination address the processor jumps to. <b>Branch offset</b> = the <b>distance</b> from the current PC to that target (<code>offset = target − PC of next instruction</code>). Storing the small offset makes the code <b>position-independent</b>: <code>EA = PC + offset</code>.</p>
+      </div>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  COA · CSE23CT201 · Unit 1 — Exam Ready Reckoner &amp; Question Bank &nbsp;·&nbsp;
+  Sri Ramachandra Faculty of Engineering &amp; Technology &nbsp;·&nbsp;
+  Answers condensed from the Unit 1 classroom deck (Hamacher / Mano).
+</footer>
+
+<!-- ==========================================================================
+     SCRIPT : two small conveniences only. The core "click to reveal" needs
+     NO script — it is the browser's native <details> behaviour.
+     ========================================================================== -->
+<script>
+  /* ------------------------------------------------------------------
+     toggleAll(open) — opens or closes EVERY question at once.
+     Called by the Expand-all (open=true) and Collapse-all (open=false)
+     buttons in the header. document.querySelectorAll('details.q') grabs
+     all question accordions; we set each element's .open property, which
+     is exactly what a manual click toggles.
+     ------------------------------------------------------------------ */
+  function toggleAll(open){
+    document.querySelectorAll('details.q').forEach(function(d){ d.open = open; });
+  }
+
+  /* ------------------------------------------------------------------
+     SCROLLSPY — highlight the nav chip of the section currently on screen
+     so the reader always knows which topic they are in.
+     We use IntersectionObserver: the browser tells us when a <section>
+     enters/leaves the viewport, which is far cheaper than listening to
+     every scroll event. When a section is at least ~40% visible, we mark
+     its matching nav link .active and clear the others.
+     ------------------------------------------------------------------ */
+  var links = document.querySelectorAll('#nav a');            // the 8 chips
+  var byId = {};                                              // id -> chip
+  links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){ a.classList.remove('active'); }); // clear all
+        var chip = byId[e.target.id];                                // find match
+        if(chip){ chip.classList.add('active'); }                    // light it up
+      }
+    });
+  }, { rootMargin:'-45% 0px -45% 0px' });   // "current" = the middle band of screen
+
+  /* Observe every topic section so the observer fires as we scroll past each. */
+  document.querySelectorAll('section.topic').forEach(function(s){ observer.observe(s); });
+</script>
+
+</body>
+</html>
