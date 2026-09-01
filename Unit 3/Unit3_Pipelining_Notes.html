@@ -400,24 +400,48 @@
 <ul>
   <li><b>The pipeline only flows if every stage finishes in one cycle.</b> The <b>Fetch</b> stage and the <b>Memory</b> stage both read the cache, which answers in about one cycle &mdash; but <i>only on a hit</i>.</li>
   <li><b>Cache miss:</b> on a miss the cache must go down to main memory to fetch the block &mdash; <b>tens of cycles</b> (10+). The stage now has no valid word to pass on, so it <b>freezes</b>; and because the pipeline is strictly in&#8209;order, <b>every instruction behind it freezes too</b> (bubbles are injected) until the word arrives. That is why one slow access stalls <i>all following instructions</i>, not just the one that missed.</li>
-  <li><b>Two things to stress:</b> it is <b>non&#8209;deterministic</b> &mdash; the same Load stalls on a miss but not on a hit, so you cannot predict it by reading the code; and you <b>cannot reschedule it away</b> &mdash; reordering never removes a genuine miss (only prefetching or a non&#8209;blocking cache can <i>hide</i> it). That is exactly what separates it from the load&#8209;use hazard below.</li>
+  <li><b>Two things to stress:</b> it is <b>non&#8209;deterministic</b> &mdash; the same Load stalls on a miss but not on a hit, so you cannot predict it by reading the code; and, unlike the load&#8209;use bubble in 3.6, you <b>cannot reschedule it away</b>.</li>
 </ul>
+
+<!-- Second-level understanding (not core exam content): WHY rescheduling, which
+     saves us from the load-use bubble, does NOT work for a cache miss. Kept in an
+     .explain box so it never gets mistaken for the core answer above. -->
+<div class="explain"><span class="tag">Explanation</span><b>Why can&rsquo;t we just reschedule a cache miss away?</b> The idea is tempting, because rescheduling is <i>exactly</i> how we kill the load&#8209;use bubble in 3.6: the compiler slides an independent instruction into the gap so the CPU does useful work instead of idling. To try the same trick here, the compiler would move some independent instructions to run <i>after</i> the Load, hoping they fill the memory wait. It fails for two reasons. <b>First, a miss is invisible at compile time</b> &mdash; the very same Load hits on one run and misses on the next depending on what happens to be in the cache, so the compiler never knows there will be a gap, or how big it is. <b>Second, even if it did know, the gap is huge and variable</b> (tens to hundreds of cycles), and there are almost never that many independent instructions lying nearby to fill it. Contrast the load&#8209;use case: exactly <i>one</i> cycle, <i>every</i> time &mdash; so a single instruction fills it perfectly. A cache miss is a <i>run&#8209;time</i> property of the memory system, so only the hardware can deal with it as it happens &mdash; prefetching, a non&#8209;blocking (&ldquo;lockup&#8209;free&rdquo;) cache, or out&#8209;of&#8209;order execution that runs later independent instructions while the miss is being served. The compiler can <i>hint</i> (a software prefetch), but it cannot schedule the stall out of existence.</div>
+
+<a class="deeplink" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">Go deeper &mdash; how the hardware hides cache&#8209;miss latency <span class="arrow">&rarr;</span><span class="note">Foothold course &middot; prefetching, non&#8209;blocking caches &amp; out&#8209;of&#8209;order execution</span></a>
+
+<!-- Figure 6.7 rebuilt to match Hamacher's timing EXACTLY (three rows, nine cycles).
+     Cycle N sits at left = 150 + (N-1)*128 px. Rows are 80px apart (top 78/158/238).
+     Key point (the earlier version got this wrong): a follower runs its stages up to
+     the point it needs the busy Memory stage, THEN stalls — it does NOT stall early.
+       Ij   Load : F1 D2 C3  M(4-6 = miss, memory busy 3 cycles)      W7
+       Ij+1      : F2 D3 C4  [wait 5,6 for Memory]              M7 W8
+       Ij+2      : F3 D4      [wait 5,6 for Compute→Memory]  C7 M8 W9  -->
 <div class="plate">
-  <div class="tclip" style="height:200px; width:864px"><div class="tscale">
-    <div class="stage-area" style="height:280px">
-      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+  <div class="tclip" style="height:245px; width:958px"><div class="tscale">
+    <div class="stage-area" style="height:340px; width:1330px">
+      <!-- cycle numbers 1..9 -->
+      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div><div class="cyc-num" style="left:1046px">8</div><div class="cyc-num" style="left:1174px">9</div>
+      <!-- Row 1: the Load. Its Memory access misses, so the Memory stage is busy for 3 cycles (4-6). -->
       <div class="rowlab" style="top:88px; font-size:20px">I<sub>j</sub>: Load</div>
       <div class="stage sF" style="left:150px; top:78px">F</div><div class="stage sD" style="left:278px; top:78px">D</div><div class="stage sC" style="left:406px; top:78px">C</div>
-      <div class="stage sM" style="left:534px; top:78px; width:372px; background:var(--red)">Memory — cache miss (3 cycles)</div>
+      <div class="stage sM words" style="left:534px; top:78px; width:372px; background:var(--red)">M — cache miss (3 cyc)</div>
       <div class="stage sW" style="left:918px; top:78px">W</div>
+      <!-- Row 2: Ij+1 runs F,D,C (reaches Compute in cycle 4), THEN waits 5-6 for the busy Memory stage. -->
       <div class="rowlab" style="top:168px; font-size:20px">I<sub>j+1</sub></div>
-      <div class="stage sF" style="left:278px; top:158px">F</div><div class="stage sD" style="left:406px; top:158px">D</div>
-      <div class="stage sBubble" style="left:534px; top:158px; width:244px">stalled</div>
-      <div class="stage sC" style="left:790px; top:158px">C</div><div class="stage sM" style="left:918px; top:158px">M</div>
-      <div class="marker" style="left:534px; top:246px; width:372px; color:var(--red)">▲ following instructions wait for the miss</div>
+      <div class="stage sF" style="left:278px; top:158px">F</div><div class="stage sD" style="left:406px; top:158px">D</div><div class="stage sC" style="left:534px; top:158px">C</div>
+      <div class="stage sBubble" style="left:662px; top:158px; width:244px">stalled</div>
+      <div class="stage sM" style="left:918px; top:158px">M</div><div class="stage sW" style="left:1046px; top:158px">W</div>
+      <!-- Row 3: Ij+2 runs F,D (reaches Decode in cycle 4), THEN waits 5-6 (Compute is blocked behind Ij+1). -->
+      <div class="rowlab" style="top:248px; font-size:20px">I<sub>j+2</sub></div>
+      <div class="stage sF" style="left:406px; top:238px">F</div><div class="stage sD" style="left:534px; top:238px">D</div>
+      <div class="stage sBubble" style="left:662px; top:238px; width:244px">stalled</div>
+      <div class="stage sC" style="left:918px; top:238px">C</div><div class="stage sM" style="left:1046px; top:238px">M</div><div class="stage sW" style="left:1174px; top:238px">W</div>
+      <!-- caption marker sits under the two stall columns (5,6) -->
+      <div class="marker" style="left:534px; top:306px; width:372px; color:var(--red)">▲ stall begins after the busy stage</div>
     </div>
   </div></div>
-  <div class="plabel"><b>Figure 6.7</b> — A cache miss delays the pipeline (shown as 3 cycles; real misses cost 10+).</div>
+  <div class="plabel"><b>Figure 6.7</b> — Stall caused by a memory access delay for a Load instruction (drawn for a 3-cycle delay; a real cache miss costs 10+).</div>
 </div>
 <h3>3.6 The load-use hazard (a data hazard, not a memory delay)</h3>
 <ul>
