@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COA Unit 3 · Pipelining — Part 4 · Datapath, Control &amp; Instruction Sets</title>
+
+<!--
+  ============================================================================
+  COA UNIT 3 · PIPELINING — PART 4 : Datapath, Control & Instruction Sets
+  Classroom teaching deck (CSE23CT201). Self-contained HTML.
+
+  Covers the syllabus topics "Datapath and Control Considerations" and
+  "Influence on Instruction sets", plus the pipeline organization the earlier
+  parts assumed. Textbook: Hamacher Ch.6 §6.2 (Fig 6.2), §6.7 (resource
+  limitations / structural hazards), §6.8.2 (number of stages), §6.10
+  (pipelining in CISC — the instruction-set influence). Engine identical to
+  Parts 1–3.
+  ============================================================================
+-->
+
+<style>
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF;
+    --red:#F85149; --orange:#F0883E; --teal:#39D0D8;
+    --text:#E6EDF3; --muted:#C3D1E0; --border:#30363D; --ink:#0D1117;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{background:var(--bg); color:var(--text); font-family:"Segoe UI",system-ui,-apple-system,sans-serif; overflow:hidden}
+  #deck{position:fixed; inset:0}
+  .slide{position:absolute; inset:0; display:none; flex-direction:column; padding:56px 72px 72px}
+  .slide.active{display:flex}
+
+  h2{font-size:56px; font-weight:800; line-height:1.05; letter-spacing:-.5px}
+  .foothold{font-size:24px; color:var(--muted); font-style:italic; line-height:1.35;
+    margin:2px 0 18px; padding-left:18px; border-left:4px solid var(--accentGlow); max-width:1180px}
+  .foothold b{color:var(--accent); font-style:normal; font-weight:700}
+  .foothold .lbl{color:var(--accentGlow); font-style:normal; font-weight:800; text-transform:uppercase; letter-spacing:1px; font-size:20px}
+
+  .body{flex:1; display:flex; flex-direction:column; justify-content:center}
+  .points{list-style:none; max-width:1240px}
+  .points li{font-size:31px; line-height:1.4; margin:15px 0; padding-left:40px; position:relative}
+  .points li::before{content:"▸"; position:absolute; left:0; color:var(--accent)}
+  .dim{color:var(--muted)} .em{color:var(--accent); font-weight:700}
+  .emg{color:var(--green); font-weight:700} .emr{color:var(--red); font-weight:700} .emp{color:var(--purple); font-weight:700}
+  .emy{color:var(--yellow); font-weight:700} .emt{color:var(--teal); font-weight:700}
+
+  .frag{opacity:0; transform:translateY(14px); transition:opacity .45s ease, transform .45s ease}
+  .frag.on{opacity:1; transform:none}
+
+  .divider{justify-content:center; align-items:flex-start}
+  .divider .kicker{font-size:26px; font-weight:800; letter-spacing:6px; color:var(--orange)}
+  .divider .chno{font-size:150px; font-weight:900; line-height:.9; color:var(--accent); text-shadow:0 0 40px rgba(88,166,255,.35)}
+  .divider .chtitle{font-size:56px; font-weight:800; margin:6px 0 22px; max-width:1150px}
+  .divider .hook{font-size:30px; font-style:italic; color:var(--muted); max-width:1050px; line-height:1.4; padding-left:22px; border-left:5px solid var(--orange)}
+
+  .title-slide{justify-content:center}
+  .title-slide .unit{font-size:30px; font-weight:800; letter-spacing:8px; color:var(--orange)}
+  .title-slide h1{font-size:96px; font-weight:900; letter-spacing:-2px; margin:6px 0 4px}
+  .title-slide .part{font-size:36px; color:var(--accent); font-weight:700; margin-bottom:40px}
+  .title-slide .course{font-size:28px} .title-slide .fac{font-size:22px; color:var(--muted); margin-top:6px}
+  .title-slide .bar{width:260px; height:6px; background:var(--orange); border-radius:3px; margin-top:34px}
+
+  .mic-badge{display:inline-flex; align-items:center; gap:12px; font-size:24px; font-weight:800; color:var(--ink); background:var(--yellow); padding:8px 20px; border-radius:30px; align-self:flex-start}
+  .ask-q{font-size:40px; font-weight:800; line-height:1.25; max-width:1220px; margin:22px 0}
+  .ask-a{font-size:32px; line-height:1.4; color:var(--green); font-weight:700; background:rgba(63,185,80,.10); border:2px solid var(--green); border-radius:14px; padding:20px 26px; max-width:1220px}
+  .ask-a .q2{color:var(--text); font-weight:400}
+
+  .key-slide{justify-content:center; align-items:center; text-align:center}
+  .key-badge{font-size:64px; margin-bottom:20px}
+  .key-text{font-size:52px; font-weight:800; line-height:1.25; max-width:1320px}
+  .key-text .hl{color:var(--accent)} .key-text .hlg{color:var(--green)}
+  .key-sub{font-size:26px; color:var(--muted); font-style:italic; margin-top:32px; max-width:1120px; padding-left:22px; border-left:4px solid var(--orange); text-align:left}
+
+  .instr-line{font-family:"Consolas",monospace; font-size:28px; margin:8px 0; color:var(--text)}
+  .instr-line .rtn{color:var(--muted); font-size:22px}
+  .reg{color:var(--teal); font-weight:700}
+  .codebox{background:var(--surface); border:2px solid var(--border); border-radius:12px; padding:16px 22px; display:inline-block}
+  .codebox .cap{font-size:18px; color:var(--muted); font-style:italic; margin-top:8px}
+
+  /* block-diagram styling (Figures drawn as SVG) */
+  .dp text{fill:var(--text); font-family:"Segoe UI",sans-serif}
+  .dp .box{fill:var(--card); stroke:var(--accent); stroke-width:2.5}
+  .dp .stagebox{fill:var(--card); stroke:var(--teal); stroke-width:2.5}
+  .dp .buf{fill:rgba(88,166,255,.16); stroke:var(--accentGlow); stroke-width:2}
+  .dp .wire{stroke:var(--muted); stroke-width:2.5; fill:none}
+  .dp .fb{stroke:var(--green); stroke-width:3; fill:none}
+  .dp .lbl{fill:var(--muted); font-size:16px}
+
+  /* two-column compare (RISC vs CISC / one cache vs two) */
+  .cols{display:flex; gap:26px; max-width:1240px; margin-top:6px}
+  .col{flex:1; background:var(--surface); border:2px solid var(--border); border-radius:14px; padding:20px 24px}
+  .col.good{border-color:var(--green)} .col.bad{border-color:var(--red)}
+  .col h3{font-size:26px; margin-bottom:10px}
+  .col.good h3{color:var(--green)} .col.bad h3{color:var(--red)}
+  .col ul{list-style:none} .col li{font-size:23px; line-height:1.35; margin:9px 0; padding-left:26px; position:relative}
+  .col li::before{content:"•"; position:absolute; left:6px; color:var(--muted)}
+
+  #bar{position:fixed; top:0; left:0; height:5px; background:var(--accent); width:0; transition:width .3s ease; z-index:50}
+  #count{position:fixed; right:20px; bottom:16px; font-size:18px; color:var(--muted); z-index:50}
+</style>
+</head>
+
+<body>
+<div id="deck">
+
+  <!-- 0 · TITLE -->
+  <section class="slide title-slide active">
+    <div class="unit">UNIT 3</div>
+    <h1>Pipelining</h1>
+    <div class="part">Part 4 · Datapath, Control &amp; Instruction Sets</div>
+    <div class="course">Computer Organization and Architecture &nbsp;·&nbsp; CSE23CT201</div>
+    <div class="fac">Sri Ramachandra Faculty of Engineering and Technology</div>
+    <div class="bar"></div>
+  </section>
+
+  <!-- 1 · CH1 DIVIDER -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 1</div>
+    <div class="chno">1</div>
+    <div class="chtitle">How the pipeline is actually built</div>
+    <div class="hook">We've drawn the pipeline as five neat boxes. But what hardware sits in each box, and what
+      passes between them every clock? Time to open the machine.</div>
+  </section>
+
+  <!-- 2 · PIPELINE ORGANIZATION (Fig 6.2) -->
+  <section class="slide">
+    <h2>Pipeline organization</h2>
+    <div class="foothold"><span class="lbl">Under the hood ·</span> Each stage is <b>separate hardware</b>. Between them sit
+      registers — the <b>interstage buffers</b> B1–B4 — that latch one instruction's work and hand it to the next stage.</div>
+    <div class="body" style="align-items:center">
+      <svg class="dp" width="540" height="352" viewBox="0 0 720 470">
+        <!-- Instruction fetch -->
+        <g class="frag"><rect class="box" x="270" y="8" width="180" height="46" rx="6"/>
+          <text x="360" y="37" text-anchor="middle" font-size="20" font-weight="700">Instruction fetch</text></g>
+        <g class="frag"><rect class="buf" x="220" y="70" width="280" height="24" rx="4"/>
+          <text x="360" y="87" text-anchor="middle" font-size="16">Interstage buffer B1</text>
+          <path class="wire" d="M360,54 V70"/></g>
+        <!-- Register file + Decode -->
+        <g class="frag">
+          <rect class="stagebox" x="150" y="110" width="150" height="52" rx="6"/><text x="225" y="141" text-anchor="middle" font-size="18" font-weight="700">Register file</text>
+          <rect class="stagebox" x="420" y="110" width="150" height="52" rx="6"/><text x="495" y="141" text-anchor="middle" font-size="18" font-weight="700">Decode</text>
+          <path class="wire" d="M300,82 H495 M225,94 V110 M495,94 V110"/></g>
+        <g class="frag"><rect class="buf" x="150" y="178" width="420" height="24" rx="4"/>
+          <text x="360" y="195" text-anchor="middle" font-size="16">Interstage buffer B2</text>
+          <path class="wire" d="M225,162 V178 M495,162 V178"/></g>
+        <!-- Compute -->
+        <g class="frag"><rect class="stagebox" x="150" y="218" width="150" height="50" rx="6"/><text x="225" y="248" text-anchor="middle" font-size="18" font-weight="700">Compute</text>
+          <path class="wire" d="M225,202 V218"/></g>
+        <g class="frag"><rect class="buf" x="150" y="284" width="420" height="24" rx="4"/>
+          <text x="360" y="301" text-anchor="middle" font-size="16">Interstage buffer B3</text>
+          <path class="wire" d="M225,268 V284"/></g>
+        <!-- Memory -->
+        <g class="frag"><rect class="stagebox" x="150" y="324" width="150" height="50" rx="6"/><text x="225" y="354" text-anchor="middle" font-size="18" font-weight="700">Memory access</text>
+          <path class="wire" d="M225,308 V324"/></g>
+        <g class="frag"><rect class="buf" x="150" y="390" width="420" height="24" rx="4"/>
+          <text x="360" y="407" text-anchor="middle" font-size="16">Interstage buffer B4</text>
+          <path class="wire" d="M225,374 V390"/></g>
+        <!-- writeback feedback to register file -->
+        <g class="frag">
+          <path class="fb" d="M150,402 H70 V136 H150"/>
+          <text x="60" y="270" text-anchor="middle" font-size="15" fill="#3FB950" transform="rotate(-90 60 270)">Write result → register file</text>
+        </g>
+      </svg>
+    </div>
+    <div class="diag-caption" style="text-align:center; font-size:22px; color:var(--muted); font-style:italic; margin-top:4px">Figure 6.2 — A five-stage pipeline built from stage hardware + interstage buffers.</div>
+  </section>
+
+  <!-- 3 · WHAT THE BUFFERS CARRY -->
+  <section class="slide">
+    <h2>What each buffer hands forward</h2>
+    <div class="foothold"><span class="lbl">Follow the work ·</span> Each buffer carries exactly what the <b>next</b> stage
+      needs — data, register identifiers, and the <b>control signals</b> that tell that stage what to do.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b class="emt">B1</b> → the newly fetched instruction, ready to decode.</li>
+        <li class="frag"><b class="emt">B2</b> → the two operands read from registers, the immediate value, and the
+          <b>control signals</b> for the remaining stages.</li>
+        <li class="frag"><b class="emt">B3</b> → the ALU result (or the address/data for a memory access).</li>
+        <li class="frag"><b class="emt">B4</b> → the value to be written back into the register file.</li>
+        <li class="frag dim">Control signals ride <b>along with</b> each instruction — this is <b class="emp">pipelined control</b>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4 · KEY INSIGHT 1 -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Each stage is its own <span class="hl">hardware</span>;<br>
+      the interstage buffers hand the work forward on <span class="hlg">every clock</span>.</div>
+  </section>
+
+  <!-- 5 · CH2 DIVIDER -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 2</div>
+    <div class="chno">2</div>
+    <div class="chtitle">Datapath &amp; control considerations</div>
+    <div class="hook">Overlap only works if no two stages ever fight over the same piece of hardware.
+      What happens when they do — and how do we prevent it?</div>
+  </section>
+
+  <!-- 6 · PIPELINED CONTROL + PER-STAGE HW -->
+  <section class="slide">
+    <h2>Every stage needs its own hardware</h2>
+    <div class="foothold"><span class="lbl">Why ·</span> If two stages shared a unit, they couldn't both work in the same
+      cycle — the whole point of overlap would be lost. So the datapath is <b>replicated per stage</b>.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">Separate hardware in each stage → all five instructions advance <b class="emg">simultaneously</b>.</li>
+        <li class="frag">Each stage also owns a <b>buffer register</b> to hold its result for the next stage.</li>
+        <li class="frag"><b class="emp">Pipelined control:</b> control signals are generated once (in Decode) and travel
+          <b>with</b> the instruction down the pipe — not regenerated each stage.</li>
+        <li class="frag dim">But some resources are expensive to duplicate — like memory. That's where trouble starts…</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 7 · STRUCTURAL HAZARD (Fig — resource limitation) -->
+  <section class="slide">
+    <h2>Structural hazard — two stages, one resource</h2>
+    <div class="foothold"><span class="lbl">The clash ·</span> A single memory serves both <b>Fetch</b> (every cycle) and
+      <b>Memory access</b> (for loads/stores). In the same cycle they collide — one must <b>stall</b>.</div>
+    <div class="body" style="align-items:center">
+      <svg class="dp" width="1000" height="300" viewBox="0 0 1000 300">
+        <!-- LEFT: single cache, conflict -->
+        <g class="frag">
+          <rect class="stagebox" x="40" y="30" width="150" height="48" rx="6" style="stroke:var(--accent)"/><text x="115" y="60" text-anchor="middle" font-size="18" font-weight="700">Fetch</text>
+          <rect class="stagebox" x="40" y="200" width="150" height="48" rx="6" style="stroke:var(--teal)"/><text x="115" y="230" text-anchor="middle" font-size="18" font-weight="700">Memory</text>
+          <rect x="290" y="110" width="150" height="60" rx="8" fill="rgba(248,81,73,.14)" stroke="#F85149" stroke-width="2.5"/><text x="365" y="146" text-anchor="middle" font-size="19" font-weight="700" fill="#F85149">One cache</text>
+          <path class="wire" d="M190,54 H250 Q280,54 290,120" stroke="#F85149"/>
+          <path class="wire" d="M190,224 H250 Q280,224 290,160" stroke="#F85149"/>
+          <text x="365" y="205" text-anchor="middle" font-size="19" font-weight="800" fill="#F85149">💥 collision — stall!</text>
+          <text x="240" y="20" font-size="17" fill="#F85149" font-weight="700">Both want it the same cycle</text>
+        </g>
+        <text class="frag" x="520" y="150" font-size="40" font-weight="800" fill="#58A6FF">→</text>
+        <!-- RIGHT: separate I-cache / D-cache -->
+        <g class="frag">
+          <rect class="stagebox" x="600" y="30" width="150" height="48" rx="6" style="stroke:var(--accent)"/><text x="675" y="60" text-anchor="middle" font-size="18" font-weight="700">Fetch</text>
+          <rect class="stagebox" x="600" y="200" width="150" height="48" rx="6" style="stroke:var(--teal)"/><text x="675" y="230" text-anchor="middle" font-size="18" font-weight="700">Memory</text>
+          <rect x="820" y="24" width="150" height="56" rx="8" fill="rgba(63,185,80,.14)" stroke="#3FB950" stroke-width="2.5"/><text x="895" y="57" text-anchor="middle" font-size="18" font-weight="700" fill="#3FB950">I-cache</text>
+          <rect x="820" y="196" width="150" height="56" rx="8" fill="rgba(63,185,80,.14)" stroke="#3FB950" stroke-width="2.5"/><text x="895" y="229" text-anchor="middle" font-size="18" font-weight="700" fill="#3FB950">D-cache</text>
+          <path class="wire" d="M750,54 H820" stroke="#3FB950"/><path class="wire" d="M750,224 H820" stroke="#3FB950"/>
+          <text x="785" y="150" text-anchor="middle" font-size="18" font-weight="800" fill="#3FB950">no clash ✓</text>
+        </g>
+      </svg>
+    </div>
+    <div class="diag-caption" style="text-align:center; font-size:22px; color:var(--muted); font-style:italic; margin-top:4px">§6.7 — Separate instruction &amp; data caches remove the structural hazard.</div>
+  </section>
+
+  <!-- 8 · NUMBER OF STAGES tradeoff -->
+  <section class="slide">
+    <h2>How many stages? A trade-off</h2>
+    <div class="foothold"><span class="lbl">Deeper isn't free ·</span> An n-stage pipeline can raise throughput up to n×.
+      So why not 50 stages? Because each extra stage brings its own costs.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b class="emg">More stages</b> → less work per stage → shorter clock period → higher clock rate.</li>
+        <li class="frag"><b class="emr">But:</b> more instructions in flight → more dependencies → more stalls.</li>
+        <li class="frag"><b class="emr">And:</b> the branch penalty grows if the decision moves to a later stage.</li>
+        <li class="frag">Gains <b>diminish</b> beyond a point — real designs balance depth against hazard cost
+          <span class="dim">(modern CPUs: ~10–20 stages, several GHz).</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 9 · KEY INSIGHT 2 -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Give every stage its own hardware —<br>
+      and <span class="hlg">duplicate the shared resources</span> that would otherwise clash.</div>
+  </section>
+
+  <!-- 10 · CH3 DIVIDER -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 3</div>
+    <div class="chno">3</div>
+    <div class="chtitle">Influence on the instruction set</div>
+    <div class="hook">The pipeline runs smoothest on simple, regular instructions. So the desire to pipeline
+      actually <em>reshaped</em> how instruction sets are designed. That's the RISC story.</div>
+  </section>
+
+  <!-- 11 · PIPELINING LIKES SIMPLE INSTRUCTIONS -->
+  <section class="slide">
+    <h2>Pipelining rewards simple instructions</h2>
+    <div class="foothold"><span class="lbl">Design for the pipe ·</span> The five-stage pipeline was <b>tailored</b> to
+      RISC-style instructions. A few regularities make Fetch and Decode fast and every stage predictable.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b class="em">Uniform length</b> (one word) &amp; <b>few formats</b> → simple, fast Fetch and Decode.</li>
+        <li class="frag"><b class="em">Load–Store architecture</b>: only Load/Store touch memory; arithmetic is
+          <b>register-to-register</b> → predictable stage timing.</li>
+        <li class="frag"><b class="em">Simple, regular addressing</b> → the operand stage's control logic stays simple.</li>
+        <li class="frag dim">These are exactly the principles of <b class="emp">RISC</b> — which evolved hand-in-hand with pipelining.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 12 · CISC COMPLICATIONS — side effects -->
+  <section class="slide">
+    <h2>Where complex instructions fight the pipe</h2>
+    <div class="foothold"><span class="lbl">The friction ·</span> CISC-style features — variable length, multiple memory
+      operands, complex addressing — break the pipeline's regular rhythm. One culprit: <b>side effects</b>.</div>
+    <div class="body" style="justify-content:flex-start">
+      <div class="frag codebox" style="margin-top:6px">
+        <div class="instr-line"><span class="reg">Move</span> R5, (R8)+ <span class="rtn">&nbsp;&nbsp; auto-increment</span></div>
+        <div class="cap">Writes R5 <b>and</b> also changes R8 — an extra, hidden dependency.</div>
+      </div>
+      <ul class="points" style="margin-top:16px">
+        <li class="frag">A <b class="emr">side effect</b> changes a location other than the named destination (here, R8).</li>
+        <li class="frag">A later instruction using R8 now has a dependency the hardware must catch — extra
+          <b>stall / forward</b> logic.</li>
+        <li class="frag">Variable-length instructions may take several cycles just to <b>fetch</b> — stalling the front end.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 13 · CONDITION CODES + micro-ops -->
+  <section class="slide">
+    <h2>Condition codes, and how modern CPUs cope</h2>
+    <div class="foothold"><span class="lbl">Another side effect ·</span> A <b>Compare</b> sets condition-code flags that a later
+      <b>Branch</b> silently depends on — an implicit dependency the pipeline must track.</div>
+    <div class="body">
+      <div class="frag codebox" style="margin-top:2px">
+        <div class="instr-line"><span class="reg">Compare</span> R7, R8</div>
+        <div class="instr-line"><span class="reg">Branch&gt;0</span> TARGET <span class="rtn">&nbsp;&nbsp; depends on the flags Compare set</span></div>
+      </div>
+      <ul class="points" style="margin-top:14px">
+        <li class="frag">Flags are easy in a simple pipeline (one ALU op per cycle) but messy when many instructions are in flight.</li>
+        <li class="frag">Modern CPUs keep CISC instruction sets but <b class="emp">crack each into simple RISC-like micro-operations</b>
+          internally — best of both worlds.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 14 · KEY INSIGHT 3 + FORWARD -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">The instruction set and the pipeline are designed <span class="hl">together</span>.<br>
+      <span class="hlg">Simplicity and regularity</span> are what make overlap pay off.</div>
+    <div class="key-sub"><b style="color:var(--orange)">NEXT ·</b> We can build and feed the pipeline correctly. Part 5 puts
+      <b>numbers</b> on the performance, and pushes past one instruction per cycle with <b>superscalar</b> execution.</div>
+  </section>
+
+</div>
+
+<div id="bar"></div>
+<div id="count"></div>
+
+<script>
+/* Reveal engine — identical to Parts 1–3. */
+const slides = Array.from(document.querySelectorAll('.slide'));
+const bar = document.getElementById('bar'); const count = document.getElementById('count');
+let si = 0, step = 0;
+function fragsOf(i){ return Array.from(slides[i].querySelectorAll('.frag')); }
+function showSlide(i, all){
+  slides.forEach((s,k)=> s.classList.toggle('active', k===i)); si=i;
+  const f=fragsOf(i);
+  if(all){ f.forEach(x=>x.classList.add('on')); step=f.length; } else { f.forEach(x=>x.classList.remove('on')); step=0; }
+  updateHud();
+}
+function next(){ const f=fragsOf(si); if(step<f.length){ f[step].classList.add('on'); step++; updateHud(); } else if(si<slides.length-1){ showSlide(si+1,false); } }
+function prev(){ if(step>0){ step--; fragsOf(si)[step].classList.remove('on'); updateHud(); } else if(si>0){ showSlide(si-1,true); } }
+function updateHud(){ bar.style.width=(si/(slides.length-1)*100)+'%'; count.textContent=(si+1)+' / '+slides.length; }
+document.addEventListener('keydown',(e)=>{ switch(e.key){
+  case 'ArrowRight': case ' ': case 'Enter': case 'PageDown': e.preventDefault(); next(); break;
+  case 'ArrowLeft': case 'PageUp': e.preventDefault(); prev(); break;
+  case 'Home': e.preventDefault(); showSlide(0,false); break;
+  case 'End': e.preventDefault(); showSlide(slides.length-1,true); break; } });
+document.addEventListener('click',(e)=>{ if(e.target.tagName!=='A') next(); });
+showSlide(0,false);
+</script>
+</body>
+</html>

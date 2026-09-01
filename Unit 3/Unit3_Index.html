@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COA Unit 3 · Pipelining — Home</title>
+<!-- Launcher for the Unit 3 pipelining materials. Lives in the Unit 3 folder; links are relative filenames. -->
+<style>
+  :root{ --bg:#0D1117; --surface:#161B22; --card:#1C2333; --accent:#58A6FF; --green:#3FB950; --yellow:#D29922;
+    --purple:#BC8CFF; --teal:#39D0D8; --orange:#F0883E; --text:#E6EDF3; --muted:#C3D1E0; --border:#30363D; }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--text); font-family:"Segoe UI",system-ui,sans-serif; min-height:100vh; padding:48px 40px 60px}
+  .wrap{max-width:1040px; margin:0 auto}
+  .unit{font-size:20px; font-weight:800; letter-spacing:6px; color:var(--orange)}
+  h1{font-size:50px; font-weight:900; letter-spacing:-1px; margin:4px 0 6px}
+  .sub{font-size:19px; color:var(--muted); margin-bottom:34px}
+  .primary{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:16px}
+  a.card{display:block; text-decoration:none; color:inherit; background:var(--card); border:1px solid var(--border);
+    border-top:5px solid var(--accent); border-radius:14px; padding:22px 26px; transition:transform .12s ease, background .12s ease}
+  a.card:hover{transform:translateY(-3px); background:#222b3d}
+  a.card.notes{border-top-color:var(--green)}
+  .card .pt{font-size:15px; font-weight:800; letter-spacing:2px; color:var(--accent); text-transform:uppercase}
+  a.card.notes .pt{color:var(--green)}
+  .card h2{font-size:27px; font-weight:800; margin:4px 0 8px}
+  .card p{font-size:16px; color:var(--muted); line-height:1.45}
+  .card .tag{display:inline-block; font-size:13px; font-weight:700; color:#0D1117; background:var(--teal); padding:3px 11px; border-radius:20px; margin-top:12px}
+  h3.sec{font-size:16px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin:26px 0 10px}
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  .chip{font-size:14px; color:var(--muted); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:7px 12px}
+  .chip b{color:var(--text)}
+  .note{margin-top:26px; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 22px}
+  .note h4{font-size:15px; color:var(--orange); letter-spacing:1px; margin-bottom:8px}
+  .note p{font-size:15px; color:var(--muted); line-height:1.5; margin:4px 0}
+  .note a{color:var(--teal)}
+  .foot{margin-top:22px; font-size:14px; color:var(--muted)}
+  kbd{background:var(--card); border:1px solid var(--border); border-radius:5px; padding:1px 7px; font-size:13px}
+  .old{display:flex; flex-wrap:wrap; gap:8px; margin-top:2px}
+  .old a{font-size:13px; color:var(--muted); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:6px 11px; text-decoration:none}
+  .old a:hover{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="unit">UNIT 3</div>
+  <h1>Pipelining</h1>
+  <div class="sub">Computer Organization and Architecture · CSE23CT201 · CO3 &nbsp;·&nbsp; complete coverage of Hamacher Chapter 6</div>
+
+  <div class="primary">
+    <a class="card" href="Unit3_Pipelining_Deck.html">
+      <div class="pt">Classroom Deck</div>
+      <h2>Pipelining — full deck</h2>
+      <p>One comprehensive deck in textbook order: the idea &amp; organization (Fig 6.1–6.2), performance, data / control /
+      structural hazards, influence on instruction sets, and superscalar. Every figure redrawn in colour; two interactive
+      clock-step simulators built in.</p>
+      <span class="tag">56 slides · interactive</span>
+    </a>
+    <a class="card notes" href="Unit3_Pipelining_Notes.html">
+      <div class="pt">Student Notes</div>
+      <h2>Reading handout</h2>
+      <p>The elaborate companion: the full textbook explanation behind each slide — definitions, reasoning, the two worked
+      examples (6.1, 6.2), and a tagged question bank. Styled to read (and print) like a handout.</p>
+      <span class="tag" style="background:var(--green)">read &amp; print</span>
+    </a>
+  </div>
+
+  <h3 class="sec">What's inside — 7 chapters</h3>
+  <div class="chips">
+    <span class="chip"><b>1</b> The Pipelining Idea</span>
+    <span class="chip"><b>2</b> Pipeline Performance</span>
+    <span class="chip"><b>3</b> Data Hazards</span>
+    <span class="chip"><b>4</b> Instruction (Control) Hazards</span>
+    <span class="chip"><b>5</b> Influence on Instruction Sets</span>
+    <span class="chip"><b>6</b> Datapath &amp; Control Considerations</span>
+    <span class="chip"><b>7</b> Superscalar Operation</span>
+  </div>
+
+  <div class="note">
+    <h4>NOTES</h4>
+    <p><b>Role of Cache memory</b> (Unit 3 syllabus topic 1): belongs to the Memory Organization unit and is deferred —
+      the pipelining-relevant part (memory delays, cache-miss stalls, separate I/D caches) is covered inside the deck.
+      The full cache topic comes next with proper cache material.</p>
+    <p><b>Hazard simulator</b> used in class: <a href="https://avps-deploy.vercel.app/">avps-deploy.vercel.app</a></p>
+  </div>
+
+  <h3 class="sec">Earlier split version (superseded)</h3>
+  <div class="old">
+    <a href="Unit3_Deck.html">Part 1</a><a href="Unit3_Deck_Part2.html">Part 2</a><a href="Unit3_Deck_Part3.html">Part 3</a>
+    <a href="Unit3_Deck_Part4.html">Part 4</a><a href="Unit3_Deck_Part5.html">Part 5</a>
+  </div>
+
+  <div class="foot">Deck controls: <kbd>→</kbd> / <kbd>Space</kbd> / click = next · <kbd>←</kbd> = back · <kbd>R</kbd> = reset a sim ·
+    <kbd>F11</kbd> = fullscreen. Source: Hamacher, Vranesic &amp; Zaky, <i>Computer Organization &amp; Embedded Systems</i>, 5th ed., Ch. 6.</div>
+</div>
+</body>
+</html>

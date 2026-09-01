@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COA Unit 3 · Pipelining — Part 1</title>
+
+<!--
+  ============================================================================
+  COA UNIT 3 · PIPELINING — PART 1 : The Pipelining Idea & the First Hazard
+  Classroom teaching deck (CSE23CT201). Single self-contained HTML file.
+
+  HOW THE PIECES FIT TOGETHER (read this first):
+    1. <style>  ....... all look-and-feel. The colour palette (top of the block)
+                        is the shared Foothold/COA palette so every unit looks
+                        the same. Diagram boxes are absolutely positioned inside
+                        a fixed 1180x-wide "stage area" using px coordinates.
+    2. <body>   ....... one <section class="slide"> per slide. A slide is either
+                        a divider, a content slide (h2 title + .foothold + body),
+                        an "ask the class" slide, or a key-insight slide.
+                        Anything that should appear on a *keypress* is wrapped in
+                        a <div class="frag"> — hidden until revealed.
+    3. <script> ....... the "reveal engine". It walks the slides, and within a
+                        slide reveals the .frag elements one at a time. Space / →
+                        / click = next; ← = back; Home/End = jump. That is the
+                        whole interaction model — the professor drives, students
+                        watch. Nothing else is clickable.
+
+  The two textbook figures students must reproduce in the exam — Figure 6.1
+  (ideal overlap) and Figure 6.3 (stall on a data dependency) — are redrawn
+  here as animated boxes, faithful to Hamacher Ch.6 (labels, stage names
+  Fetch/Decode/Compute/Memory/Write, and the Add/Subtract example unchanged).
+  ============================================================================
+-->
+
+<style>
+  /* ---- Shared colour palette (COA / Foothold) — kept bright for the low-quality projector ---- */
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF;
+    --red:#F85149; --orange:#F0883E; --teal:#39D0D8;
+    --text:#E6EDF3;
+    --muted:#C3D1E0;        /* deliberately bright — never dim grey on the projector */
+    --border:#30363D;
+    --ink:#0D1117;          /* dark text, only ever placed on top of a bright fill  */
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    overflow:hidden;
+  }
+
+  /* ---- The deck fills the browser; press F11 in class for true fullscreen ---- */
+  #deck{position:fixed; inset:0}
+
+  /* ---- A slide is a full-screen flex column; only the .active one is shown ---- */
+  .slide{
+    position:absolute; inset:0;
+    display:none; flex-direction:column;
+    padding:56px 72px 72px;
+  }
+  .slide.active{display:flex}
+
+  /* ---- Titles & the always-visible foothold line (structural, not a .frag) ---- */
+  h2{
+    font-size:60px; font-weight:800; line-height:1.05;
+    color:var(--text); letter-spacing:-.5px;
+  }
+  .foothold{
+    font-size:24px; color:var(--muted); font-style:italic; line-height:1.35;
+    margin:2px 0 18px; padding-left:18px; border-left:4px solid var(--accentGlow);
+    max-width:1180px;
+  }
+  .foothold b{color:var(--accent); font-style:normal; font-weight:700}
+  .foothold .lbl{
+    color:var(--accentGlow); font-style:normal; font-weight:800;
+    text-transform:uppercase; letter-spacing:1px; font-size:20px;
+  }
+
+  /* ---- Generic body area under the foothold ---- */
+  .body{flex:1; display:flex; flex-direction:column; justify-content:center}
+  .points{list-style:none; max-width:1240px}
+  .points li{
+    font-size:33px; line-height:1.4; margin:18px 0; color:var(--text);
+    padding-left:40px; position:relative;
+  }
+  .points li::before{content:"▸"; position:absolute; left:0; color:var(--accent)}
+  .dim{color:var(--muted)}
+  .em{color:var(--accent); font-weight:700}
+  .emg{color:var(--green); font-weight:700}
+  .emr{color:var(--red); font-weight:700}
+  .emp{color:var(--purple); font-weight:700}
+
+  /* ---- The step-by-step reveal: a .frag is hidden, then slides+fades in ---- */
+  .frag{opacity:0; transform:translateY(14px); transition:opacity .45s ease, transform .45s ease}
+  .frag.on{opacity:1; transform:none}
+  /* Diagram fragments that convey MOTION slide in from the left instead ---- */
+  .frag.slidein{transform:translateX(-40px)}
+  .frag.slidein.on{transform:none}
+
+  /* ---------------------------------------------------------------------------
+     DIVIDER SLIDES (between chapters): big number + title + spoken hook
+     --------------------------------------------------------------------------- */
+  .divider{justify-content:center; align-items:flex-start}
+  .divider .kicker{font-size:26px; font-weight:800; letter-spacing:6px; color:var(--orange)}
+  .divider .chno{
+    font-size:150px; font-weight:900; line-height:.9; color:var(--accent);
+    text-shadow:0 0 40px rgba(88,166,255,.35);
+  }
+  .divider .chtitle{font-size:64px; font-weight:800; margin:6px 0 22px; max-width:1150px}
+  .divider .hook{
+    font-size:30px; font-style:italic; color:var(--muted); max-width:1050px; line-height:1.4;
+    padding-left:22px; border-left:5px solid var(--orange);
+  }
+
+  /* ---------------------------------------------------------------------------
+     TITLE SLIDE
+     --------------------------------------------------------------------------- */
+  .title-slide{justify-content:center}
+  .title-slide .unit{font-size:30px; font-weight:800; letter-spacing:8px; color:var(--orange)}
+  .title-slide h1{font-size:104px; font-weight:900; letter-spacing:-2px; margin:6px 0 4px}
+  .title-slide .part{font-size:38px; color:var(--accent); font-weight:700; margin-bottom:40px}
+  .title-slide .course{font-size:28px; color:var(--text)}
+  .title-slide .fac{font-size:22px; color:var(--muted); margin-top:6px}
+  .title-slide .bar{width:260px; height:6px; background:var(--orange); border-radius:3px; margin:34px 0 0}
+
+  /* ---------------------------------------------------------------------------
+     ASK-THE-CLASS SLIDES  (🎤) — the active-learning instrument
+     --------------------------------------------------------------------------- */
+  .mic-badge{
+    display:inline-flex; align-items:center; gap:12px;
+    font-size:24px; font-weight:800; color:var(--ink);
+    background:var(--yellow); padding:8px 20px; border-radius:30px; align-self:flex-start;
+  }
+  .ask-q{font-size:44px; font-weight:800; line-height:1.25; max-width:1200px; margin:26px 0}
+  .ask-a{
+    font-size:34px; line-height:1.4; color:var(--green); font-weight:700;
+    background:rgba(63,185,80,.10); border:2px solid var(--green);
+    border-radius:14px; padding:22px 28px; max-width:1200px;
+  }
+  .ask-a .q2{color:var(--text); font-weight:400}
+
+  /* ---------------------------------------------------------------------------
+     KEY-INSIGHT SLIDES (🔑) — one huge sentence to close a chapter
+     --------------------------------------------------------------------------- */
+  .key-slide{justify-content:center; align-items:center; text-align:center}
+  .key-badge{font-size:64px; margin-bottom:20px}
+  .key-text{font-size:56px; font-weight:800; line-height:1.25; max-width:1300px; color:var(--text)}
+  .key-text .hl{color:var(--accent)}
+  .key-text .hlg{color:var(--green)}
+  .key-sub{
+    font-size:26px; color:var(--muted); font-style:italic; margin-top:34px; max-width:1100px;
+    padding-left:22px; border-left:4px solid var(--orange); text-align:left;
+  }
+  .key-sub a{color:var(--accent)}
+
+  /* ---------------------------------------------------------------------------
+     DIAGRAMS — a "stage area" is a fixed canvas; every box is placed with
+     absolute left/top in px. leftOf(cycle) = 150 + (cycle-1)*128.
+     Stage colours are consistent across the deck so students learn them:
+       F=blue  D=purple  C=orange  M=teal  W=green.  Dark ink text sits on the
+       bright fills (allowed by the projector rule).
+     --------------------------------------------------------------------------- */
+  .stage-area{position:relative; width:1200px; height:330px; margin:6px auto 0}
+  .stage-area.tall{height:360px}
+  .cyc-num{position:absolute; top:0; width:116px; text-align:center; font-size:22px; color:var(--muted)}
+  .time-arrow{position:absolute; top:-2px; font-size:20px; color:var(--muted)}
+  .rowlab{position:absolute; left:0; width:140px; font-size:26px; font-weight:700; color:var(--teal)}
+  .rowlab .sub{font-size:18px}
+
+  .stage{
+    position:absolute; width:116px; height:58px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:24px; font-weight:800; color:var(--ink);
+    transition:left .6s ease, opacity .4s ease, box-shadow .3s ease;
+  }
+  .sF{background:var(--accent)}
+  .sD{background:var(--purple)}
+  .sC{background:var(--orange)}
+  .sM{background:var(--teal)}
+  .sW{background:var(--green)}
+  .sBubble{background:transparent; color:var(--red); border:2px dashed var(--red); font-size:20px; font-weight:700}
+  .stage.hl{box-shadow:0 0 0 4px var(--text), 0 0 22px 4px rgba(230,237,243,.5)}
+  .stage.hlr{box-shadow:0 0 0 4px var(--red), 0 0 22px 4px rgba(248,81,73,.55)}
+
+  .diag-caption{text-align:center; font-size:22px; color:var(--muted); font-style:italic; margin-top:10px}
+  .marker{position:absolute; font-size:20px; font-weight:700; text-align:center; width:160px}
+
+  /* ---- The idle-hardware note used on the "one at a time" slide ---- */
+  .idlebox{
+    position:absolute; border:2px dashed var(--muted); border-radius:8px;
+    color:var(--muted); font-size:18px; display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ---------------------------------------------------------------------------
+     ASSEMBLY-LINE ANALOGY — 4 stations, cars slide across once revealed.
+     --------------------------------------------------------------------------- */
+  .line-area{position:relative; width:1180px; height:300px; margin:20px auto 0}
+  .station{
+    position:absolute; top:110px; width:220px; height:90px; border-radius:12px;
+    background:var(--card); border:2px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; font-weight:700; color:var(--text);
+  }
+  .beltline{position:absolute; top:155px; left:20px; width:1140px; height:3px; background:var(--border)}
+  .car{
+    position:absolute; top:135px; left:0; width:52px; height:34px; border-radius:7px;
+    opacity:0;
+  }
+  .frag.on .car{opacity:1; animation:roll 6s linear infinite}
+  @keyframes roll{ from{transform:translateX(0)} to{transform:translateX(1120px)} }
+
+  /* ---------------------------------------------------------------------------
+     HUD — progress bar (top) + slide counter (bottom-right). Read-only.
+     --------------------------------------------------------------------------- */
+  #bar{position:fixed; top:0; left:0; height:5px; background:var(--accent); width:0; transition:width .3s ease; z-index:50}
+  #count{position:fixed; right:20px; bottom:16px; font-size:18px; color:var(--muted); z-index:50}
+  .instr-line{font-family:"Consolas",monospace; font-size:30px; margin:10px 0; color:var(--text)}
+  .instr-line .rtn{color:var(--muted); font-size:26px}
+  .reg{color:var(--teal); font-weight:700}
+
+  /* ---------------------------------------------------------------------------
+     FUNNY CARTOON ANIMATION — the 5 units drawn as little robot workers.
+     Each "buddy" flips between two states via a class:
+        .relax  → sunglasses on, 💤, gently swaying (no work this pulse)
+        .work   → bouncing, spinning 🔨, glowing in the current instruction's
+                  colour, with a token (I1 / I2 …) floating above it.
+     The controller JS (bottom of file) toggles these states pulse by pulse and
+     sweeps the bottom "clock pulse" bar across the screen once per pulse.
+     --------------------------------------------------------------------------- */
+  .cartoon-stage{display:flex; justify-content:center; align-items:flex-end; gap:22px;
+    width:100%; max-width:1250px; margin:14px auto 0}
+  /* only the pipelined slide shows a stall speech bubble, so only it needs the top gap */
+  #anim-pipe .cartoon-stage{margin-top:60px}
+  .buddy{position:relative; width:196px; display:flex; flex-direction:column; align-items:center}
+
+  /* the floating instruction token (which instruction this unit is working on) */
+  .buddy .token{height:32px; line-height:26px; margin-bottom:12px; opacity:0;
+    font-weight:800; font-size:20px; color:var(--ink); padding:3px 16px; border-radius:16px;
+    background:#888; transform:translateY(6px); transition:opacity .3s ease, transform .3s ease}
+  .buddy.work .token{opacity:1; transform:none}
+
+  /* the little stage box each character stands in */
+  .buddy .scene{position:relative; width:182px; height:164px; border-radius:20px;
+    background:var(--card); border:3px solid var(--border);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    transition:box-shadow .3s ease, border-color .3s ease, background .3s ease}
+  .buddy.work .scene{border-color:var(--tc,var(--uc));
+    box-shadow:0 0 34px var(--tc,var(--uc)); background:rgba(255,255,255,.05)}
+  .buddy .name{margin-top:14px; font-size:24px; font-weight:800}
+
+  /* the robot itself — colour comes from --uc set on each .buddy */
+  .creature{width:118px; height:118px; color:var(--uc)}
+  .buddy.work  .creature{animation:workbounce .42s infinite}
+  .buddy.relax .creature{animation:sway 2.6s ease-in-out infinite}
+  .creature .shades{opacity:0; transition:opacity .3s ease}         /* sunglasses only when chilling */
+  .buddy.relax .creature .shades{opacity:1}
+  .buddy.relax .creature .eye,
+  .buddy.relax .creature .pupil{opacity:0}                          /* hide eyes behind the shades */
+  @keyframes workbounce{0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-12px) rotate(3deg)}}
+  @keyframes sway{0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)}}
+
+  /* emoji props: 💤 in the relax corner, 🔨 spinning in the work corner */
+  .prop-relax,.prop-work{position:absolute; font-size:36px; transition:opacity .3s ease}
+  .prop-relax{top:8px; right:12px}
+  .prop-work{bottom:8px; left:12px}
+  .buddy.relax .prop-work{opacity:0}
+  .buddy.work  .prop-relax{opacity:0}
+  .buddy.work  .prop-work{animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* HUD for the animation: pulse counter (top-right) + clock-sweep bar (bottom) */
+  .pulse-counter{position:absolute; top:0; right:0; font-size:26px; font-weight:800;
+    color:var(--yellow); background:var(--card); padding:8px 18px; border-radius:12px; border:2px solid var(--yellow)}
+  .clockbar-wrap{position:absolute; left:0; right:0; bottom:44px; height:26px;
+    background:var(--surface); border:2px solid var(--border); border-radius:14px; overflow:hidden}
+  .clockbar{height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--teal)); border-radius:12px}
+  .clock-tag{position:absolute; left:0; right:0; bottom:14px; text-align:center; font-size:20px; color:var(--muted)}
+  .finish-note{position:absolute; left:0; right:0; bottom:100px; text-align:center;
+    font-size:30px; font-weight:800; color:var(--green); opacity:0; transition:opacity .45s ease}
+  .finish-note.show{opacity:1}
+
+  /* ---------------------------------------------------------------------------
+     INTERACTIVE SIMULATOR CONTROLS — the professor drives: pick an instruction,
+     issue it, then step the clock. (These replace the old auto-play.)
+     --------------------------------------------------------------------------- */
+  .sim{position:relative; display:flex; flex-direction:column; align-items:center}
+  .sim-controls{display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:center; margin-bottom:10px}
+  .sim-controls .lab{font-size:20px; color:var(--muted); font-weight:700}
+  .sim-select{font-size:20px; font-weight:700; padding:9px 12px; border-radius:10px; margin-left:8px;
+    background:var(--card); color:var(--text); border:2px solid var(--border); font-family:inherit}
+  .sim-btn{font-size:20px; font-weight:800; padding:10px 18px; border-radius:10px; cursor:pointer;
+    border:2px solid var(--border); background:var(--surface); color:var(--text); font-family:inherit; transition:filter .15s}
+  .sim-btn.primary{background:var(--accent); color:var(--ink); border-color:var(--accent)}
+  .sim-btn.pulse{background:var(--yellow); color:var(--ink); border-color:var(--yellow)}
+  .sim-btn:hover{filter:brightness(1.12)}
+  .sim-msg{min-height:36px; text-align:center; font-size:24px; font-weight:800; margin-top:8px}
+  .sim-msg.warn{color:var(--red)} .sim-msg.ok{color:var(--green)} .sim-msg.info{color:var(--accent)}
+
+  /* a bubble = a hole in the pipeline, shown in the buddy's token slot */
+  .buddy.bubbling .token{opacity:1; background:transparent!important; color:var(--red);
+    border:2px dashed var(--red); font-weight:700}
+  /* speech bubble that pops above a stalled buddy */
+  .buddy .speech{position:absolute; bottom:100%; left:50%; transform:translateX(-50%) translateY(2px);
+    width:310px; background:var(--red); color:#fff; font-size:15px; font-weight:700; line-height:1.22;
+    padding:8px 11px; border-radius:12px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:6}
+  .buddy .speech::after{content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+    border:9px solid transparent; border-top-color:var(--red)}
+  .buddy.say .speech{opacity:1}
+</style>
+</head>
+
+<body>
+<div id="deck">
+
+  <!-- ===================== SLIDE 0 · TITLE ===================== -->
+  <section class="slide title-slide active">
+    <div class="unit">UNIT 3</div>
+    <h1>Pipelining</h1>
+    <div class="part">Part 1 · The Pipelining Idea &amp; the First Hazard</div>
+    <div class="course">Computer Organization and Architecture &nbsp;·&nbsp; CSE23CT201</div>
+    <div class="fac">Sri Ramachandra Faculty of Engineering and Technology</div>
+    <div class="bar"></div>
+  </section>
+
+  <!-- ===================== SLIDE 1 · CHAPTER 1 DIVIDER ===================== -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 1</div>
+    <div class="chno">1</div>
+    <div class="chtitle">The Pipelining Idea</div>
+    <div class="hook">Four loads of laundry, one washer and one dryer. Must the second load really wait
+      for the first to be washed, dried <em>and</em> folded before it can even start?</div>
+  </section>
+
+  <!-- ===================== SLIDE 2 · RECALL (revisited from Unit 2) ===================== -->
+  <section class="slide">
+    <h2>One instruction, five steps</h2>
+    <div class="foothold"><span class="lbl">Recall ·</span> In <b>Unit 2</b> we built the datapath that runs a
+      <b>single</b> instruction as Fetch → Decode → Compute → Memory → Write. We revisit it — now watching
+      the hardware <b>between</b> the steps.</div>
+    <div class="body">
+      <div class="stage-area" style="height:150px">
+        <div class="rowlab" style="top:46px">I<span class="sub">j</span></div>
+        <div class="frag stage sF" style="left:150px; top:46px">F</div>
+        <div class="frag stage sD" style="left:278px; top:46px">D</div>
+        <div class="frag stage sC" style="left:406px; top:46px">C</div>
+        <div class="frag stage sM" style="left:534px; top:46px">M</div>
+        <div class="frag stage sW" style="left:662px; top:46px">W</div>
+        <div class="frag marker" style="left:806px; top:54px; width:340px; text-align:left; color:var(--muted); font-style:italic">
+          Five steps, <b class="em">five different hardware units</b> — one busy at a time.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== INTERACTIVE · WITHOUT PIPELINING ===================== -->
+  <section class="slide" id="anim-nopipe">
+    <h2>Without pipelining: one worker at a time</h2>
+    <div class="foothold"><span class="lbl">You drive ·</span> Pick an instruction and <b>issue</b> it, then step the clock.
+      Only <b>one</b> instruction fits — try issuing a second before it exits and see what happens. 😎</div>
+    <div class="body">
+      <div class="pulse-counter">Clock pulse <span class="pnum">0</span></div>
+      <div class="sim">
+        <div class="sim-controls">
+          <span class="lab">Instruction:<select class="sim-select"></select></span>
+          <button class="sim-btn primary sim-issue">＋ Issue instruction</button>
+          <button class="sim-btn pulse sim-pulse">⏭ Next clock pulse</button>
+          <button class="sim-btn sim-reset">↺ Reset</button>
+        </div>
+        <div class="cartoon-stage"></div>
+        <div class="sim-msg"></div>
+      </div>
+      <div class="clockbar-wrap"><div class="clockbar"></div></div>
+    </div>
+  </section>
+
+  <!-- ===================== INTERACTIVE · WITH PIPELINING ===================== -->
+  <section class="slide" id="anim-pipe">
+    <h2>With pipelining: everybody works</h2>
+    <div class="foothold"><span class="lbl">You drive ·</span> Issue a <b>new instruction every pulse</b>. Pick one that
+      <b>depends</b> on a previous result and watch it refuse to move until the value is ready. 🎉</div>
+    <div class="body">
+      <div class="pulse-counter">Clock pulse <span class="pnum">0</span></div>
+      <div class="sim">
+        <div class="sim-controls">
+          <span class="lab">Instruction:<select class="sim-select"></select></span>
+          <button class="sim-btn primary sim-issue">＋ Issue instruction</button>
+          <button class="sim-btn pulse sim-pulse">⏭ Next clock pulse</button>
+          <button class="sim-btn sim-reset">↺ Reset</button>
+        </div>
+        <div class="cartoon-stage"></div>
+        <div class="sim-msg"></div>
+      </div>
+      <div class="clockbar-wrap"><div class="clockbar"></div></div>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE · THE GAP (motivate the waste) ===================== -->
+  <section class="slide">
+    <h2>One at a time wastes the machine</h2>
+    <div class="foothold"><span class="lbl">The gap ·</span> We can run one instruction correctly. But while it
+      <b>Decodes</b>, the Fetch hardware sits <b>idle</b> — and the next instruction can't even begin until this
+      one fully finishes.</div>
+    <div class="body">
+      <div class="stage-area" style="height:250px">
+        <div class="time-arrow" style="left:1090px">Time →</div>
+        <!-- Instruction 1: cycles 1..5 -->
+        <div class="rowlab" style="top:70px">I<span class="sub">1</span></div>
+        <div class="frag stage sF" style="left:150px; top:70px">F</div>
+        <div class="frag stage sD" style="left:278px; top:70px">D</div>
+        <div class="frag stage sC" style="left:406px; top:70px">C</div>
+        <div class="frag stage sM" style="left:534px; top:70px">M</div>
+        <div class="frag stage sW" style="left:662px; top:70px">W</div>
+        <!-- Instruction 2: forced to wait until cycle 6 -->
+        <div class="frag rowlab slidein" style="top:150px">I<span class="sub">2</span></div>
+        <div class="frag stage sF slidein" style="left:790px; top:150px">F</div>
+        <div class="frag stage sD slidein" style="left:918px; top:150px">D</div>
+        <div class="frag stage sC slidein" style="left:1046px; top:150px" >C</div>
+        <div class="frag marker" style="left:1156px; top:158px; width:44px; color:var(--muted); font-size:34px; font-weight:800">…</div>
+        <div class="frag marker" style="left:150px; top:222px; width:1000px; text-align:left; color:var(--muted); font-style:italic">
+          2 instructions need <b class="emr">10 cycles</b> — and <b class="emr">4 of 5</b> units idle every cycle.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 4 · ANALOGY (assembly line) ===================== -->
+  <section class="slide">
+    <h2>The assembly line</h2>
+    <div class="foothold"><span class="lbl">Analogy ·</span> A car takes <b>hours</b> to build, yet one rolls off
+      the line every <b>few minutes</b>. The trick isn't a faster station — it's never letting a station stand idle.</div>
+    <div class="body">
+      <div class="line-area">
+        <div class="beltline"></div>
+        <div class="station" style="left:20px">Body</div>
+        <div class="station" style="left:320px">Paint</div>
+        <div class="station" style="left:620px">Engine</div>
+        <div class="station" style="left:920px">Test</div>
+        <!-- Each car is its own fragment: reveal one, it starts rolling down the belt -->
+        <div class="frag"><div class="car" style="background:var(--accent); animation-delay:0s"></div></div>
+        <div class="frag"><div class="car" style="background:var(--purple); animation-delay:-2s"></div></div>
+        <div class="frag"><div class="car" style="background:var(--green); animation-delay:-4s"></div></div>
+        <div class="frag marker" style="left:20px; top:250px; width:1100px; text-align:left; font-size:24px; color:var(--muted); font-style:italic">
+          Every station is <b class="emg">always busy</b> — on a different car. That is pipelining.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 5 · THE IDEA / FIGURE 6.1 (exam figure) ===================== -->
+  <section class="slide">
+    <h2>Overlap: start the next while this one moves on</h2>
+    <div class="foothold"><span class="lbl">The idea ·</span> The moment I<b>j</b> leaves Fetch and enters Decode,
+      the Fetch unit is free — so fetch I<b>j+1</b> <b>now</b>. Overlapping the steps this way is <b>pipelining</b>.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="time-arrow" style="left:1090px">Time →</div>
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div>
+        <div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+        <div class="cyc-num" style="left:918px">7</div>
+        <!-- I_j : cycles 1..5 -->
+        <div class="frag slidein rowlab" style="top:78px">I<span class="sub">j</span></div>
+        <div class="frag slidein stage sF" style="left:150px; top:78px">F</div>
+        <div class="frag slidein stage sD" style="left:278px; top:78px">D</div>
+        <div class="frag slidein stage sC" style="left:406px; top:78px">C</div>
+        <div class="frag slidein stage sM" style="left:534px; top:78px">M</div>
+        <div class="frag slidein stage sW" style="left:662px; top:78px">W</div>
+        <!-- I_j+1 : cycles 2..6 -->
+        <div class="frag slidein rowlab" style="top:158px">I<span class="sub">j+1</span></div>
+        <div class="frag slidein stage sF" style="left:278px; top:158px">F</div>
+        <div class="frag slidein stage sD" style="left:406px; top:158px">D</div>
+        <div class="frag slidein stage sC" style="left:534px; top:158px">C</div>
+        <div class="frag slidein stage sM" style="left:662px; top:158px">M</div>
+        <div class="frag slidein stage sW" style="left:790px; top:158px">W</div>
+        <!-- I_j+2 : cycles 3..7 -->
+        <div class="frag slidein rowlab" style="top:238px">I<span class="sub">j+2</span></div>
+        <div class="frag slidein stage sF" style="left:406px; top:238px">F</div>
+        <div class="frag slidein stage sD" style="left:534px; top:238px">D</div>
+        <div class="frag slidein stage sC" style="left:662px; top:238px">C</div>
+        <div class="frag slidein stage sM" style="left:790px; top:238px">M</div>
+        <div class="frag slidein stage sW" style="left:918px; top:238px">W</div>
+      </div>
+      <div class="diag-caption">Figure 6.1 — Pipelined execution, the ideal case.
+        <span class="frag" style="color:var(--green); font-style:normal; font-weight:700">Once full, one instruction completes every cycle.</span></div>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 6 · ASK THE CLASS ===================== -->
+  <section class="slide">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="foothold" style="margin-top:20px"><span class="lbl">Predict ·</span> Before we count — trust the picture you just saw.</div>
+    <div class="body">
+      <div class="ask-q">3 instructions, 5 stages each. How many clock cycles —<br>running <b class="emr">one at a time</b>, versus <b class="em">pipelined</b>?</div>
+      <div class="frag ask-a">
+        <span class="q2">Sequential:</span> 3 × 5 = <b>15 cycles</b> &nbsp; · &nbsp;
+        <span class="q2">Pipelined:</span> 5 + (3 − 1) = <b>7 cycles</b>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 7 · PERFORMANCE (the numbers) ===================== -->
+  <section class="slide">
+    <h2>Pipeline performance — counting the cycles</h2>
+    <div class="foothold"><span class="lbl">The payoff ·</span> Put numbers to the staircase. A pipeline of
+      <b>k</b> stages fills up in <b>k</b> cycles, then finishes <b>one instruction per cycle</b> after that.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><span class="em">k</span> stages, <span class="em">n</span> instructions →
+          <b>k + (n − 1)</b> cycles &nbsp;<span class="dim">— versus</span>&nbsp; <b>k × n</b> cycles with no overlap.</li>
+        <li class="frag">Concrete: n = 100, k = 5 → <b class="emg">104</b> cycles instead of <b class="emr">500</b>
+          &nbsp;≈&nbsp; <b class="emg">4.8× faster</b>.</li>
+        <li class="frag">Speedup approaches <span class="em">k</span> (the number of stages) as <span class="em">n</span> grows large.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 8 · WHY NOT EXACTLY k ===================== -->
+  <section class="slide">
+    <h2>Speedup approaches k — but never quite reaches it</h2>
+    <div class="foothold"><span class="lbl">Why not perfect ·</span> Ideal throughput is one instruction per cycle,
+      a <b>k-fold</b> gain. Two things always hold us back.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b>Filling &amp; draining</b> — the first k−1 and last few cycles aren't at full overlap.</li>
+        <li class="frag"><b>The slowest stage sets the clock</b> — every stage must fit the longest stage's delay.</li>
+        <li class="frag">And any <span class="emr">stall</span> — a stage forced to wait — drops throughput below the ideal.
+          <span class="dim">Which brings us to hazards…</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 9 · KEY INSIGHT (Ch 1) ===================== -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Pipelining does <span class="hl">not</span> make one instruction faster.<br>
+      It raises <span class="hlg">throughput</span> — how many finish per second — by overlapping many.</div>
+  </section>
+
+  <!-- ===================== SLIDE 10 · CHAPTER 2 DIVIDER ===================== -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 2</div>
+    <div class="chno">2</div>
+    <div class="chtitle">When the flow breaks: the data hazard</div>
+    <div class="hook">Instruction 2 needs a number that instruction 1 hasn't finished writing yet.
+      Read it now, and you read a <em>stale</em> value. Now what?</div>
+  </section>
+
+  <!-- ===================== SLIDE 11 · THE SETUP (dependency) ===================== -->
+  <section class="slide">
+    <h2>A dependency between neighbours</h2>
+    <div class="foothold"><span class="lbl">The catch ·</span> The staircase quietly assumed instructions are
+      <b>independent</b>. But real code chains: one instruction's result feeds the next. Watch register <b>R2</b>.</div>
+    <div class="body">
+      <div style="max-width:1150px">
+        <div class="frag instr-line">Add&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="reg">R2</span>, R3, #100
+          <span class="rtn">&nbsp;&nbsp;&nbsp;R2 ← [R3] + 100</span></div>
+        <div class="frag instr-line">Subtract&nbsp;R9, <span class="reg">R2</span>, #30
+          <span class="rtn">&nbsp;&nbsp;&nbsp;R9 ← [R2] − 30</span></div>
+        <ul class="points" style="margin-top:26px">
+          <li class="frag"><span class="reg">R2</span> is <b class="emp">produced</b> by the Add and
+            <b class="emp">consumed</b> by the Subtract — a <b class="em">data dependency</b> on R2.</li>
+          <li class="frag dim">Fine when they run one at a time. The trouble starts when we overlap them…</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 12 · TRACE IT / FIGURE 6.3 (hazard exposed) ===================== -->
+  <section class="slide">
+    <h2>The write comes too late</h2>
+    <div class="foothold"><span class="lbl">Trace it ·</span> Lay both on the pipeline. The Add writes R2 in its
+      <b>Write</b> stage — cycle&nbsp;5. But the Subtract reads its operands back in <b>Decode</b> — cycle&nbsp;3.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="time-arrow" style="left:1090px">Time →</div>
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div>
+        <div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+        <!-- Add : cycles 1..5 -->
+        <div class="frag slidein rowlab" style="top:88px; font-size:22px">Add</div>
+        <div class="frag slidein stage sF" style="left:150px; top:78px">F</div>
+        <div class="frag slidein stage sD" style="left:278px; top:78px">D</div>
+        <div class="frag slidein stage sC" style="left:406px; top:78px">C</div>
+        <div class="frag slidein stage sM" style="left:534px; top:78px">M</div>
+        <div class="frag slidein stage sW" style="left:662px; top:78px">W</div>
+        <!-- Subtract (naive overlap) : cycles 2..6 -->
+        <div class="frag slidein rowlab" style="top:178px; font-size:22px">Sub</div>
+        <div class="frag slidein stage sF" style="left:278px; top:168px">F</div>
+        <div class="frag slidein stage sD" style="left:406px; top:168px">D</div>
+        <div class="frag slidein stage sC" style="left:534px; top:168px">C</div>
+        <div class="frag slidein stage sM" style="left:662px; top:168px">M</div>
+        <div class="frag slidein stage sW" style="left:790px; top:168px">W</div>
+        <!-- Conflict markers, revealed last (single-line so they clear the boxes) -->
+        <div class="frag marker" style="left:560px; top:50px; width:320px; color:var(--green)">R2 written in cycle 5 &nbsp;▼</div>
+        <div class="frag marker" style="left:320px; top:236px; width:300px; color:var(--red)">▲ &nbsp;R2 read here — cycle 3</div>
+      </div>
+      <div class="diag-caption">Figure 6.3 — Needed in cycle 3, not written until cycle 5:
+        <span class="frag" style="color:var(--red); font-style:normal; font-weight:700">the Subtract would use a stale R2.</span></div>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 13 · NAME IT + THE FIX (stall) ===================== -->
+  <section class="slide">
+    <h2>That's a hazard — so we stall</h2>
+    <div class="foothold"><span class="lbl">Name it ·</span> Any condition that forces the pipeline to <b>wait</b> is a
+      <b>hazard</b>. This one, born of a data dependency, is a <b class="em" style="font-style:normal">data hazard</b>.
+      The simplest cure: make the Subtract wait.</div>
+    <div class="body">
+      <div class="stage-area tall">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div>
+        <div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+        <div class="cyc-num" style="left:918px">7</div><div class="cyc-num" style="left:1046px">8</div>
+        <!-- Add : cycles 1..5 -->
+        <div class="rowlab" style="top:88px; font-size:22px">Add</div>
+        <div class="stage sF" style="left:150px; top:78px">F</div>
+        <div class="stage sD" style="left:278px; top:78px">D</div>
+        <div class="stage sC" style="left:406px; top:78px">C</div>
+        <div class="stage sM" style="left:534px; top:78px">M</div>
+        <div class="stage sW" style="left:662px; top:78px">W</div>
+        <!-- Subtract stalled: F@2 D@3, bubbles@4,5, C@6 M@7 W@8 -->
+        <div class="rowlab" style="top:178px; font-size:22px">Sub</div>
+        <div class="stage sF" style="left:278px; top:168px">F</div>
+        <div class="stage sD" style="left:406px; top:168px">D</div>
+        <!-- The two bubbles + the shifted C/M/W arrive on a fragment (the stall being inserted) -->
+        <div class="frag stage sBubble" style="left:534px; top:168px">bubble</div>
+        <div class="frag stage sBubble" style="left:662px; top:168px">bubble</div>
+        <div class="frag stage sC" style="left:790px; top:168px">C</div>
+        <div class="frag stage sM" style="left:918px; top:168px">M</div>
+        <div class="frag stage sW" style="left:1046px; top:168px">W</div>
+        <div class="frag marker" style="left:470px; top:250px; width:340px; color:var(--red)">▲ &nbsp;3-cycle stall (bubbles)</div>
+        <div class="frag marker" style="left:850px; top:250px; width:320px; color:var(--green)">▲ &nbsp;R2 read safely now — cycle 6</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 14 · ASK THE CLASS ===================== -->
+  <section class="slide">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="foothold" style="margin-top:20px"><span class="lbl">Predict ·</span> Spot the dependency before you trace it.</div>
+    <div class="body">
+      <div class="ask-q">Which pair stalls the pipeline?</div>
+      <ul class="points" style="max-width:1150px">
+        <li class="frag" style="font-family:Consolas,monospace; font-size:30px">(a) &nbsp;Add <span class="reg">R2</span>,R3,R4 &nbsp;;&nbsp; Sub R5,<span class="reg">R2</span>,R6</li>
+        <li class="frag" style="font-family:Consolas,monospace; font-size:30px">(b) &nbsp;Add R2,R3,R4 &nbsp;;&nbsp; Sub R5,R6,R7</li>
+      </ul>
+      <div class="frag ask-a" style="margin-top:14px">
+        <b>(a) hazard</b> <span class="q2">— Sub needs R2 that Add is still producing.</span> &nbsp;·&nbsp;
+        <b>(b) independent</b> <span class="q2">— no shared register, no stall.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SLIDE 15 · KEY INSIGHT (Ch 2) + FORWARD POINTER ===================== -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Correctness sometimes forces the pipeline to <span class="hl">wait</span>.<br>
+      The whole game from here is <span class="hlg">shrinking that wait</span>.</div>
+    <div class="key-sub"><b style="color:var(--orange)">NEXT ·</b> A data hazard is just the first of several.
+      Next class we open the simulator and watch data, structural and control hazards live —
+      <a href="https://avps-deploy.vercel.app/">avps-deploy.vercel.app</a></div>
+  </section>
+
+</div>
+
+<!-- HUD: progress bar + slide counter -->
+<div id="bar"></div>
+<div id="count"></div>
+
+<script>
+/* ============================================================================
+   THE REVEAL ENGINE
+   ----------------------------------------------------------------------------
+   Model: the deck is an ordered list of .slide sections. Exactly one is
+   ".active" (visible) at a time. Inside a slide, elements marked ".frag" start
+   hidden and are revealed one-per-keypress by adding the ".on" class.
+
+   State we track:
+     si   = index of the current slide
+     step = how many .frag elements on the current slide are already revealed
+
+   Interaction:
+     next()  reveal the next frag; if none left, advance to the next slide
+     prev()  hide the last frag; if none shown, go back a slide (fully revealed)
+   That is the entire contract — the professor taps forward through the lesson.
+   ============================================================================ */
+
+const slides = Array.from(document.querySelectorAll('.slide'));
+const bar    = document.getElementById('bar');
+const count  = document.getElementById('count');
+let si = 0;      // current slide index
+let step = 0;    // frags revealed on the current slide
+
+// All .frag elements belonging to slide i, in document order (= reveal order).
+function fragsOf(i){ return Array.from(slides[i].querySelectorAll('.frag')); }
+
+// Show slide i. revealAll=true means jump in with every frag already visible
+// (used when stepping BACKWARD into a slide, so it appears "finished").
+function showSlide(i, revealAll){
+  slides.forEach((s, k) => s.classList.toggle('active', k === i));
+  si = i;
+  const f = fragsOf(i);
+  if (revealAll){ f.forEach(x => x.classList.add('on')); step = f.length; }
+  else          { f.forEach(x => x.classList.remove('on')); step = 0;      }
+  updateHud();
+  handleAnim(i);   // start (or stop) any cartoon animation attached to this slide
+}
+
+// Forward: next hidden frag, else next slide.
+function next(){
+  const f = fragsOf(si);
+  if (step < f.length){ f[step].classList.add('on'); step++; updateHud(); }
+  else if (si < slides.length - 1){ showSlide(si + 1, false); }
+}
+
+// Backward: hide last-shown frag, else previous slide (shown fully revealed).
+function prev(){
+  if (step > 0){ step--; fragsOf(si)[step].classList.remove('on'); updateHud(); }
+  else if (si > 0){ showSlide(si - 1, true); }
+}
+
+// HUD reflects position only — progress bar by slide, counter as "n / N".
+function updateHud(){
+  bar.style.width = (si / (slides.length - 1) * 100) + '%';
+  count.textContent = (si + 1) + ' / ' + slides.length;
+}
+
+// ---- Input bindings: keyboard drives the lesson; a click also advances ----
+document.addEventListener('keydown', (e) => {
+  switch(e.key){
+    case 'ArrowRight': case ' ': case 'Enter': case 'PageDown':
+      e.preventDefault(); next(); break;
+    case 'ArrowLeft': case 'PageUp':
+      e.preventDefault(); prev(); break;
+    case 'Home': e.preventDefault(); showSlide(0, false); break;
+    case 'End':  e.preventDefault(); showSlide(slides.length - 1, true); break;
+    case 'r': case 'R': handleAnim(si); break;   // replay the current slide's animation
+  }
+});
+// Click anywhere advances (ignore clicks on the simulator link so it still opens).
+document.addEventListener('click', (e) => { if (e.target.tagName !== 'A') next(); });
+
+/* ============================================================================
+   CARTOON ANIMATION CONTROLLERS
+   ----------------------------------------------------------------------------
+   Two slides carry a "5 robot workers + clock pulse" animation. A controller
+   knows, for a given clock pulse p, WHICH units are working and on WHICH
+   instruction (the plan() function). It flips each buddy between .relax/.work,
+   colours the working ones by their instruction, and sweeps the clock bar once
+   per pulse. handleAnim() (called from showSlide) plays the right one on entry.
+   ============================================================================ */
+const UNITS = [                                   // the 5 pipeline stages, each its own colour
+  {name:'Fetch',   c:'#58A6FF'}, {name:'Decode', c:'#BC8CFF'}, {name:'Compute', c:'#F0883E'},
+  {name:'Memory',  c:'#39D0D8'}, {name:'Write',  c:'#3FB950'}
+];
+const INSTR = ['#58A6FF','#BC8CFF','#3FB950','#F0883E','#39D0D8'];   // colours for I1..I5
+
+// One reusable little robot, drawn in SVG (colour inherited from the buddy's --uc).
+const CREATURE = `
+  <svg class="creature" viewBox="0 0 120 120">
+    <path class="antenna" d="M60 26 V12" stroke="currentColor" stroke-width="4"/>
+    <circle cx="60" cy="9" r="5" fill="currentColor"/>
+    <rect x="18" y="26" width="84" height="80" rx="26" fill="currentColor"/>
+    <circle class="eye" cx="46" cy="58" r="10" fill="#fff"/><circle class="eye" cx="74" cy="58" r="10" fill="#fff"/>
+    <circle class="pupil" cx="46" cy="58" r="4.5" fill="#0D1117"/><circle class="pupil" cx="74" cy="58" r="4.5" fill="#0D1117"/>
+    <path class="mouth" d="M46 80 Q60 92 74 80" stroke="#0D1117" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <rect class="shades" x="32" y="52" width="56" height="14" rx="7" fill="#0D1117"/>
+  </svg>`;
+
+// Fill a stage with the 5 buddies (called once per simulator). Each buddy also
+// carries a hidden .speech bubble used when it stalls.
+function buildBuddies(stage){
+  stage.innerHTML = UNITS.map(u => `
+    <div class="buddy relax" style="--uc:${u.c}">
+      <div class="speech"></div>
+      <div class="token">I1</div>
+      <div class="scene"><div class="prop-relax">💤</div><div class="prop-work">🔨</div>${CREATURE}</div>
+      <div class="name" style="color:${u.c}">${u.name}</div>
+    </div>`).join('');
+}
+
+/* ----------------------------------------------------------------------------
+   THE INSTRUCTION MENU the professor can choose from. Each entry carries its
+   destination register (written in the Write stage) and its source registers
+   (needed before Compute) — so data dependencies are detected for real:
+   issue "Add …R1…" then "Sub …R1…" and the Sub genuinely stalls.
+   ---------------------------------------------------------------------------- */
+const MENU = [
+  { t:'Add   R1, R2, R3',  m:'Add',  d:'R1',  s:['R2','R3'] },
+  { t:'Sub   R4, R1, R5',  m:'Sub',  d:'R4',  s:['R1','R5'] },   // depends on R1
+  { t:'Or    R6, R7, R8',  m:'Or',   d:'R6',  s:['R7','R8'] },   // independent
+  { t:'And   R8, R4, R6',  m:'And',  d:'R8',  s:['R4','R6'] },   // depends on R4 / R6
+  { t:'Load  R2, (R9)',    m:'Load', d:'R2',  s:['R9'] },
+  { t:'Mul   R10, R2, R3', m:'Mul',  d:'R10', s:['R2','R3'] },
+];
+const BUBBLE = { bubble:true };                         // sentinel: an empty slot pushed by a stall
+
+/* Build one interactive simulator on a slide.
+   stages[0..4] = Fetch,Decode,Compute,Memory,Write — each holds an instruction,
+   a BUBBLE, or null. mode 'nopipe' allows only one instruction in flight;
+   mode 'pipe' allows one issue per pulse and stalls on a data dependency. */
+function makeSim(slideId, mode){
+  const root  = document.getElementById(slideId);
+  const stage = root.querySelector('.cartoon-stage');
+  buildBuddies(stage);
+  const buddies  = Array.from(stage.querySelectorAll('.buddy'));
+  const pnum     = root.querySelector('.pnum');
+  const bar      = root.querySelector('.clockbar');
+  const sel      = root.querySelector('.sim-select');
+  const msgEl    = root.querySelector('.sim-msg');
+  const btnIssue = root.querySelector('.sim-issue');
+  const btnPulse = root.querySelector('.sim-pulse');
+  const btnReset = root.querySelector('.sim-reset');
+
+  sel.innerHTML = MENU.map((m,i)=>`<option value="${i}">${m.t}</option>`).join('');
+
+  let stages = [null,null,null,null,null];
+  let pulse = 0, issued = 0, stalledText = '';
+
+  const msg   = (t,c)=>{ msgEl.textContent = t; msgEl.className = 'sim-msg ' + (c||''); };
+  const busy  = ()=> stages.filter(s => s && s !== BUBBLE).length;      // real instructions in flight
+  function sweep(){                                                     // one clock-pulse bar sweep
+    bar.style.transition='none'; bar.style.width='0%'; void bar.offsetWidth;
+    bar.style.transition='width 650ms linear'; bar.style.width='100%';
+  }
+
+  function render(){
+    pnum.textContent = pulse;
+    buddies.forEach((b,i)=>{
+      b.classList.remove('work','bubbling','say');
+      b.classList.add('relax');
+      const it = stages[i], tok = b.querySelector('.token'), sp = b.querySelector('.speech');
+      if (it === BUBBLE){ b.classList.add('bubbling'); tok.textContent = 'bubble'; }   // idle hole: stays asleep, just labelled
+      else if (it){ b.classList.remove('relax'); b.classList.add('work');
+        b.style.setProperty('--tc', it.color); tok.textContent = it.tag; tok.style.background = it.color; }
+      if (i === 1 && stalledText){ b.classList.add('say'); sp.textContent = stalledText; }  // Decode speaks when stalled
+    });
+  }
+
+  function issue(){
+    const m = MENU[+sel.value];
+    const inst = { tag:m.m+' '+m.d, dest:m.d, src:m.s, color:INSTR[issued % INSTR.length] };
+    if (mode === 'nopipe'){
+      if (busy()){ msg('⏳ Wait — let the current instruction come out first!', 'warn'); return; }
+      stages[0] = inst; issued++; msg('Issued ' + inst.tag + ' → Fetch. Now step the clock.', 'ok');
+    } else {
+      if (stages[0]){ msg('Fetch is still busy — press Next clock pulse, then issue.', 'warn'); return; }
+      stages[0] = inst; issued++; msg('Issued ' + inst.tag + ' → Fetch.', 'ok');
+    }
+    render();
+  }
+
+  function nextPulse(){
+    pulse++; stalledText = '';
+
+    if (mode === 'nopipe'){
+      stages = [null, stages[0], stages[1], stages[2], stages[3]];      // single instruction shifts on; Write retires
+      sweep(); render();
+      msg(busy() ? 'One unit works, the rest nap. Step again…'
+                 : 'Instruction finished and left the pipeline — issue the next one.', busy() ? 'info' : 'ok');
+      return;
+    }
+
+    // PIPELINED: does the Decode instruction depend on one still ahead of it (not yet written back)?
+    let waitOn = null;
+    const dec = stages[1];
+    if (dec && dec !== BUBBLE){
+      for (const srcReg of dec.src)
+        for (const idx of [2,3,4]){ const p = stages[idx]; if (p && p !== BUBBLE && p.dest === srcReg) waitOn = p; }
+    }
+
+    if (waitOn){
+      // Compute/Memory/Write drain forward; a bubble enters Compute; Fetch+Decode are held frozen
+      stages = [ stages[0], stages[1], BUBBLE, stages[2], stages[3] ];
+      stalledText = 'My ' + waitOn.dest + ' isn’t written back by ' + waitOn.tag + ' yet — still waiting!';
+      sweep(); render();
+      msg('⛔ ' + dec.tag + ' stalls in Decode — ' + waitOn.dest + ' not ready.', 'warn');
+    } else {
+      stages = [ null, stages[0], stages[1], stages[2], stages[3] ];    // everyone advances; Fetch opens up
+      sweep(); render();
+      msg(busy() >= 5 ? '🎉 All five stages busy — full house!'
+                      : 'Pipeline advancing — issue another instruction!', busy() >= 5 ? 'ok' : 'info');
+    }
+  }
+
+  function reset(){
+    stages = [null,null,null,null,null]; pulse = 0; issued = 0; stalledText = '';
+    bar.style.transition='none'; bar.style.width='0%';
+    render();
+    msg(mode === 'nopipe' ? 'Pick an instruction and issue it — only one fits at a time.'
+                          : 'Issue an instruction each pulse. Try a dependent one to trigger a stall.', 'info');
+  }
+
+  btnIssue.onclick = ()=>{ issue();     btnIssue.blur(); };
+  btnPulse.onclick = ()=>{ nextPulse(); btnPulse.blur(); };
+  btnReset.onclick = ()=>{ reset();     btnReset.blur(); };
+  reset();
+  return { reset };
+}
+
+const sims = { 'anim-nopipe': makeSim('anim-nopipe','nopipe'), 'anim-pipe': makeSim('anim-pipe','pipe') };
+
+// Clicks inside a simulator must NOT advance the slide — swallow them here.
+document.querySelectorAll('.sim').forEach(el => el.addEventListener('click', e => e.stopPropagation()));
+
+// On entering a simulator slide, reset it to a clean "everyone asleep" state.
+function handleAnim(i){
+  const cur = slides[i];
+  if (cur && cur.id && sims[cur.id]) sims[cur.id].reset();
+}
+
+// ---- Boot ----
+showSlide(0, false);
+</script>
+</body>
+</html>

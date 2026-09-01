@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COA Unit 3 · Pipelining — Part 2 · Resolving Data Hazards</title>
+
+<!--
+  ============================================================================
+  COA UNIT 3 · PIPELINING — PART 2 : Resolving Data Hazards (CSE23CT201)
+  Classroom teaching deck. Single self-contained HTML file.
+
+  Same machinery as Part 1:
+    <style>  = palette + slide/foothold/diagram styling (px-positioned boxes).
+    <body>   = one <section class="slide"> each; anything revealed on a keypress
+               is a <div class="frag">.
+    <script> = the reveal engine (Space/→/click = next, ← = back, Home/End).
+
+  Textbook figures redrawn faithfully (Hamacher Ch.6): Figure 6.4 (forwarding
+  avoids the stall), Figure 6.5 (datapath modified for forwarding), Figure 6.8
+  (one-cycle stall for a load-use hazard), Figure 6.6 (NOPs in software). Stage
+  names Fetch/Decode/Compute/Memory/Write and the Add/Subtract/Load examples are
+  unchanged so what students see is what they reproduce in the exam.
+  ============================================================================
+-->
+
+<style>
+  /* ---- Shared palette (kept bright for the projector) ---- */
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF;
+    --red:#F85149; --orange:#F0883E; --teal:#39D0D8;
+    --text:#E6EDF3; --muted:#C3D1E0; --border:#30363D; --ink:#0D1117;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{background:var(--bg); color:var(--text); font-family:"Segoe UI",system-ui,-apple-system,sans-serif; overflow:hidden}
+  #deck{position:fixed; inset:0}
+
+  .slide{position:absolute; inset:0; display:none; flex-direction:column; padding:56px 72px 72px}
+  .slide.active{display:flex}
+
+  h2{font-size:58px; font-weight:800; line-height:1.05; letter-spacing:-.5px}
+  .foothold{font-size:24px; color:var(--muted); font-style:italic; line-height:1.35;
+    margin:2px 0 18px; padding-left:18px; border-left:4px solid var(--accentGlow); max-width:1180px}
+  .foothold b{color:var(--accent); font-style:normal; font-weight:700}
+  .foothold .lbl{color:var(--accentGlow); font-style:normal; font-weight:800; text-transform:uppercase; letter-spacing:1px; font-size:20px}
+
+  .body{flex:1; display:flex; flex-direction:column; justify-content:center}
+  .points{list-style:none; max-width:1240px}
+  .points li{font-size:32px; line-height:1.4; margin:16px 0; padding-left:40px; position:relative}
+  .points li::before{content:"▸"; position:absolute; left:0; color:var(--accent)}
+  .dim{color:var(--muted)} .em{color:var(--accent); font-weight:700}
+  .emg{color:var(--green); font-weight:700} .emr{color:var(--red); font-weight:700} .emp{color:var(--purple); font-weight:700}
+
+  .frag{opacity:0; transform:translateY(14px); transition:opacity .45s ease, transform .45s ease}
+  .frag.on{opacity:1; transform:none}
+  .frag.slidein{transform:translateX(-40px)} .frag.slidein.on{transform:none}
+
+  /* ---- Divider slides ---- */
+  .divider{justify-content:center; align-items:flex-start}
+  .divider .kicker{font-size:26px; font-weight:800; letter-spacing:6px; color:var(--orange)}
+  .divider .chno{font-size:150px; font-weight:900; line-height:.9; color:var(--accent); text-shadow:0 0 40px rgba(88,166,255,.35)}
+  .divider .chtitle{font-size:60px; font-weight:800; margin:6px 0 22px; max-width:1150px}
+  .divider .hook{font-size:30px; font-style:italic; color:var(--muted); max-width:1050px; line-height:1.4; padding-left:22px; border-left:5px solid var(--orange)}
+
+  /* ---- Title slide ---- */
+  .title-slide{justify-content:center}
+  .title-slide .unit{font-size:30px; font-weight:800; letter-spacing:8px; color:var(--orange)}
+  .title-slide h1{font-size:100px; font-weight:900; letter-spacing:-2px; margin:6px 0 4px}
+  .title-slide .part{font-size:38px; color:var(--accent); font-weight:700; margin-bottom:40px}
+  .title-slide .course{font-size:28px} .title-slide .fac{font-size:22px; color:var(--muted); margin-top:6px}
+  .title-slide .bar{width:260px; height:6px; background:var(--orange); border-radius:3px; margin-top:34px}
+
+  /* ---- Ask-the-class ---- */
+  .mic-badge{display:inline-flex; align-items:center; gap:12px; font-size:24px; font-weight:800; color:var(--ink); background:var(--yellow); padding:8px 20px; border-radius:30px; align-self:flex-start}
+  .ask-q{font-size:42px; font-weight:800; line-height:1.25; max-width:1220px; margin:24px 0}
+  .ask-a{font-size:33px; line-height:1.4; color:var(--green); font-weight:700; background:rgba(63,185,80,.10); border:2px solid var(--green); border-radius:14px; padding:22px 28px; max-width:1220px}
+  .ask-a .q2{color:var(--text); font-weight:400}
+
+  /* ---- Key insight ---- */
+  .key-slide{justify-content:center; align-items:center; text-align:center}
+  .key-badge{font-size:64px; margin-bottom:20px}
+  .key-text{font-size:54px; font-weight:800; line-height:1.25; max-width:1320px}
+  .key-text .hl{color:var(--accent)} .key-text .hlg{color:var(--green)}
+  .key-sub{font-size:26px; color:var(--muted); font-style:italic; margin-top:34px; max-width:1120px; padding-left:22px; border-left:4px solid var(--orange); text-align:left}
+  .key-sub a{color:var(--accent)}
+
+  /* ---- Pipeline stage diagrams (leftOf(c) = 150 + (c-1)*128) ---- */
+  .stage-area{position:relative; width:1200px; height:330px; margin:6px auto 0}
+  .stage-area.tall{height:360px}
+  .cyc-num{position:absolute; top:0; width:116px; text-align:center; font-size:22px; color:var(--muted)}
+  .time-arrow{position:absolute; top:-2px; font-size:20px; color:var(--muted)}
+  .rowlab{position:absolute; left:0; width:150px; font-size:23px; font-weight:700; color:var(--teal)}
+  .stage{position:absolute; width:116px; height:58px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:24px; font-weight:800; color:var(--ink); transition:left .6s ease, opacity .4s ease, box-shadow .3s ease}
+  .sF{background:var(--accent)} .sD{background:var(--purple)} .sC{background:var(--orange)} .sM{background:var(--teal)} .sW{background:var(--green)}
+  .sBubble{background:transparent; color:var(--red); border:2px dashed var(--red); font-size:20px; font-weight:700}
+  .diag-caption{text-align:center; font-size:22px; color:var(--muted); font-style:italic; margin-top:12px}
+  .marker{position:absolute; font-size:20px; font-weight:700; text-align:center; width:200px}
+  .fwd-svg{position:absolute; left:0; top:0; overflow:visible; pointer-events:none}
+
+  .instr-line{font-family:"Consolas",monospace; font-size:30px; margin:8px 0; color:var(--text)}
+  .instr-line .rtn{color:var(--muted); font-size:24px}
+  .reg{color:var(--teal); font-weight:700}
+  .nop{color:var(--muted)}
+
+  /* ---- Datapath (Figure 6.5) SVG labels ---- */
+  .dp text{fill:var(--text); font-family:"Segoe UI",sans-serif}
+  .dp .box{fill:var(--card); stroke:var(--border); stroke-width:2}
+  .dp .wire{stroke:var(--muted); stroke-width:2.5; fill:none}
+  .dp .alu{fill:var(--surface); stroke:var(--accent); stroke-width:2.5}
+
+  /* ---- Simulator call-to-action ---- */
+  .simlink{display:inline-block; font-size:34px; font-weight:800; color:var(--ink); background:var(--teal);
+    padding:14px 30px; border-radius:14px; margin:8px 0 4px}
+  .simlink:hover{filter:brightness(1.08)}
+
+  #bar{position:fixed; top:0; left:0; height:5px; background:var(--accent); width:0; transition:width .3s ease; z-index:50}
+  #count{position:fixed; right:20px; bottom:16px; font-size:18px; color:var(--muted); z-index:50}
+</style>
+</head>
+
+<body>
+<div id="deck">
+
+  <!-- ===================== 0 · TITLE ===================== -->
+  <section class="slide title-slide active">
+    <div class="unit">UNIT 3</div>
+    <h1>Pipelining</h1>
+    <div class="part">Part 2 · Resolving Data Hazards</div>
+    <div class="course">Computer Organization and Architecture &nbsp;·&nbsp; CSE23CT201</div>
+    <div class="fac">Sri Ramachandra Faculty of Engineering and Technology</div>
+    <div class="bar"></div>
+  </section>
+
+  <!-- ===================== 1 · CHAPTER 1 DIVIDER ===================== -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 1</div>
+    <div class="chno">1</div>
+    <div class="chtitle">Operand forwarding</div>
+    <div class="hook">Last class we stalled the pipeline for three cycles to fix a data hazard.
+      Three wasted cycles for one dependency — surely we can be cleverer than just waiting?</div>
+  </section>
+
+  <!-- ===================== 2 · RECAP (bridge from Part 1) ===================== -->
+  <section class="slide">
+    <h2>Recap: the stall we paid last class</h2>
+    <div class="foothold"><span class="lbl">Recall ·</span> In <b>Part 1</b> the Subtract needed <b>R2</b> before the Add
+      had written it — a <b>data hazard</b>. Our only cure so far: freeze the Subtract for three cycles.</div>
+    <div class="body">
+      <div class="stage-area tall">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div>
+        <div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+        <div class="cyc-num" style="left:918px">7</div><div class="cyc-num" style="left:1046px">8</div>
+        <div class="rowlab" style="top:88px; font-size:22px">Add</div>
+        <div class="stage sF" style="left:150px; top:78px">F</div>
+        <div class="stage sD" style="left:278px; top:78px">D</div>
+        <div class="stage sC" style="left:406px; top:78px">C</div>
+        <div class="stage sM" style="left:534px; top:78px">M</div>
+        <div class="stage sW" style="left:662px; top:78px">W</div>
+        <div class="rowlab" style="top:178px; font-size:22px">Sub</div>
+        <div class="stage sF" style="left:278px; top:168px">F</div>
+        <div class="stage sD" style="left:406px; top:168px">D</div>
+        <div class="frag stage sBubble" style="left:534px; top:168px">bubble</div>
+        <div class="frag stage sBubble" style="left:662px; top:168px">bubble</div>
+        <div class="frag stage sC" style="left:790px; top:168px">C</div>
+        <div class="frag stage sM" style="left:918px; top:168px">M</div>
+        <div class="frag stage sW" style="left:1046px; top:168px">W</div>
+        <div class="frag marker" style="left:470px; top:250px; width:340px; color:var(--red)">▲ &nbsp;3 wasted cycles</div>
+      </div>
+      <div class="diag-caption">Correct — but three idle cycles for a single dependency.
+        <span class="frag" style="color:var(--accent); font-style:normal; font-weight:700">Can we avoid them?</span></div>
+    </div>
+  </section>
+
+  <!-- ===================== 3 · THE OBSERVATION + ASK ===================== -->
+  <section class="slide">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="foothold" style="margin-top:20px"><span class="lbl">Think ·</span> Look at <b>when</b> the answer actually exists,
+      not when it gets written.</div>
+    <div class="body">
+      <div class="ask-q">The Add's ALU finishes computing R2 by the end of <b class="em">cycle 3</b>.<br>
+        The Subtract needs R2 in its Compute stage, <b class="em">cycle 4</b>.<br>So must we really stall?</div>
+      <div class="frag ask-a">
+        <b>No.</b> <span class="q2">The value is sitting at the ALU output after cycle 3 — just
+        <b style="color:var(--green)">route it straight across</b> to the Subtract, without waiting for the register write.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 4 · FORWARDING IDEA (Figure 6.4) ===================== -->
+  <section class="slide">
+    <h2>Operand forwarding — no stall at all</h2>
+    <div class="foothold"><span class="lbl">The idea ·</span> Take the Add's result the moment the ALU produces it
+      (end of cycle 3) and feed it directly into the Subtract's ALU input in cycle 4. <b>Zero</b> stall cycles.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div>
+        <div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+        <div class="rowlab" style="top:88px; font-size:22px">Add</div>
+        <div class="frag slidein stage sF" style="left:150px; top:78px">F</div>
+        <div class="frag slidein stage sD" style="left:278px; top:78px">D</div>
+        <div class="frag slidein stage sC" style="left:406px; top:78px">C</div>
+        <div class="frag slidein stage sM" style="left:534px; top:78px">M</div>
+        <div class="frag slidein stage sW" style="left:662px; top:78px">W</div>
+        <div class="rowlab" style="top:178px; font-size:22px">Sub</div>
+        <div class="frag slidein stage sF" style="left:278px; top:168px">F</div>
+        <div class="frag slidein stage sD" style="left:406px; top:168px">D</div>
+        <div class="frag slidein stage sC" style="left:534px; top:168px">C</div>
+        <div class="frag slidein stage sM" style="left:662px; top:168px">M</div>
+        <div class="frag slidein stage sW" style="left:790px; top:168px">W</div>
+        <!-- forwarding arrow: Add C (end cycle 3) -> Sub C (cycle 4) -->
+        <svg class="fwd-svg frag" width="1200" height="330" viewBox="0 0 1200 330">
+          <defs><marker id="ah" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#3FB950"/></marker></defs>
+          <path d="M464,138 C500,158 540,150 585,166" stroke="#3FB950" stroke-width="4" fill="none" marker-end="url(#ah)"/>
+          <text x="452" y="258" fill="#3FB950" font-size="21" font-weight="700">forward the ALU result — no wait</text>
+        </svg>
+      </div>
+      <div class="diag-caption">Figure 6.4 — Avoiding the stall by operand forwarding.
+        <span class="frag" style="color:var(--green); font-style:normal; font-weight:700">Both instructions run back-to-back.</span></div>
+    </div>
+  </section>
+
+  <!-- ===================== 5 · FORWARDING HARDWARE (Figure 6.5) ===================== -->
+  <section class="slide">
+    <h2>The hardware that makes it possible</h2>
+    <div class="foothold"><span class="lbl">Under the hood ·</span> The ALU result is captured in register <b>RZ</b>.
+      Add wires from RZ back to the ALU inputs, plus multiplexers to choose them — that is all forwarding needs.</div>
+    <div class="body" style="align-items:center">
+      <svg class="dp" width="720" height="420" viewBox="0 0 720 420">
+        <!-- Register file -->
+        <rect class="box" x="250" y="12" width="220" height="80" rx="6"/>
+        <text x="360" y="47" text-anchor="middle" font-size="22" font-weight="700">Register file</text>
+        <text x="285" y="86" text-anchor="middle" font-size="18">A</text>
+        <text x="435" y="86" text-anchor="middle" font-size="18">B</text>
+        <!-- RA / RB -->
+        <rect class="box" x="240" y="130" width="90" height="42" rx="5"/><text x="285" y="157" text-anchor="middle" font-size="20" font-weight="700">RA</text>
+        <rect class="box" x="390" y="130" width="90" height="42" rx="5"/><text x="435" y="157" text-anchor="middle" font-size="20" font-weight="700">RB</text>
+        <path class="wire" d="M285,92 V130"/><path class="wire" d="M435,92 V130"/>
+        <text x="612" y="196" font-size="16" fill="#C3D1E0">Immediate</text>
+        <!-- MuxA / MuxB (trapezoids) -->
+        <polygon class="box" points="250,210 330,210 316,250 264,250"/><text x="290" y="235" text-anchor="middle" font-size="16">MuxA</text>
+        <polygon class="box" points="392,210 500,210 486,250 406,250"/><text x="446" y="235" text-anchor="middle" font-size="16">MuxB</text>
+        <path class="wire" d="M285,172 V210"/><path class="wire" d="M435,172 V210"/>
+        <path class="wire" d="M600,196 H470 M470,196 V210"/>
+        <!-- ALU -->
+        <polygon class="alu" points="255,290 465,290 430,360 290,360"/>
+        <text x="360" y="325" text-anchor="middle" font-size="22" font-weight="700" fill="#58A6FF">ALU</text>
+        <text x="292" y="286" font-size="15" fill="#C3D1E0">InA</text><text x="410" y="286" font-size="15" fill="#C3D1E0">InB</text>
+        <path class="wire" d="M290,250 V290"/><path class="wire" d="M446,250 V290"/>
+        <!-- RZ -->
+        <rect class="box" x="320" y="378" width="80" height="36" rx="5"/><text x="360" y="402" text-anchor="middle" font-size="20" font-weight="700" fill="#3FB950">RZ</text>
+        <path class="wire" d="M360,360 V378"/>
+        <!-- FORWARDING PATH (revealed) -->
+        <g class="frag">
+          <!-- feedback wire: RZ → up the right edge → across (below RA/RB) → down into both muxes -->
+          <path d="M400,396 H650 V182 H300 V206" stroke="#3FB950" stroke-width="4" fill="none" marker-end="url(#ah2)"/>
+          <path d="M452,182 V206" stroke="#3FB950" stroke-width="4" fill="none" marker-end="url(#ah3)"/>
+          <defs>
+            <marker id="ah2" markerWidth="12" markerHeight="12" refX="4" refY="6" orient="auto"><path d="M0,0 L8,0 L4,8 Z" fill="#3FB950"/></marker>
+            <marker id="ah3" markerWidth="12" markerHeight="12" refX="4" refY="6" orient="auto"><path d="M0,0 L8,0 L4,8 Z" fill="#3FB950"/></marker>
+          </defs>
+          <text x="498" y="286" font-size="17" font-weight="700" fill="#3FB950">RZ forwarded</text>
+          <text x="498" y="308" font-size="17" font-weight="700" fill="#3FB950">to ALU inputs</text>
+        </g>
+      </svg>
+    </div>
+    <div class="diag-caption">Figure 6.5 — Datapath modified so register RZ feeds back to the ALU inputs.</div>
+  </section>
+
+  <!-- ===================== 6 · KEY INSIGHT 1 ===================== -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Don't wait for the register <span class="hl">write</span>.<br>
+      <span class="hlg">Forward</span> the result the instant the ALU produces it.</div>
+  </section>
+
+  <!-- ===================== 7 · CHAPTER 2 DIVIDER ===================== -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 2</div>
+    <div class="chno">2</div>
+    <div class="chtitle">When forwarding isn't enough: the Load</div>
+    <div class="hook">Forwarding erased the stall for an Add. But what if the value comes from
+      <em>memory</em> instead of the ALU — can we still hand it over in time?</div>
+  </section>
+
+  <!-- ===================== 8 · LOAD-USE HAZARD (Figure 6.8) ===================== -->
+  <section class="slide">
+    <h2>A load's value arrives one stage later</h2>
+    <div class="foothold"><span class="lbl">The catch ·</span> A <b>Load</b> reads its data in the <b>Memory</b> stage — a whole
+      stage after the ALU. Forwarding still helps, but it can't beat time: one stall cycle is unavoidable.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div>
+        <div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+        <div class="cyc-num" style="left:918px">7</div>
+        <div class="rowlab" style="top:88px; font-size:21px">Load R2,(R3)</div>
+        <div class="frag slidein stage sF" style="left:150px; top:78px">F</div>
+        <div class="frag slidein stage sD" style="left:278px; top:78px">D</div>
+        <div class="frag slidein stage sC" style="left:406px; top:78px">C</div>
+        <div class="frag slidein stage sM" style="left:534px; top:78px">M</div>
+        <div class="frag slidein stage sW" style="left:662px; top:78px">W</div>
+        <div class="rowlab" style="top:178px; font-size:21px">Sub R9,R2</div>
+        <div class="frag slidein stage sF" style="left:278px; top:168px">F</div>
+        <div class="frag slidein stage sD" style="left:406px; top:168px">D</div>
+        <div class="frag stage sBubble" style="left:534px; top:168px">bubble</div>
+        <div class="frag stage sC" style="left:662px; top:168px">C</div>
+        <div class="frag stage sM" style="left:790px; top:168px">M</div>
+        <div class="frag stage sW" style="left:918px; top:168px">W</div>
+        <svg class="fwd-svg frag" width="1200" height="330" viewBox="0 0 1200 330">
+          <defs><marker id="ah4" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3FB950"/></marker></defs>
+          <path d="M592,138 C640,158 670,150 713,166" stroke="#3FB950" stroke-width="4" fill="none" marker-end="url(#ah4)"/>
+          <text x="760" y="258" fill="#3FB950" font-size="21" font-weight="700">forward from Memory</text>
+        </svg>
+        <div class="frag marker" style="left:470px; top:238px; width:260px; color:var(--red)">▲ one unavoidable stall</div>
+      </div>
+      <div class="diag-caption">Figure 6.8 — A load-use hazard: forwarding still needs a single-cycle stall.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 9 · ASK THE CLASS ===================== -->
+  <section class="slide">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="foothold" style="margin-top:20px"><span class="lbl">Predict ·</span> Compare where each value is born.</div>
+    <div class="body">
+      <div class="ask-q">Add-then-use costs <b class="emg">no</b> stall, but Load-then-use costs <b class="emr">one</b>. Why?</div>
+      <div class="frag ask-a">
+        The ALU result exists after the <b>Compute</b> stage; the memory value only after the <b>Memory</b> stage —
+        <span class="q2">one stage later, so it reaches the next instruction one cycle too late to fully forward.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 10 · KEY INSIGHT 2 ===================== -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Forwarding removes <span class="hlg">most</span> data-hazard stalls —<br>
+      but a <span class="hl">load-use</span> pair always costs at least one cycle.</div>
+  </section>
+
+  <!-- ===================== 11 · CHAPTER 3 DIVIDER ===================== -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 3</div>
+    <div class="chno">3</div>
+    <div class="chtitle">Software help &amp; seeing it live</div>
+    <div class="hook">Hardware isn't the only fixer. The compiler can rearrange code to dodge hazards —
+      and a simulator lets us watch every stall and forward happen in real time.</div>
+  </section>
+
+  <!-- ===================== 12 · SOFTWARE HANDLING (Figure 6.6) ===================== -->
+  <section class="slide">
+    <h2>Letting the compiler handle it</h2>
+    <div class="foothold"><span class="lbl">Another route ·</span> If the hardware won't forward, the compiler must create the
+      delay itself — by inserting <b>NOP</b>s, or better, by <b>reordering</b> useful work into the gap.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b>Insert NOPs:</b> place three do-nothing instructions between the dependent pair —
+          <span class="dim">simple, but pure waste.</span>
+          <div class="instr-line" style="margin-top:10px">Add&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="reg">R2</span>,R3,#100 &nbsp;&nbsp;
+            <span class="nop">NOP · NOP · NOP</span> &nbsp;&nbsp; Subtract R9,<span class="reg">R2</span>,#30</div></li>
+        <li class="frag"><b>Reorder instead:</b> move independent instructions into those slots so the CPU does
+          <span class="emg">real work</span> while the value settles — no wasted cycles.</li>
+        <li class="frag dim">This is <b style="color:var(--purple)">instruction scheduling</b> — the compiler and the pipeline
+          designed hand-in-hand.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== 13 · THE SIMULATOR ===================== -->
+  <section class="slide">
+    <h2>Now let's watch it happen</h2>
+    <div class="foothold"><span class="lbl">Hands-on ·</span> Everything we drew — the stall, the bubble, the forward — you can now
+      <b>see stepping through live</b>, one clock pulse at a time.</div>
+    <div class="body">
+      <a class="simlink" href="https://avps-deploy.vercel.app/">▶ &nbsp;avps-deploy.vercel.app</a>
+      <ul class="points" style="margin-top:22px">
+        <li class="frag">Load the <span class="reg">Add</span> → <span class="reg">Subtract</span> pair and <b>single-step the clock</b> —
+          watch the Subtract freeze in Decode.</li>
+        <li class="frag">Turn <b class="emg">forwarding on</b> and re-run — see the stall vanish as the arrow appears.</li>
+        <li class="frag">Try a <b>Load</b> → use pair and confirm the <b class="emr">one</b> stall cycle we predicted.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== 14 · KEY INSIGHT 3 + SUMMARY ===================== -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">A data hazard has a whole <span class="hlg">toolkit</span>:<br>
+      forward in hardware, stall when you must, or <span class="hl">reschedule</span> in software.</div>
+    <div class="key-sub"><b style="color:var(--orange)">NEXT ·</b> Data hazards are only one family. Next we meet
+      <b>instruction (control) hazards</b> — when a branch makes the pipeline fetch the wrong instructions entirely.</div>
+  </section>
+
+</div>
+
+<div id="bar"></div>
+<div id="count"></div>
+
+<script>
+/* ============================================================================
+   REVEAL ENGINE (identical to Part 1)
+   One .active slide at a time; .frag elements reveal one-per-keypress.
+   next() advances a frag or the slide; prev() reverses; Home/End jump.
+   ============================================================================ */
+const slides = Array.from(document.querySelectorAll('.slide'));
+const bar = document.getElementById('bar');
+const count = document.getElementById('count');
+let si = 0, step = 0;
+
+function fragsOf(i){ return Array.from(slides[i].querySelectorAll('.frag')); }
+function showSlide(i, revealAll){
+  slides.forEach((s,k)=> s.classList.toggle('active', k===i));
+  si = i;
+  const f = fragsOf(i);
+  if (revealAll){ f.forEach(x=>x.classList.add('on')); step = f.length; }
+  else          { f.forEach(x=>x.classList.remove('on')); step = 0; }
+  updateHud();
+}
+function next(){
+  const f = fragsOf(si);
+  if (step < f.length){ f[step].classList.add('on'); step++; updateHud(); }
+  else if (si < slides.length-1){ showSlide(si+1, false); }
+}
+function prev(){
+  if (step > 0){ step--; fragsOf(si)[step].classList.remove('on'); updateHud(); }
+  else if (si > 0){ showSlide(si-1, true); }
+}
+function updateHud(){
+  bar.style.width = (si/(slides.length-1)*100) + '%';
+  count.textContent = (si+1) + ' / ' + slides.length;
+}
+document.addEventListener('keydown', (e)=>{
+  switch(e.key){
+    case 'ArrowRight': case ' ': case 'Enter': case 'PageDown': e.preventDefault(); next(); break;
+    case 'ArrowLeft': case 'PageUp': e.preventDefault(); prev(); break;
+    case 'Home': e.preventDefault(); showSlide(0,false); break;
+    case 'End': e.preventDefault(); showSlide(slides.length-1,true); break;
+  }
+});
+document.addEventListener('click', (e)=>{ if (e.target.tagName !== 'A') next(); });
+showSlide(0,false);
+</script>
+</body>
+</html>

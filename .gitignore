@@ -1,0 +1,16 @@
+# --- Never publish on this PUBLIC GitHub Pages repo ---
+# Exam question papers and their answer keys
+Question paper/
+# Colleagues' reference PDFs (not mine to publish)
+References from co-teachers/
+# Answer keys anywhere
+*_AnswerKey.docx
+*_AK.docx
+*AnswerKey*
+# stray sync-test artifacts
+.__wtest
+_synctest.txt
+ziJg0CQA
+
+# Copyrighted textbook chapter (not mine to publish)
+Unit 3/Hamacher_Ch06_Pipelining.pdf

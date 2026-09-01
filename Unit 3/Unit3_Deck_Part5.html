@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COA Unit 3 · Pipelining — Part 5 · Performance &amp; Superscalar</title>
+
+<!--
+  ============================================================================
+  COA UNIT 3 · PIPELINING — PART 5 : Performance & Superscalar Operation
+  Classroom teaching deck (CSE23CT201). Self-contained HTML.
+
+  Completes the pipelining unit. Textbook: Hamacher Ch.6 §6.8 (performance
+  evaluation — T = N·S/R, throughput, δstall/δbranch/δmiss, §6.8.2 number of
+  stages, worked Example 6.2) and §6.9 (superscalar operation — Fig 6.13/6.14,
+  reservation stations, out-of-order execution, register renaming, reorder
+  buffer). Engine identical to Parts 1–4.
+  ============================================================================
+-->
+
+<style>
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF;
+    --red:#F85149; --orange:#F0883E; --teal:#39D0D8;
+    --text:#E6EDF3; --muted:#C3D1E0; --border:#30363D; --ink:#0D1117;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{background:var(--bg); color:var(--text); font-family:"Segoe UI",system-ui,-apple-system,sans-serif; overflow:hidden}
+  #deck{position:fixed; inset:0}
+  .slide{position:absolute; inset:0; display:none; flex-direction:column; padding:56px 72px 72px}
+  .slide.active{display:flex}
+
+  h2{font-size:56px; font-weight:800; line-height:1.05; letter-spacing:-.5px}
+  .foothold{font-size:24px; color:var(--muted); font-style:italic; line-height:1.35;
+    margin:2px 0 18px; padding-left:18px; border-left:4px solid var(--accentGlow); max-width:1180px}
+  .foothold b{color:var(--accent); font-style:normal; font-weight:700}
+  .foothold .lbl{color:var(--accentGlow); font-style:normal; font-weight:800; text-transform:uppercase; letter-spacing:1px; font-size:20px}
+
+  .body{flex:1; display:flex; flex-direction:column; justify-content:center}
+  .points{list-style:none; max-width:1240px}
+  .points li{font-size:31px; line-height:1.4; margin:15px 0; padding-left:40px; position:relative}
+  .points li::before{content:"▸"; position:absolute; left:0; color:var(--accent)}
+  .dim{color:var(--muted)} .em{color:var(--accent); font-weight:700}
+  .emg{color:var(--green); font-weight:700} .emr{color:var(--red); font-weight:700} .emp{color:var(--purple); font-weight:700}
+
+  .frag{opacity:0; transform:translateY(14px); transition:opacity .45s ease, transform .45s ease}
+  .frag.on{opacity:1; transform:none}
+  .frag.slidein{transform:translateX(-40px)} .frag.slidein.on{transform:none}
+
+  .divider{justify-content:center; align-items:flex-start}
+  .divider .kicker{font-size:26px; font-weight:800; letter-spacing:6px; color:var(--orange)}
+  .divider .chno{font-size:150px; font-weight:900; line-height:.9; color:var(--accent); text-shadow:0 0 40px rgba(88,166,255,.35)}
+  .divider .chtitle{font-size:56px; font-weight:800; margin:6px 0 22px; max-width:1150px}
+  .divider .hook{font-size:30px; font-style:italic; color:var(--muted); max-width:1050px; line-height:1.4; padding-left:22px; border-left:5px solid var(--orange)}
+
+  .title-slide{justify-content:center}
+  .title-slide .unit{font-size:30px; font-weight:800; letter-spacing:8px; color:var(--orange)}
+  .title-slide h1{font-size:96px; font-weight:900; letter-spacing:-2px; margin:6px 0 4px}
+  .title-slide .part{font-size:36px; color:var(--accent); font-weight:700; margin-bottom:40px}
+  .title-slide .course{font-size:28px} .title-slide .fac{font-size:22px; color:var(--muted); margin-top:6px}
+  .title-slide .bar{width:260px; height:6px; background:var(--orange); border-radius:3px; margin-top:34px}
+
+  .mic-badge{display:inline-flex; align-items:center; gap:12px; font-size:24px; font-weight:800; color:var(--ink); background:var(--yellow); padding:8px 20px; border-radius:30px; align-self:flex-start}
+  .ask-q{font-size:40px; font-weight:800; line-height:1.25; max-width:1220px; margin:22px 0}
+  .ask-a{font-size:31px; line-height:1.4; color:var(--green); font-weight:700; background:rgba(63,185,80,.10); border:2px solid var(--green); border-radius:14px; padding:20px 26px; max-width:1220px}
+  .ask-a .q2{color:var(--text); font-weight:400}
+
+  .key-slide{justify-content:center; align-items:center; text-align:center}
+  .key-badge{font-size:64px; margin-bottom:20px}
+  .key-text{font-size:52px; font-weight:800; line-height:1.25; max-width:1320px}
+  .key-text .hl{color:var(--accent)} .key-text .hlg{color:var(--green)}
+  .key-sub{font-size:26px; color:var(--muted); font-style:italic; margin-top:32px; max-width:1120px; padding-left:22px; border-left:4px solid var(--orange); text-align:left}
+
+  /* equation cards */
+  .eqn{font-family:"Cambria Math","Times New Roman",serif; font-size:42px; text-align:center;
+    background:var(--surface); border:2px solid var(--border); border-radius:14px; padding:20px 30px; margin:8px 0; max-width:900px}
+  .eqn .sub{font-size:26px; vertical-align:sub} .eqn .var{color:var(--accent); font-style:italic}
+  .eqn .note{display:block; font-family:"Segoe UI",sans-serif; font-size:20px; color:var(--muted); font-style:italic; margin-top:8px}
+  .eqctr{display:flex; flex-direction:column; align-items:center}
+
+  /* pipeline stage diagram (for superscalar Fig 6.14) */
+  .stage-area{position:relative; width:1120px; height:300px; margin:6px auto 0}
+  .cyc-num{position:absolute; top:0; width:96px; text-align:center; font-size:20px; color:var(--muted)}
+  .rowlab{position:absolute; left:0; width:210px; font-size:20px; font-weight:700; color:var(--teal); font-family:"Consolas",monospace}
+  .stage{position:absolute; width:92px; height:46px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-size:20px; font-weight:800; color:var(--ink)}
+  .sF{background:var(--accent)} .sD{background:var(--purple)} .sC{background:var(--orange)} .sM{background:var(--teal)} .sW{background:var(--green)}
+
+  /* superscalar block diagram (Fig 6.13) */
+  .dp text{fill:var(--text); font-family:"Segoe UI",sans-serif}
+  .dp .box{fill:var(--card); stroke:var(--accent); stroke-width:2.5}
+  .dp .unit{fill:var(--card); stroke:var(--teal); stroke-width:2.5}
+  .dp .q{fill:rgba(88,166,255,.14); stroke:var(--accentGlow); stroke-width:2}
+  .dp .wire{stroke:var(--muted); stroke-width:2.5; fill:none}
+
+  #bar{position:fixed; top:0; left:0; height:5px; background:var(--accent); width:0; transition:width .3s ease; z-index:50}
+  #count{position:fixed; right:20px; bottom:16px; font-size:18px; color:var(--muted); z-index:50}
+</style>
+</head>
+
+<body>
+<div id="deck">
+
+  <!-- 0 · TITLE -->
+  <section class="slide title-slide active">
+    <div class="unit">UNIT 3</div>
+    <h1>Pipelining</h1>
+    <div class="part">Part 5 · Performance &amp; Superscalar</div>
+    <div class="course">Computer Organization and Architecture &nbsp;·&nbsp; CSE23CT201</div>
+    <div class="fac">Sri Ramachandra Faculty of Engineering and Technology</div>
+    <div class="bar"></div>
+  </section>
+
+  <!-- 1 · CH1 DIVIDER -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 1</div>
+    <div class="chno">1</div>
+    <div class="chtitle">Measuring pipeline performance</div>
+    <div class="hook">We keep saying "speedup approaches k." Time to put real numbers on it — and to account,
+      honestly, for every stall that pulls us below the ideal.</div>
+  </section>
+
+  <!-- 2 · THE BASIC EQUATIONS -->
+  <section class="slide">
+    <h2>The basic performance equation</h2>
+    <div class="foothold"><span class="lbl">Put numbers on it ·</span> Execution time depends on how many instructions run,
+      how many cycles each takes on average, and how fast the clock ticks.</div>
+    <div class="body eqctr">
+      <div class="frag eqn"><span class="var">T</span> = ( <span class="var">N</span> × <span class="var">S</span> ) / <span class="var">R</span>
+        <span class="note">N = instructions · S = avg cycles per instruction · R = clock rate</span></div>
+      <div class="frag eqn">Throughput <span class="var">P</span><span class="sub">np</span> = <span class="var">R</span> / <span class="var">S</span>
+        &nbsp;&nbsp;→&nbsp;&nbsp; pipelined ideal (S=1): <span class="var">P</span><span class="sub">p</span> = <span class="var">R</span>
+        <span class="note">Non-pipelined S = 5; ideal pipeline drops S to 1 → up to 5× the throughput.</span></div>
+    </div>
+  </section>
+
+  <!-- 3 · REALITY: S = 1 + deltas -->
+  <section class="slide">
+    <h2>Reality: stalls push S above 1</h2>
+    <div class="foothold"><span class="lbl">Honest accounting ·</span> The ideal is S = 1. Every kind of stall we met adds a
+      penalty term — and these terms simply <b>add up</b>.</div>
+    <div class="body">
+      <div class="frag eqn" style="margin:0 auto 18px"><span class="var">S</span> = 1 + δ<span class="sub">stall</span> + δ<span class="sub">branch</span> + δ<span class="sub">miss</span></div>
+      <ul class="points">
+        <li class="frag"><b class="emr">δ<sub>stall</sub></b> — load-use dependencies. <span class="dim">e.g. 25% loads × 40% followed by a dependent × 1 = 0.10</span></li>
+        <li class="frag"><b class="emr">δ<sub>branch</sub></b> — branch mispredictions. <span class="dim">e.g. 20% branches × 10% mispredict × 1 = 0.02</span></li>
+        <li class="frag"><b class="emr">δ<sub>miss</sub></b> — cache misses (often the <b>biggest</b>). <span class="dim">e.g. (0.05 + 0.30×0.10) × 10 = 0.8</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4 · WORKED EXAMPLE (Ex 6.2) -->
+  <section class="slide">
+    <div class="mic-badge">🎤 Worked example</div>
+    <div class="foothold" style="margin-top:20px"><span class="lbl">Example 6.2 ·</span> 20% of instructions are branches,
+      static "not-taken" prediction, 1-cycle penalty. Compare <b>30%</b> vs <b>70%</b> of branches actually taken.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">δ<sub>branch</sub> = 0.20 × <b>0.30</b> × 1 = <b class="emg">0.06</b> → S = 1.06 &nbsp; (30% taken)</li>
+        <li class="frag">δ<sub>branch</sub> = 0.20 × <b>0.70</b> × 1 = <b class="emr">0.14</b> → S = 1.14 &nbsp; (70% taken)</li>
+      </ul>
+      <div class="frag ask-a" style="margin-top:16px">
+        Speedup of the better case = (1.14 / 1.06 − 1) × 100 ≈ <b>7.5% faster</b>.
+        <span class="q2">The more branches are taken, the more a not-taken guess costs.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 · NUMBER OF STAGES -->
+  <section class="slide">
+    <h2>So how deep should the pipeline be?</h2>
+    <div class="foothold"><span class="lbl">Diminishing returns ·</span> n stages promise up to n× throughput — but the
+      penalties we just added scale <b>against</b> depth.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b class="emg">Deeper</b> → shorter clock period → higher clock rate.</li>
+        <li class="frag"><b class="emr">But</b> more instructions in flight → more dependencies, bigger branch penalty → larger δ terms.</li>
+        <li class="frag">The clock is ultimately limited by the <b>slowest basic operation</b> (usually the ALU).</li>
+        <li class="frag dim">Sweet spot in practice: ~10–20 stages at several GHz.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 6 · KEY INSIGHT 1 -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Real speedup = the ideal, <span class="hl">minus every stall</span>.<br>
+      And the <span class="hlg">cache-miss</span> term is often the one that dominates.</div>
+  </section>
+
+  <!-- 7 · CH2 DIVIDER -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 2</div>
+    <div class="chno">2</div>
+    <div class="chtitle">Beyond one per cycle: superscalar</div>
+    <div class="hook">A single pipeline can finish, at best, one instruction every cycle. To go faster still,
+      we stop waiting in one line — and open several checkouts at once.</div>
+  </section>
+
+  <!-- 8 · THE CEILING + IDEA -->
+  <section class="slide">
+    <h2>Multiple issue — more than one per cycle</h2>
+    <div class="foothold"><span class="lbl">Break the ceiling ·</span> A single pipeline tops out at one instruction per cycle.
+      A <b>superscalar</b> processor equips itself with <b>several execution units</b> and issues multiple instructions each cycle.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">Fetch and decode <b>two or more</b> instructions every cycle into an <b>instruction queue</b>.</li>
+        <li class="frag">A <b class="emp">dispatch unit</b> sends independent instructions to <b>different</b> execution units.</li>
+        <li class="frag">Throughput can exceed <b class="emg">one instruction per cycle</b> — this is <b>multiple-issue</b>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 9 · SUPERSCALAR ORGANIZATION (Fig 6.13) -->
+  <section class="slide">
+    <h2>A superscalar processor</h2>
+    <div class="foothold"><span class="lbl">The organization ·</span> Two execution units here — an <b>arithmetic</b> unit and a
+      two-stage <b>Load/Store</b> unit — fed from a shared queue by the dispatch unit.</div>
+    <div class="body" style="align-items:center">
+      <svg class="dp" width="1120" height="330" viewBox="0 0 1120 330">
+        <g class="frag"><rect class="box" x="20" y="130" width="150" height="70" rx="8"/><text x="95" y="160" text-anchor="middle" font-size="18" font-weight="700">Fetch</text><text x="95" y="182" text-anchor="middle" font-size="18" font-weight="700">unit</text></g>
+        <g class="frag">
+          <rect class="q" x="230" y="135" width="220" height="60" rx="8"/>
+          <line x1="285" y1="135" x2="285" y2="195" stroke="#1F6FEB"/><line x1="340" y1="135" x2="340" y2="195" stroke="#1F6FEB"/><line x1="395" y1="135" x2="395" y2="195" stroke="#1F6FEB"/>
+          <text x="340" y="220" text-anchor="middle" font-size="17" fill="#C3D1E0">Instruction queue</text>
+          <path class="wire" d="M170,165 H230"/></g>
+        <g class="frag"><rect class="box" x="500" y="130" width="150" height="70" rx="8"/><text x="575" y="160" text-anchor="middle" font-size="18" font-weight="700">Dispatch</text><text x="575" y="182" text-anchor="middle" font-size="18" font-weight="700">unit</text>
+          <path class="wire" d="M450,165 H500"/></g>
+        <g class="frag"><rect class="unit" x="720" y="60" width="180" height="60" rx="8"/><text x="810" y="96" text-anchor="middle" font-size="18" font-weight="700">Arithmetic unit</text>
+          <path class="wire" d="M650,150 Q690,150 690,90 H720"/></g>
+        <g class="frag"><rect class="unit" x="720" y="205" width="180" height="60" rx="8"/><text x="810" y="233" text-anchor="middle" font-size="18" font-weight="700">Load / Store</text><text x="810" y="253" text-anchor="middle" font-size="15" fill="#C3D1E0">(two-stage)</text>
+          <path class="wire" d="M650,180 Q690,180 690,235 H720"/></g>
+        <g class="frag"><rect class="box" x="950" y="130" width="150" height="70" rx="8"/><text x="1025" y="160" text-anchor="middle" font-size="18" font-weight="700">Write</text><text x="1025" y="182" text-anchor="middle" font-size="18" font-weight="700">results</text>
+          <path class="wire" d="M900,90 Q940,90 940,150 H950"/><path class="wire" d="M900,235 Q940,235 940,180 H950"/></g>
+      </svg>
+    </div>
+    <div class="diag-caption" style="text-align:center; font-size:22px; color:var(--muted); font-style:italic; margin-top:2px">Figure 6.13 — A superscalar processor with two execution units.</div>
+  </section>
+
+  <!-- 10 · MULTIPLE ISSUE IN ACTION (Fig 6.14) -->
+  <section class="slide">
+    <h2>Two instructions started every cycle</h2>
+    <div class="foothold"><span class="lbl">In action ·</span> An arithmetic instruction and a Load/Store can be <b>issued together</b>
+      each cycle — so this four-instruction sequence finishes far sooner than a single pipeline could manage.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:230px">1</div><div class="cyc-num" style="left:326px">2</div>
+        <div class="cyc-num" style="left:422px">3</div><div class="cyc-num" style="left:518px">4</div>
+        <div class="cyc-num" style="left:614px">5</div><div class="cyc-num" style="left:710px">6</div>
+        <!-- Add: F D C W (arith, 4 stages) cycles 1-4 -->
+        <div class="rowlab" style="top:56px">Add R2,R3,#100</div>
+        <div class="frag slidein stage sF" style="left:230px; top:48px">F</div>
+        <div class="frag slidein stage sD" style="left:326px; top:48px">D</div>
+        <div class="frag slidein stage sC" style="left:422px; top:48px">C</div>
+        <div class="frag slidein stage sW" style="left:518px; top:48px">W</div>
+        <!-- Load: F D C M W cycles 1-5 (issued same cycle) -->
+        <div class="rowlab" style="top:108px">Load R5,16(R6)</div>
+        <div class="frag slidein stage sF" style="left:230px; top:100px">F</div>
+        <div class="frag slidein stage sD" style="left:326px; top:100px">D</div>
+        <div class="frag slidein stage sC" style="left:422px; top:100px">C</div>
+        <div class="frag slidein stage sM" style="left:518px; top:100px">M</div>
+        <div class="frag slidein stage sW" style="left:614px; top:100px">W</div>
+        <!-- Subtract: F D C W cycles 2-5 -->
+        <div class="rowlab" style="top:160px">Subtract R7,R8,R9</div>
+        <div class="frag slidein stage sF" style="left:326px; top:152px">F</div>
+        <div class="frag slidein stage sD" style="left:422px; top:152px">D</div>
+        <div class="frag slidein stage sC" style="left:518px; top:152px">C</div>
+        <div class="frag slidein stage sW" style="left:614px; top:152px">W</div>
+        <!-- Store: F D C M W cycles 2-6 -->
+        <div class="rowlab" style="top:212px">Store R10,24(R11)</div>
+        <div class="frag slidein stage sF" style="left:326px; top:204px">F</div>
+        <div class="frag slidein stage sD" style="left:422px; top:204px">D</div>
+        <div class="frag slidein stage sC" style="left:518px; top:204px">C</div>
+        <div class="frag slidein stage sM" style="left:614px; top:204px">M</div>
+        <div class="frag slidein stage sW" style="left:710px; top:204px">W</div>
+      </div>
+      <div class="diag-caption" style="text-align:center; font-size:22px; color:var(--muted); font-style:italic; margin-top:6px">Figure 6.14 — Two instructions issued per cycle (arithmetic + Load/Store).</div>
+    </div>
+  </section>
+
+  <!-- 11 · KEEPING IT CORRECT (OoO, renaming) -->
+  <section class="slide">
+    <h2>Keeping many-in-flight correct</h2>
+    <div class="foothold"><span class="lbl">The price ·</span> With several units running at once, instructions may finish
+      <b>out of order</b>. Extra hardware keeps the <b>results</b> correct and exceptions <b>precise</b>.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b class="emp">Reservation stations</b> hold a dispatched instruction until all its operands arrive.</li>
+        <li class="frag"><b class="emp">Out-of-order execution</b>: independent instructions run as soon as they're ready.</li>
+        <li class="frag"><b class="emp">Register renaming</b> uses temporary registers to avoid false conflicts.</li>
+        <li class="frag">A <b class="emp">reorder buffer</b> commits results <b>in program order</b> → precise exceptions.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 12 · KEY INSIGHT 2 + UNIT CLOSE -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Pipelining approaches one instruction per cycle;<br>
+      <span class="hlg">superscalar</span> pushes past it — <span class="hl">several per cycle</span>.</div>
+    <div class="key-sub"><b style="color:var(--orange)">PIPELINING — COMPLETE.</b> Ideal case · organization · data, structural
+      &amp; control hazards · instruction-set influence · performance · superscalar. Remaining Unit 3 topic: the
+      <b>role of cache memory</b>, which we'll take up next with proper cache material.</div>
+  </section>
+
+</div>
+
+<div id="bar"></div>
+<div id="count"></div>
+
+<script>
+/* Reveal engine — identical to Parts 1–4. */
+const slides = Array.from(document.querySelectorAll('.slide'));
+const bar = document.getElementById('bar'); const count = document.getElementById('count');
+let si = 0, step = 0;
+function fragsOf(i){ return Array.from(slides[i].querySelectorAll('.frag')); }
+function showSlide(i, all){
+  slides.forEach((s,k)=> s.classList.toggle('active', k===i)); si=i;
+  const f=fragsOf(i);
+  if(all){ f.forEach(x=>x.classList.add('on')); step=f.length; } else { f.forEach(x=>x.classList.remove('on')); step=0; }
+  updateHud();
+}
+function next(){ const f=fragsOf(si); if(step<f.length){ f[step].classList.add('on'); step++; updateHud(); } else if(si<slides.length-1){ showSlide(si+1,false); } }
+function prev(){ if(step>0){ step--; fragsOf(si)[step].classList.remove('on'); updateHud(); } else if(si>0){ showSlide(si-1,true); } }
+function updateHud(){ bar.style.width=(si/(slides.length-1)*100)+'%'; count.textContent=(si+1)+' / '+slides.length; }
+document.addEventListener('keydown',(e)=>{ switch(e.key){
+  case 'ArrowRight': case ' ': case 'Enter': case 'PageDown': e.preventDefault(); next(); break;
+  case 'ArrowLeft': case 'PageUp': e.preventDefault(); prev(); break;
+  case 'Home': e.preventDefault(); showSlide(0,false); break;
+  case 'End': e.preventDefault(); showSlide(slides.length-1,true); break; } });
+document.addEventListener('click',(e)=>{ if(e.target.tagName!=='A') next(); });
+showSlide(0,false);
+</script>
+</body>
+</html>

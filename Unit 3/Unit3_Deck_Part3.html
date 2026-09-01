@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COA Unit 3 · Pipelining — Part 3 · Control (Instruction) Hazards</title>
+
+<!--
+  ============================================================================
+  COA UNIT 3 · PIPELINING — PART 3 : Control (Instruction) Hazards (CSE23CT201)
+  Classroom teaching deck. Single self-contained HTML file.
+
+  Same machinery as Parts 1 & 2:
+    <style>  = palette + slide/foothold/diagram styling.
+    <body>   = one <section class="slide"> each; keypress-revealed bits are .frag.
+    <script> = reveal engine (Space/→/click = next, ← = back, Home/End).
+
+  Textbook figures (Hamacher Ch.6, §6.6): Figure 6.9 (2-cycle branch penalty),
+  Figure 6.10 (1-cycle penalty when the branch is resolved in Decode), Figure
+  6.11 (the branch delay slot), Figure 6.12 (2-bit dynamic-prediction FSM).
+  Stage names Fetch/Decode/Compute/Memory/Write and the textbook branch
+  examples are kept unchanged for exam fidelity.
+  ============================================================================
+-->
+
+<style>
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF;
+    --red:#F85149; --orange:#F0883E; --teal:#39D0D8;
+    --text:#E6EDF3; --muted:#C3D1E0; --border:#30363D; --ink:#0D1117;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{background:var(--bg); color:var(--text); font-family:"Segoe UI",system-ui,-apple-system,sans-serif; overflow:hidden}
+  #deck{position:fixed; inset:0}
+  .slide{position:absolute; inset:0; display:none; flex-direction:column; padding:56px 72px 72px}
+  .slide.active{display:flex}
+
+  h2{font-size:58px; font-weight:800; line-height:1.05; letter-spacing:-.5px}
+  .foothold{font-size:24px; color:var(--muted); font-style:italic; line-height:1.35;
+    margin:2px 0 18px; padding-left:18px; border-left:4px solid var(--accentGlow); max-width:1180px}
+  .foothold b{color:var(--accent); font-style:normal; font-weight:700}
+  .foothold .lbl{color:var(--accentGlow); font-style:normal; font-weight:800; text-transform:uppercase; letter-spacing:1px; font-size:20px}
+
+  .body{flex:1; display:flex; flex-direction:column; justify-content:center}
+  .points{list-style:none; max-width:1240px}
+  .points li{font-size:32px; line-height:1.4; margin:16px 0; padding-left:40px; position:relative}
+  .points li::before{content:"▸"; position:absolute; left:0; color:var(--accent)}
+  .dim{color:var(--muted)} .em{color:var(--accent); font-weight:700}
+  .emg{color:var(--green); font-weight:700} .emr{color:var(--red); font-weight:700} .emp{color:var(--purple); font-weight:700}
+
+  .frag{opacity:0; transform:translateY(14px); transition:opacity .45s ease, transform .45s ease}
+  .frag.on{opacity:1; transform:none}
+  .frag.slidein{transform:translateX(-40px)} .frag.slidein.on{transform:none}
+
+  .divider{justify-content:center; align-items:flex-start}
+  .divider .kicker{font-size:26px; font-weight:800; letter-spacing:6px; color:var(--orange)}
+  .divider .chno{font-size:150px; font-weight:900; line-height:.9; color:var(--accent); text-shadow:0 0 40px rgba(88,166,255,.35)}
+  .divider .chtitle{font-size:60px; font-weight:800; margin:6px 0 22px; max-width:1150px}
+  .divider .hook{font-size:30px; font-style:italic; color:var(--muted); max-width:1050px; line-height:1.4; padding-left:22px; border-left:5px solid var(--orange)}
+
+  .title-slide{justify-content:center}
+  .title-slide .unit{font-size:30px; font-weight:800; letter-spacing:8px; color:var(--orange)}
+  .title-slide h1{font-size:100px; font-weight:900; letter-spacing:-2px; margin:6px 0 4px}
+  .title-slide .part{font-size:38px; color:var(--accent); font-weight:700; margin-bottom:40px}
+  .title-slide .course{font-size:28px} .title-slide .fac{font-size:22px; color:var(--muted); margin-top:6px}
+  .title-slide .bar{width:260px; height:6px; background:var(--orange); border-radius:3px; margin-top:34px}
+
+  .mic-badge{display:inline-flex; align-items:center; gap:12px; font-size:24px; font-weight:800; color:var(--ink); background:var(--yellow); padding:8px 20px; border-radius:30px; align-self:flex-start}
+  .ask-q{font-size:42px; font-weight:800; line-height:1.25; max-width:1220px; margin:24px 0}
+  .ask-a{font-size:33px; line-height:1.4; color:var(--green); font-weight:700; background:rgba(63,185,80,.10); border:2px solid var(--green); border-radius:14px; padding:22px 28px; max-width:1220px}
+  .ask-a .q2{color:var(--text); font-weight:400}
+
+  .key-slide{justify-content:center; align-items:center; text-align:center}
+  .key-badge{font-size:64px; margin-bottom:20px}
+  .key-text{font-size:54px; font-weight:800; line-height:1.25; max-width:1320px}
+  .key-text .hl{color:var(--accent)} .key-text .hlg{color:var(--green)}
+  .key-sub{font-size:26px; color:var(--muted); font-style:italic; margin-top:34px; max-width:1120px; padding-left:22px; border-left:4px solid var(--orange); text-align:left}
+
+  /* pipeline stage diagrams */
+  .stage-area{position:relative; width:1200px; height:360px; margin:6px auto 0}
+  .cyc-num{position:absolute; top:0; width:116px; text-align:center; font-size:22px; color:var(--muted)}
+  .time-arrow{position:absolute; top:-2px; font-size:20px; color:var(--muted)}
+  .rowlab{position:absolute; left:0; width:150px; font-size:22px; font-weight:700; color:var(--teal)}
+  .stage{position:absolute; width:116px; height:56px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:24px; font-weight:800; color:var(--ink); transition:opacity .4s ease}
+  .sF{background:var(--accent)} .sD{background:var(--purple)} .sC{background:var(--orange)} .sM{background:var(--teal)} .sW{background:var(--green)}
+  .sBr{background:var(--yellow)}                                   /* the branch instruction */
+  .sTgt{background:var(--green)}                                   /* the correct target instruction */
+  .discard{background:transparent!important; color:var(--red); border:2px dashed var(--red); font-size:18px; font-weight:800}
+  .diag-caption{text-align:center; font-size:22px; color:var(--muted); font-style:italic; margin-top:12px}
+  .marker{position:absolute; font-size:20px; font-weight:700; text-align:center}
+  .penalty-bracket{position:absolute; border:3px solid var(--red); border-bottom:none; height:18px}
+
+  .instr-line{font-family:"Consolas",monospace; font-size:28px; margin:6px 0; color:var(--text)}
+  .instr-line .br{color:var(--yellow); font-weight:700}
+  .instr-line .mv{color:var(--green); font-weight:700}
+  .codebox{background:var(--surface); border:2px solid var(--border); border-radius:12px; padding:16px 22px; display:inline-block; margin:6px 12px 6px 0; vertical-align:top}
+  .codebox .cap{font-size:18px; color:var(--muted); font-style:italic; margin-top:8px}
+
+  /* branch-prediction FSM (Figure 6.12) */
+  .fsm text{fill:var(--text); font-family:"Segoe UI",sans-serif; font-weight:700}
+  .fsm .st-node{stroke-width:3}
+  .fsm .taken{fill:rgba(63,185,80,.18); stroke:var(--green)}       /* states that predict TAKEN */
+  .fsm .nottaken{fill:rgba(248,81,73,.15); stroke:var(--red)}      /* states that predict NOT taken */
+  .fsm .edge{stroke:var(--muted); stroke-width:2.5; fill:none}
+  .fsm .elabel{fill:var(--muted); font-size:17px; font-weight:700}
+
+  #bar{position:fixed; top:0; left:0; height:5px; background:var(--accent); width:0; transition:width .3s ease; z-index:50}
+  #count{position:fixed; right:20px; bottom:16px; font-size:18px; color:var(--muted); z-index:50}
+</style>
+</head>
+
+<body>
+<div id="deck">
+
+  <!-- ===================== 0 · TITLE ===================== -->
+  <section class="slide title-slide active">
+    <div class="unit">UNIT 3</div>
+    <h1>Pipelining</h1>
+    <div class="part">Part 3 · Control (Instruction) Hazards</div>
+    <div class="course">Computer Organization and Architecture &nbsp;·&nbsp; CSE23CT201</div>
+    <div class="fac">Sri Ramachandra Faculty of Engineering and Technology</div>
+    <div class="bar"></div>
+  </section>
+
+  <!-- ===================== 1 · CHAPTER 1 DIVIDER ===================== -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 1</div>
+    <div class="chno">1</div>
+    <div class="chtitle">The branch problem</div>
+    <div class="hook">A data hazard made one instruction wait. A branch is nastier: the pipeline doesn't even
+      know <em>which instruction</em> to fetch next — so it may fetch the wrong ones entirely.</div>
+  </section>
+
+  <!-- ===================== 2 · RECAP / THE PROBLEM ===================== -->
+  <section class="slide">
+    <h2>The pipeline fetches ahead — and may guess wrong</h2>
+    <div class="foothold"><span class="lbl">The gap ·</span> To stay full, the pipeline fetches the <b>next in sequence</b>
+      every cycle. But a <b>branch</b> can redirect execution — so those already-fetched instructions may be wrong.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">A <b class="em">branch</b> instruction can change which instruction runs next
+          (<span class="dim">e.g. loops, if-else, function calls</span>).</li>
+        <li class="frag">But the branch must be <b>executed</b> before we know the outcome and the target address.</li>
+        <li class="frag">Meanwhile the pipeline has <b class="emr">already fetched</b> the instructions sitting right behind it —
+          which now have to be thrown away. That waste is a <b class="emr">control hazard</b>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== 3 · BRANCH PENALTY (Figure 6.9) ===================== -->
+  <section class="slide">
+    <h2>Branch penalty — two wasted cycles</h2>
+    <div class="foothold"><span class="lbl">Trace it ·</span> The branch is resolved only in its <b>Compute</b> stage
+      (cycle 3). By then, two following instructions have been fetched wrongly — and must be discarded.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div>
+        <div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+        <div class="cyc-num" style="left:918px">7</div><div class="cyc-num" style="left:1046px">8</div>
+        <!-- Branch: F D C -->
+        <div class="rowlab" style="top:78px">I<sub>j</sub>: Branch→I<sub>k</sub></div>
+        <div class="frag slidein stage sBr" style="left:150px; top:70px">F</div>
+        <div class="frag slidein stage sBr" style="left:278px; top:70px">D</div>
+        <div class="frag slidein stage sBr" style="left:406px; top:70px">C</div>
+        <!-- wrongly fetched I(j+1), I(j+2): discarded -->
+        <div class="rowlab" style="top:158px">I<sub>j+1</sub></div>
+        <div class="frag stage discard" style="left:278px; top:150px">F ✗</div>
+        <div class="frag stage discard" style="left:406px; top:150px">D ✗</div>
+        <div class="rowlab" style="top:238px">I<sub>j+2</sub></div>
+        <div class="frag stage discard" style="left:406px; top:230px">F ✗</div>
+        <!-- correct target Ik from cycle 4 -->
+        <div class="rowlab" style="top:308px">I<sub>k</sub>: target</div>
+        <div class="frag slidein stage sTgt" style="left:534px; top:300px">F</div>
+        <div class="frag slidein stage sTgt" style="left:662px; top:300px">D</div>
+        <div class="frag slidein stage sTgt" style="left:790px; top:300px">C</div>
+        <div class="frag slidein stage sTgt" style="left:918px; top:300px">M</div>
+        <div class="frag slidein stage sTgt" style="left:1046px; top:300px">W</div>
+        <!-- penalty bracket over cycles 4-5 -->
+        <div class="frag penalty-bracket" style="left:534px; top:212px; width:244px"></div>
+        <div class="frag marker" style="left:534px; top:176px; width:244px; color:var(--red)">2-cycle penalty</div>
+      </div>
+      <div class="diag-caption">Figure 6.9 — Branch penalty when the target is determined in the Compute stage.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 4 · WHY IT MATTERS ===================== -->
+  <section class="slide">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="foothold" style="margin-top:20px"><span class="lbl">Estimate ·</span> Branches are common — about
+      <b>one in five</b> instructions.</div>
+    <div class="body">
+      <div class="ask-q">If <b class="em">20%</b> of instructions are branches and each taken branch costs a
+        <b class="emr">2-cycle</b> penalty, roughly how much slower?</div>
+      <div class="frag ask-a">
+        ≈ 0.20 × 2 = <b>0.4</b> → up to <b style="color:var(--red)">~40% overhead</b>.
+        <span class="q2">Branches are frequent enough that this penalty <b>must</b> be attacked.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 5 · KEY INSIGHT 1 ===================== -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">A taken branch throws away the instructions fetched behind it.<br>
+      That waste is the <span class="hl">branch penalty</span>.</div>
+  </section>
+
+  <!-- ===================== 6 · CHAPTER 2 DIVIDER ===================== -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 2</div>
+    <div class="chno">2</div>
+    <div class="chtitle">Shrinking the penalty</div>
+    <div class="hook">If the damage is the instructions fetched before we know the branch outcome —
+      then deciding the branch <em>sooner</em> should hurt less. How soon can we decide?</div>
+  </section>
+
+  <!-- ===================== 7 · DECIDE EARLIER (Figure 6.10) ===================== -->
+  <section class="slide">
+    <h2>Decide in Decode — penalty drops to one</h2>
+    <div class="foothold"><span class="lbl">The fix ·</span> Add a small comparator and an adder so the branch condition
+      <b>and</b> target are worked out in the <b>Decode</b> stage. Now only <b>one</b> wrong instruction is fetched.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div>
+        <div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+        <div class="cyc-num" style="left:918px">7</div>
+        <div class="rowlab" style="top:88px">I<sub>j</sub>: Branch→I<sub>k</sub></div>
+        <div class="frag slidein stage sBr" style="left:150px; top:80px">F</div>
+        <div class="frag slidein stage sBr" style="left:278px; top:80px">D</div>
+        <div class="rowlab" style="top:168px">I<sub>j+1</sub></div>
+        <div class="frag stage discard" style="left:278px; top:160px">F ✗</div>
+        <div class="rowlab" style="top:248px">I<sub>k</sub>: target</div>
+        <div class="frag slidein stage sTgt" style="left:406px; top:240px">F</div>
+        <div class="frag slidein stage sTgt" style="left:534px; top:240px">D</div>
+        <div class="frag slidein stage sTgt" style="left:662px; top:240px">C</div>
+        <div class="frag slidein stage sTgt" style="left:790px; top:240px">M</div>
+        <div class="frag slidein stage sTgt" style="left:918px; top:240px">W</div>
+        <div class="frag penalty-bracket" style="left:406px; top:212px; width:116px"></div>
+        <div class="frag marker" style="left:352px; top:176px; width:224px; color:var(--green)">1-cycle penalty</div>
+      </div>
+      <div class="diag-caption">Figure 6.10 — Resolving the branch in Decode cuts the penalty from two cycles to one.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 8 · THE DELAY SLOT (Figure 6.11) ===================== -->
+  <section class="slide">
+    <h2>The branch delay slot</h2>
+    <div class="foothold"><span class="lbl">Turn waste into work ·</span> The instruction right after the branch is
+      <b>always</b> fetched anyway. So let it <b>always execute</b> — and let the compiler put something useful there.</div>
+    <div class="body" style="justify-content:flex-start">
+      <div style="display:flex; align-items:center; gap:22px; margin-top:8px">
+        <div class="frag codebox" style="width:434px">
+          <div class="instr-line mv">Add&nbsp;&nbsp;R7, R8, R9</div>
+          <div class="instr-line"><span class="br">Branch_if&lt;R3=0&gt;</span> TARGET</div>
+          <div class="instr-line emr">NOP&nbsp;&nbsp;<span class="dim">← wasted slot</span></div>
+          <div class="cap">Before: a NOP wastes the slot right after the branch.</div>
+        </div>
+        <div class="frag" style="font-size:44px; color:var(--accent); font-weight:800">→</div>
+        <div class="frag codebox" style="width:434px">
+          <div class="instr-line"><span class="br">Branch_if&lt;R3=0&gt;</span> TARGET</div>
+          <div class="instr-line mv">Add&nbsp;&nbsp;R7, R8, R9 &nbsp;<span class="dim">← delay slot</span></div>
+          <div class="instr-line dim">…</div>
+          <div class="cap">After: the Add moves into the slot — always executed.</div>
+        </div>
+      </div>
+      <ul class="points" style="margin-top:18px">
+        <li class="frag"><b class="emp">Delayed branching</b>: the branch takes effect one instruction later.</li>
+        <li class="frag">Compilers fill the slot usefully about <b class="emg">70%</b> of the time.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== 9 · KEY INSIGHT 2 ===================== -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Decide the branch <span class="hl">earlier</span>,<br>
+      and fill the delay slot with <span class="hlg">useful work</span>.</div>
+  </section>
+
+  <!-- ===================== 10 · CHAPTER 3 DIVIDER ===================== -->
+  <section class="slide divider">
+    <div class="kicker">CHAPTER 3</div>
+    <div class="chno">3</div>
+    <div class="chtitle">Guessing ahead: branch prediction</div>
+    <div class="hook">Even a one-cycle penalty adds up over millions of branches. What if the processor could
+      <em>guess</em> the outcome the instant it fetches the branch — and usually be right?</div>
+  </section>
+
+  <!-- ===================== 11 · STATIC PREDICTION ===================== -->
+  <section class="slide">
+    <h2>Static prediction — a fixed guess</h2>
+    <div class="foothold"><span class="lbl">Simplest first ·</span> Guess the <b>same way every time</b>, decided before the
+      program runs. If right, no penalty; if wrong, pay the usual penalty and refetch.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b>Assume not-taken:</b> keep fetching in sequence. Simple — but only ~50% right for a coin-flip branch.</li>
+        <li class="frag"><b>Use the branch direction:</b> a <span class="em">backward</span> branch (end of a loop) is usually
+          <b class="emg">taken</b>; a forward branch usually not. Predict by the sign of the offset.</li>
+        <li class="frag">A single <b>hint bit</b> in the instruction lets the compiler say "expect taken / not-taken".</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== 12 · DYNAMIC PREDICTION FSM (Figure 6.12) ===================== -->
+  <section class="slide">
+    <h2>Dynamic prediction — learn from history</h2>
+    <div class="foothold"><span class="lbl">Do better ·</span> Track how this branch behaved <b>last time</b>. A 2-bit counter
+      needs <b>two</b> wrong guesses in a row to change its mind — so one odd iteration won't fool it.</div>
+    <div class="body" style="align-items:center">
+      <svg class="fsm" width="1080" height="250" viewBox="0 0 1080 250">
+        <defs><marker id="ea" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#C3D1E0"/></marker></defs>
+        <!-- four states left→right: SNT, LNT, LT, ST -->
+        <g class="frag">
+          <circle class="st-node nottaken" cx="140" cy="130" r="66"/><text x="140" y="124" text-anchor="middle" font-size="26">SNT</text>
+          <text x="140" y="150" text-anchor="middle" font-size="15" fill="#F85149">predict ✗</text>
+        </g>
+        <g class="frag">
+          <circle class="st-node nottaken" cx="420" cy="130" r="66"/><text x="420" y="124" text-anchor="middle" font-size="26">LNT</text>
+          <text x="420" y="150" text-anchor="middle" font-size="15" fill="#F85149">predict ✗</text>
+        </g>
+        <g class="frag">
+          <circle class="st-node taken" cx="700" cy="130" r="66"/><text x="700" y="124" text-anchor="middle" font-size="26">LT</text>
+          <text x="700" y="150" text-anchor="middle" font-size="15" fill="#3FB950">predict ✓</text>
+        </g>
+        <g class="frag">
+          <circle class="st-node taken" cx="980" cy="130" r="66"/><text x="980" y="124" text-anchor="middle" font-size="26">ST</text>
+          <text x="980" y="150" text-anchor="middle" font-size="15" fill="#3FB950">predict ✓</text>
+        </g>
+        <!-- transitions to the right on "taken" (BT) -->
+        <g class="frag">
+          <path class="edge" d="M206,108 Q280,72 354,108" marker-end="url(#ea)"/>
+          <path class="edge" d="M486,108 Q560,72 634,108" marker-end="url(#ea)"/>
+          <path class="edge" d="M766,108 Q840,72 914,108" marker-end="url(#ea)"/>
+          <text class="elabel" x="280" y="66" text-anchor="middle">taken →</text>
+          <text class="elabel" x="560" y="66" text-anchor="middle">taken →</text>
+          <text class="elabel" x="840" y="66" text-anchor="middle">taken →</text>
+          <!-- self-loop at strong-taken -->
+          <path class="edge" d="M1030,96 Q1075,130 1030,164" marker-end="url(#ea)"/>
+        </g>
+        <!-- transitions to the left on "not taken" (BNT) -->
+        <g class="frag">
+          <path class="edge" d="M634,156 Q560,192 486,156" marker-end="url(#ea)"/>
+          <path class="edge" d="M354,156 Q280,192 206,156" marker-end="url(#ea)"/>
+          <path class="edge" d="M914,156 Q840,192 766,156" marker-end="url(#ea)"/>
+          <text class="elabel" x="560" y="210" text-anchor="middle">← not taken</text>
+          <text class="elabel" x="280" y="210" text-anchor="middle">← not taken</text>
+          <text class="elabel" x="840" y="210" text-anchor="middle">← not taken</text>
+          <!-- self-loop at strong-not-taken -->
+          <path class="edge" d="M90,164 Q45,130 90,96" marker-end="url(#ea)"/>
+        </g>
+      </svg>
+      <div class="diag-caption">Figure 6.12 — A 2-bit predictor: it only flips its guess after two misses in a row.</div>
+    </div>
+  </section>
+
+  <!-- ===================== 13 · ASK THE CLASS (loop) ===================== -->
+  <section class="slide">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="foothold" style="margin-top:20px"><span class="lbl">Predict ·</span> A loop runs 100 times, so its branch is
+      <b>taken</b> 99 times and <b>not taken</b> once (the exit).</div>
+    <div class="body">
+      <div class="ask-q">With the 2-bit predictor, about how many of those 100 branches are <b class="em">mispredicted</b>?</div>
+      <div class="frag ask-a">
+        Just <b>~1</b> — the loop exit. <span class="q2">The single not-taken pass isn't enough to flip a
+        <b>strongly-taken</b> counter, so every looping pass is predicted correctly.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 14 · BRANCH TARGET BUFFER ===================== -->
+  <section class="slide">
+    <h2>Predicting in cycle 1 — the branch target buffer</h2>
+    <div class="foothold"><span class="lbl">The last piece ·</span> To fetch the right instruction next cycle, we must predict
+      <b>while still fetching</b> the branch — before we even know it's a branch.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">A <b class="emp">branch target buffer (BTB)</b> is a small fast table, keyed by the
+          <b>branch's address</b>.</li>
+        <li class="frag">Each entry stores the <b>prediction state bits</b> and the <b class="emg">target address</b>.</li>
+        <li class="frag">While fetching, the processor checks the BTB: a hit gives both "this is a taken branch" and where to go —
+          so the <b>right</b> instruction is fetched next cycle. <span class="dim">(~1024 entries, most-recent branches.)</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== 15 · KEY INSIGHT 3 + FORWARD POINTER ===================== -->
+  <section class="slide key-slide">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Control hazards shrink three ways:<br>
+      decide <span class="hl">early</span>, fill the <span class="hl">delay slot</span>, and
+      <span class="hlg">predict</span> the branch.</div>
+    <div class="key-sub"><b style="color:var(--orange)">NEXT ·</b> We've now met every hazard — data, structural, control.
+      Next we'll see how all this <b>shapes the instruction set and the datapath</b> (RISC, load-store, uniform formats).</div>
+  </section>
+
+</div>
+
+<div id="bar"></div>
+<div id="count"></div>
+
+<script>
+/* ============================================================================
+   REVEAL ENGINE (identical to Parts 1 & 2)
+   ============================================================================ */
+const slides = Array.from(document.querySelectorAll('.slide'));
+const bar = document.getElementById('bar');
+const count = document.getElementById('count');
+let si = 0, step = 0;
+function fragsOf(i){ return Array.from(slides[i].querySelectorAll('.frag')); }
+function showSlide(i, revealAll){
+  slides.forEach((s,k)=> s.classList.toggle('active', k===i));
+  si = i;
+  const f = fragsOf(i);
+  if (revealAll){ f.forEach(x=>x.classList.add('on')); step = f.length; }
+  else          { f.forEach(x=>x.classList.remove('on')); step = 0; }
+  updateHud();
+}
+function next(){
+  const f = fragsOf(si);
+  if (step < f.length){ f[step].classList.add('on'); step++; updateHud(); }
+  else if (si < slides.length-1){ showSlide(si+1, false); }
+}
+function prev(){
+  if (step > 0){ step--; fragsOf(si)[step].classList.remove('on'); updateHud(); }
+  else if (si > 0){ showSlide(si-1, true); }
+}
+function updateHud(){
+  bar.style.width = (si/(slides.length-1)*100) + '%';
+  count.textContent = (si+1) + ' / ' + slides.length;
+}
+document.addEventListener('keydown', (e)=>{
+  switch(e.key){
+    case 'ArrowRight': case ' ': case 'Enter': case 'PageDown': e.preventDefault(); next(); break;
+    case 'ArrowLeft': case 'PageUp': e.preventDefault(); prev(); break;
+    case 'Home': e.preventDefault(); showSlide(0,false); break;
+    case 'End': e.preventDefault(); showSlide(slides.length-1,true); break;
+  }
+});
+document.addEventListener('click', (e)=>{ if (e.target.tagName !== 'A') next(); });
+showSlide(0,false);
+</script>
+</body>
+</html>
