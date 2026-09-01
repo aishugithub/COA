@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  COMPUTER ORGANIZATION & ARCHITECTURE (CSE23CT201) — STANDALONE COURSE PAGE
+  ----------------------------------------------------------------------------
+  This is a COMPLETE, SELF-CONTAINED web page. Unlike the earlier version, it
+  no longer depends on a portfolio home page (index.html): there is no
+  "Back to home" link and no shared footer link. It works on its own — open
+  the single file in any browser, or host it anywhere, and it stands alone.
+
+  HOW THE FILE IS PUT TOGETHER (the big picture):
+    1. <head>  — metadata, Google Fonts, and ALL styling live here in one
+                 <style> block, so the file has no external CSS dependency.
+    2. <nav>   — a sticky top bar whose links are IN-PAGE anchors (#story,
+                 #teaching, #materials) instead of links to other pages.
+    3. <header>— the course "hero": title, code, and a one-line summary.
+    4. <main>  — three restructured content regions:
+                   • #story     — why the subject + tribute to Dr. Shanthi
+                   • #teaching   — how the class is delivered + honest caveat
+                   • #materials  — the interactive course and lecture decks
+    5. <footer>— a quiet closing line (self-referential, no external links).
+    6. <script>— two tiny helpers: reveal-on-scroll and the auto-updating year.
+
+  EDITING GUIDE:
+    • Search "EDIT:" for the handful of spots you may want to personalise
+      (mainly deck URLs and any wording you'd phrase differently).
+    • All colours/spacing come from CSS custom properties in :root, so you can
+      restyle the whole page by changing a few variables in one place.
+  ============================================================================
+-->
+<html lang="en">
+<head>
+  <!-- Character encoding + responsive scaling: required for correct text and mobile layout. -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Browser tab title. -->
+  <title>Computer Organization &amp; Architecture — Aishwarya S</title>
+
+  <!-- A short description used by search engines / link previews. -->
+  <meta name="description" content="Computer Organization & Architecture (CSE23CT201) — course story, teaching approach, and free, open teaching materials by Aishwarya S." />
+
+  <!--
+    Google Fonts. preconnect warms up the connection so the fonts arrive faster.
+    Fraunces = the serif used for headings (warm, academic feel).
+    Inter    = the sans-serif used for body text (clean, highly readable).
+    This is the ONLY external resource the page loads; everything else is inline.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       DESIGN TOKENS
+       One central place for every colour, measure, and radius. Change a value
+       here and it updates everywhere the variable is used. This is what makes
+       the page easy to re-theme without hunting through the markup.
+       ========================================================================== */
+    :root {
+      --paper:#faf8f4;      /* page background — warm off-white "paper" */
+      --panel:#f2eee6;      /* slightly deeper tint for panels/sections */
+      --card:#ffffff;       /* raised surfaces (cards, callouts) */
+      --ink:#201d1a;        /* primary text colour (near-black, warm) */
+      --muted:#6b655d;      /* secondary text (captions, body prose) */
+      --line:#e4ded3;       /* hairline borders and dividers */
+      --accent:#14625b;     /* brand teal — links, eyebrows, accents */
+      --accent-soft:#e2efec;/* pale teal fill for the tribute block */
+      --maxw:820px;         /* comfortable reading measure for long text */
+      --radius:12px;        /* default corner rounding */
+    }
+
+    /* ==========================================================================
+       GLOBAL RESET + BASE TYPOGRAPHY
+       Strip default browser margins so our spacing is predictable, then set the
+       base fonts and colours the whole document inherits.
+       ========================================================================== */
+    * { margin:0; padding:0; box-sizing:border-box; }          /* predictable sizing everywhere */
+    html { scroll-behavior:smooth; }                            /* smooth scroll when nav anchors are clicked */
+    body {
+      background:var(--paper); color:var(--ink);
+      font-family:'Inter',system-ui,sans-serif;                 /* body copy uses Inter */
+      line-height:1.7;                                          /* airy line spacing for readability */
+      -webkit-font-smoothing:antialiased;                       /* crisper text on WebKit */
+    }
+    h1,h2,h3,h4 {
+      font-family:'Fraunces',Georgia,serif;                     /* headings use the serif face */
+      line-height:1.22; font-weight:600;
+    }
+    a { color:var(--accent); text-decoration:none; }            /* links inherit the brand teal */
+    a:hover { text-decoration:underline; }
+
+    /* .wrap centres content and gives it a consistent horizontal padding. */
+    .wrap { max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+
+    /* ==========================================================================
+       NAV — sticky top bar with IN-PAGE anchor links.
+       This is the key "standalone" change: the links jump to sections on THIS
+       page (#story, #teaching, #materials) rather than to a separate home page.
+       ========================================================================== */
+    nav {
+      position:sticky; top:0; z-index:50;                       /* stays pinned while scrolling */
+      background:rgba(250,248,244,.9);                          /* translucent paper colour */
+      backdrop-filter:blur(8px);                                /* frosted-glass effect over content */
+      border-bottom:1px solid var(--line);
+    }
+    nav .wrap {
+      display:flex; align-items:center; justify-content:space-between;
+      height:62px; max-width:960px;                             /* nav is a touch wider than the reading column */
+    }
+    .brand { font-family:'Fraunces'; font-weight:700; font-size:1.12rem; }
+    /* The right-hand link group. On narrow screens the least-important link hides. */
+    .navlinks { display:flex; gap:22px; }
+    .navlinks a { font-family:'Inter'; font-size:.92rem; font-weight:500; color:var(--muted); }
+    .navlinks a:hover { color:var(--ink); text-decoration:none; }
+
+    /* ==========================================================================
+       HERO / COURSE HEADER
+       ========================================================================== */
+    header.hero { padding:78px 0 50px; }
+    .eyebrow {
+      font-family:'Inter'; font-size:.76rem; font-weight:600;
+      letter-spacing:1.5px; text-transform:uppercase; color:var(--accent);
+      margin-bottom:14px;
+    }
+    .hero h1 { font-size:clamp(2.1rem,4.6vw,3rem); font-weight:600; letter-spacing:-.5px; }
+    .hero .code { font-family:'Inter'; color:var(--muted); font-size:.95rem; margin-top:10px; }
+    .hero .lede { font-size:1.14rem; color:var(--ink); margin-top:22px; max-width:640px; }
+
+    /* Quick "jump" chips under the hero — a second, friendlier way to reach each section. */
+    .jump { display:flex; flex-wrap:wrap; gap:10px; margin-top:28px; }
+    .jump a {
+      font-family:'Inter'; font-size:.9rem; font-weight:500;
+      background:var(--card); border:1px solid var(--line); border-radius:999px;
+      padding:8px 16px; color:var(--ink);
+      transition:border-color .2s, box-shadow .2s, transform .2s;
+    }
+    .jump a:hover {
+      text-decoration:none; border-color:var(--accent);
+      box-shadow:0 6px 18px rgba(20,98,91,.10); transform:translateY(-1px);
+    }
+
+    /* ==========================================================================
+       SECTIONS + LONG-FORM PROSE
+       ========================================================================== */
+    section { padding:34px 0; }
+    /* Small uppercase label that sits above each section heading. */
+    .section-tag {
+      font-family:'Inter'; font-size:.72rem; font-weight:600; letter-spacing:1.4px;
+      text-transform:uppercase; color:var(--accent); margin-bottom:8px;
+    }
+    .prose h2 { font-size:1.6rem; margin:0 0 14px; }
+    .prose h3 { font-size:1.2rem; margin:30px 0 10px; }
+    .prose p { color:var(--muted); margin-bottom:16px; }
+    .prose p strong { color:var(--ink); font-weight:600; }     /* emphasised words return to full-ink colour */
+
+    /* A thin divider between major regions, for visual breathing room. */
+    .divider { border:0; border-top:1px solid var(--line); margin:8px 0; }
+
+    /* ---- Tribute pull-quote for Dr. Shanthi ---- */
+    .tribute {
+      background:var(--accent-soft); border:1px solid #cfe4df; border-left:4px solid var(--accent);
+      border-radius:8px; padding:26px 28px; margin:26px 0;
+    }
+    .tribute p {
+      color:#234b46; font-family:'Fraunces'; font-size:1.15rem; font-weight:500;
+      font-style:italic; margin:0; line-height:1.5;
+    }
+    .tribute .by { font-family:'Inter'; font-style:normal; font-size:.88rem; color:var(--accent); margin-top:12px; font-weight:600; }
+
+    /* ---- Honest "note on the materials" callout ---- */
+    .callout {
+      background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+      padding:26px 28px; margin:26px 0;
+    }
+    .callout h3 { font-size:1.2rem; margin:0 0 10px; color:var(--accent); }
+    .callout p { color:var(--muted); margin:0; }
+
+    /* ---- Open / free-to-use note ---- */
+    .opennote { font-size:.95rem; color:var(--muted); border-top:1px solid var(--line); padding-top:22px; margin-top:26px; }
+
+    /* ==========================================================================
+       UNITS / DECKS — the list of clickable resource rows.
+       ========================================================================== */
+    .units { display:grid; gap:14px; margin-top:8px; }
+    .unit {
+      display:flex; align-items:center; justify-content:space-between; gap:16px;
+      background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+      padding:18px 22px; transition:box-shadow .2s, transform .2s, border-color .2s;
+    }
+    .unit:hover { box-shadow:0 8px 24px rgba(32,29,26,.07); transform:translateY(-2px); border-color:#d7cebe; }
+    .unit .u-title { font-family:'Fraunces'; font-weight:600; font-size:1.05rem; }
+    .unit .u-sub { color:var(--muted); font-size:.86rem; margin-top:2px; display:block; }
+    .unit .u-open { font-family:'Inter'; font-weight:600; font-size:.9rem; white-space:nowrap; color:var(--accent); }
+    /* "muted" rows are placeholders for content that isn't published yet. */
+    .unit.muted { opacity:.6; }
+    .unit.muted .u-open { color:var(--muted); }
+
+    /* ==========================================================================
+       FOOTER — self-contained, no links off this page.
+       ========================================================================== */
+    footer { text-align:center; padding:44px 0; color:var(--muted); font-size:.84rem; border-top:1px solid var(--line); margin-top:56px; }
+
+    /* ==========================================================================
+       REVEAL-ON-SCROLL ANIMATION
+       Elements marked .reveal start invisible and slightly lowered; the script
+       adds .in when they scroll into view, fading/sliding them up gently.
+       ========================================================================== */
+    .reveal { opacity:0; transform:translateY(20px); transition:opacity .6s ease, transform .6s ease; }
+    .reveal.in { opacity:1; transform:none; }
+
+    /* ==========================================================================
+       RESPONSIVE TWEAKS for small screens.
+       ========================================================================== */
+    @media (max-width:640px){
+      .unit { flex-direction:column; align-items:flex-start; } /* stack row content vertically */
+      .navlinks a:nth-child(3) { display:none; }               /* hide the third nav link to save space */
+      header.hero { padding:56px 0 40px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ======================= NAV =======================
+       Standalone navigation: every link is an in-page anchor (#…), so the bar
+       navigates within THIS document and needs no other pages to function. -->
+  <nav>
+    <div class="wrap">
+      <div class="brand">Aishwarya S</div>
+      <div class="navlinks">
+        <a href="#story">The subject</a>
+        <a href="#teaching">Teaching</a>
+        <a href="#materials">Materials</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ======================= COURSE HEADER / HERO =======================
+       The first thing a visitor sees: what the course is, its code, and a
+       one-line summary — followed by quick "jump" chips into each section. -->
+  <header class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Course</p>
+      <h1>Computer Organization &amp; Architecture</h1>
+      <p class="code">CSE23CT201 · B.Tech · Computer Science &amp; Engineering</p>
+      <!-- EDIT: one-line summary of the course, in your voice. -->
+      <p class="lede">How a computer actually works underneath — from logic gates and the datapath
+        to memory and I/O. This is one of my favourite subjects to teach, and this page holds the
+        materials along with the story behind them.</p>
+
+      <!-- Friendly shortcut chips. They point at the same sections as the nav. -->
+      <div class="jump">
+        <a href="#story">Why this subject</a>
+        <a href="#teaching">How I teach it</a>
+        <a href="#materials">Course &amp; decks</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======================= MAIN CONTENT ======================= -->
+  <main>
+
+    <!-- ---------- REGION 1: THE SUBJECT + TRIBUTE ---------- -->
+    <section id="story">
+      <div class="wrap prose reveal">
+        <p class="section-tag">The subject</p>
+        <h2>Why this subject</h2>
+        <!-- EDIT: drafted in your voice — reshape freely. -->
+        <p>Computer Organization &amp; Architecture is where the abstraction finally drops away. Students spend
+           years writing code that "just runs"; here they get to see what's really happening beneath it — how
+           instructions move through a datapath, how memory is organised, how the machine is built to be fast.
+           When that click happens for a student, it's one of the most rewarding moments in teaching.</p>
+        <p>I care about this subject because it rewards <strong>curiosity about the invisible</strong>. Nothing
+           here is magic once you look closely, and getting students to look closely is exactly the kind of
+           teaching I love.</p>
+
+        <hr class="divider" />
+
+        <h3>The teacher I owe this to</h3>
+        <p>My own spark for this came from a remarkable teacher, and I don't want to teach it without saying so.</p>
+        <div class="tribute">
+          <!-- EDIT: put this in your own words if you'd prefer. -->
+          <p>“Everything I bring to a classroom as a teacher — the spark, the interest, the love for going deep —
+             I owe to Dr. Shanthi. She showed me what a great teacher can do for a student.”</p>
+          <p class="by">— with gratitude to Dr. Shanthi, Professor, College of Engineering Guindy (CEG), Anna University</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- REGION 2: TEACHING APPROACH + HONEST CAVEAT ---------- -->
+    <section id="teaching">
+      <div class="wrap prose reveal">
+        <p class="section-tag">Teaching</p>
+        <h2>How I teach it</h2>
+        <p>I'm a passionate teacher, and I take real care to make every class <strong>interactive and engaging</strong>.
+           The deck isn't a script to read out — it's the scaffolding for a live conversation with the room,
+           full of questions, analogies and moments where we work something out together.</p>
+
+        <!-- The honest caveat: the live talk carries more than the slides alone. -->
+        <div class="callout">
+          <h3>A note on the materials</h3>
+          <p>These slides are the visible skeleton of the class. When I deliver them live, there's always
+             something subtler and deeper in the talk than the deck alone can hold — the connections drawn
+             in the moment, the intuition behind a diagram, the aside that makes an idea land. If you use
+             these materials, treat the deck as a starting point and bring your own voice to bridge the gap.</p>
+        </div>
+
+        <p class="opennote"><strong>Free to use.</strong> These materials are open for anyone — students,
+           teachers, self-learners — to learn from or teach with. A mention is always appreciated, but not required.</p>
+      </div>
+    </section>
+
+    <!-- ---------- REGION 3: THE MATERIALS (COURSE + DECKS) ---------- -->
+    <section id="materials">
+      <div class="wrap reveal">
+        <p class="section-tag">Materials</p>
+        <h2 style="font-family:'Fraunces'; font-size:1.6rem; margin-bottom:8px;">The interactive course</h2>
+        <p style="color:var(--muted); margin-bottom:18px;">A full self-paced "Foothold" course — the best place to start
+           if you want to learn the whole subject at your own pace.</p>
+
+        <div class="units">
+          <!-- Foothold interactive self-paced course (primary entry point). EDIT: URL if it changes. -->
+          <a class="unit" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
+            <span>
+              <span class="u-title">Foothold — Interactive COA Course</span>
+              <span class="u-sub">Self-paced · active-learning widgets &amp; quizzes</span>
+            </span>
+            <span class="u-open">Start course →</span>
+          </a>
+        </div>
+
+        <h2 style="font-family:'Fraunces'; font-size:1.6rem; margin:38px 0 18px;">Lessons &amp; lecture decks</h2>
+        <div class="units">
+          <!-- Unit 0 landing lesson. EDIT: URL if it changes. -->
+          <a class="unit" href="https://aishugithub.github.io/COA/" target="_blank" rel="noopener">
+            <span>
+              <span class="u-title">Unit 0 — Introduction Lesson</span>
+              <span class="u-sub">The starting lesson — sets up the subject</span>
+            </span>
+            <span class="u-open">Open lesson →</span>
+          </a>
+
+          <!-- Unit 1 lecture deck. EDIT: URL if it changes. -->
+          <a class="unit" href="https://aishugithub.github.io/COA/Unit1_Deck.html" target="_blank" rel="noopener">
+            <span>
+              <span class="u-title">Unit 1 — Lecture Deck</span>
+              <span class="u-sub">Classroom teaching deck</span>
+            </span>
+            <span class="u-open">Open deck →</span>
+          </a>
+
+          <!-- Unit 2 lecture deck. EDIT: URL if it changes. -->
+          <a class="unit" href="https://aishugithub.github.io/COA/Unit2_Deck.html" target="_blank" rel="noopener">
+            <span>
+              <span class="u-title">Unit 2 — Lecture Deck</span>
+              <span class="u-sub">Classroom teaching deck</span>
+            </span>
+            <span class="u-open">Open deck →</span>
+          </a>
+
+          <!-- Unit 3 lecture deck. -->
+          <a class="unit" href="Unit3_Deck.html" target="_blank" rel="noopener">
+            <span>
+              <span class="u-title">Unit 3 — Lecture Deck</span>
+              <span class="u-sub">Classroom teaching deck · pipelining</span>
+            </span>
+            <span class="u-open">Open deck →</span>
+          </a>
+
+          <!-- Unit 3 class notes. -->
+          <a class="unit" href="Unit3_Notes.html" target="_blank" rel="noopener">
+            <span>
+              <span class="u-title">Unit 3 — Class Notes</span>
+              <span class="u-sub">Detailed pipelining notes — the idea, performance, data &amp; instruction hazards, scheduling</span>
+            </span>
+            <span class="u-open">Open notes →</span>
+          </a>
+
+          <!-- Placeholder for units not yet published. Turn into a real <a> as decks go live. -->
+          <div class="unit muted">
+            <span>
+              <span class="u-title">Units 4 onward</span>
+              <span class="u-sub">Coming soon</span>
+            </span>
+            <span class="u-open">In progress</span>
+          </div>
+        </div>
+
+        <!-- ---------- EXAM READY RECKONERS ----------
+             A third resource group, using the SAME .units / .unit card styling as the
+             decks above so it fits the page automatically. These are the exam-focused
+             question banks: each shows the different ways a question can be asked and
+             reveals a ready-to-reproduce answer on a click.
+             URLs follow the SAME flat pattern as the decks (all files live together in
+             the .../COA/ folder on the server), e.g. COA/Unit1_ExamReadyReckoner.html.
+             EDIT the filenames/URLs here if you host them under a different path. -->
+        <h2 style="font-family:'Fraunces'; font-size:1.6rem; margin:38px 0 8px;">Exam ready reckoners</h2>
+        <p style="color:var(--muted); margin-bottom:18px;">Skimmed, exam-focused question banks. Each one shows the different
+           ways a question can be asked and reveals a ready-to-reproduce answer on a click — best used for last-minute
+           revision alongside the decks.</p>
+        <div class="units">
+          <!-- Unit 1 reckoner. EDIT: URL if it changes. -->
+          <a class="unit" href="https://aishugithub.github.io/COA/Unit1_ExamReadyReckoner.html" target="_blank" rel="noopener">
+            <span>
+              <span class="u-title">Unit 1 — Exam Ready Reckoner &amp; Question Bank</span>
+              <span class="u-sub">Click-to-reveal answers · functional units, registers, buses, memory, addressing, sequencing</span>
+            </span>
+            <span class="u-open">Open reckoner →</span>
+          </a>
+
+          <!-- Unit 2 reckoner. EDIT: URL if it changes. -->
+          <a class="unit" href="https://aishugithub.github.io/COA/Unit2_ExamReadyReckoner.html" target="_blank" rel="noopener">
+            <span>
+              <span class="u-title">Unit 2 — Exam Ready Reckoner &amp; Question Bank</span>
+              <span class="u-sub">Click-to-reveal answers · microoperations, ALU, instruction execution, buses, control unit</span>
+            </span>
+            <span class="u-open">Open reckoner →</span>
+          </a>
+
+          <!-- Placeholder for future units' reckoners. Turn into a real <a> as they go live. -->
+          <div class="unit muted">
+            <span>
+              <span class="u-title">Units 3 onward — reckoners</span>
+              <span class="u-sub">Coming soon</span>
+            </span>
+            <span class="u-open">In progress</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================= FOOTER =======================
+       Self-referential only: the year auto-fills via script, and there are no
+       links to other pages — the page is complete on its own. -->
+  <footer>
+    <div class="wrap">© <span id="year"></span> Aishwarya S · Computer Organization &amp; Architecture (CSE23CT201)</div>
+  </footer>
+
+  <!-- ======================= SCRIPT =======================
+       Two small, dependency-free helpers. -->
+  <script>
+    /*
+      1) REVEAL-ON-SCROLL
+      An IntersectionObserver watches every element with class "reveal".
+      When such an element enters the viewport (10% visible), we add the class
+      "in", which the CSS transition turns into a gentle fade-and-rise.
+    */
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('in'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /*
+      2) AUTO YEAR
+      Keeps the footer copyright year current without manual edits.
+    */
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

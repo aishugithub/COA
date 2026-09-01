@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COA Unit 3 · Pipelining — Student Notes</title>
+<!--
+  STANDALONE Student Notes for Unit 3 (Pipelining), CSE23CT201.
+  Everything is here: bullet-point explanations, every figure embedded inline
+  (as dark "figure plates"), and the relevant questions listed under each topic.
+  Content follows Hamacher, Vranesic & Zaky, "Computer Organization & Embedded
+  Systems", 5th ed, Chapter 6. Paper theme for comfortable reading & printing.
+-->
+<style>
+  :root{
+    --ink:#1a2233; --soft:#4a5568; --paper:#fbfaf7; --panel:#ffffff;
+    --accent:#1f6feb; --accent2:#c2410c; --green:#15803d; --red:#b91c1c;
+    --line:#e3e0d8; --keybg:#eef4ff; --keyline:#bcd3ff; --codebg:#f1f3f7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:"Segoe UI",system-ui,-apple-system,sans-serif; line-height:1.55; font-size:17px}
+  .wrap{max-width:940px; margin:0 auto; padding:52px 28px 90px}
+  header.doc{border-bottom:3px solid var(--accent); padding-bottom:18px; margin-bottom:12px}
+  header.doc .unit{font-size:14px; font-weight:800; letter-spacing:3px; color:var(--accent2); text-transform:uppercase}
+  header.doc h1{font-size:38px; margin:6px 0 6px; line-height:1.1; font-family:Georgia,serif}
+  header.doc .meta{font-size:14.5px; color:var(--soft)}
+  h2.ch{font-size:26px; color:var(--accent); margin:46px 0 4px; padding-top:14px; border-top:1px solid var(--line); font-family:Georgia,serif}
+  h2.ch .n{color:var(--accent2)}
+  h3{font-size:20px; margin:24px 0 6px; color:var(--ink)}
+  .lead{color:var(--soft); font-style:italic; margin:2px 0 10px}
+  p{margin:9px 0}
+  ul{margin:8px 0 8px 2px; padding-left:22px} li{margin:6px 0}
+  ul ul{margin:4px 0}
+  b,strong{color:var(--ink)}
+  .term{font-weight:700; color:var(--accent)}
+  code,.mono{font-family:"Consolas","Courier New",monospace; background:var(--codebg); color:#0f172a; font-size:14.5px; padding:1px 6px; border-radius:4px}
+  .key{background:var(--keybg); border:1px solid var(--keyline); border-left:5px solid var(--accent); border-radius:8px; padding:11px 18px; margin:16px 0; font-size:16px}
+  .key b{color:var(--accent)}
+  .eqbox{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 18px; margin:10px 0; text-align:center; font-size:19px; font-family:"Cambria Math",Georgia,serif}
+  .eqbox .sub{font-size:13px; vertical-align:sub}
+  .worked{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 20px; margin:16px 0}
+  .worked .tag{font-weight:800; color:var(--accent2); font-size:14px; letter-spacing:1px}
+  .toc{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:14px 22px; margin:18px 0}
+  .toc a{color:var(--accent); text-decoration:none} .toc a:hover{text-decoration:underline}
+  .toc ol{columns:2; column-gap:34px; margin-left:16px}
+  .src{font-size:13.5px; color:var(--soft); margin-top:40px; border-top:1px solid var(--line); padding-top:14px}
+
+  /* ---- Explanation add-ons: extra understanding beyond what's strictly needed for
+     the exam answer. Always italic + a size step down from body text, with a soft
+     left rule, so it's visually unmistakable as "teacher's extra explanation" and
+     never gets confused with the core answer above it. ---- */
+  .explain{font-style:italic; font-size:15px; color:var(--soft); background:#f6f5f0;
+    border-left:3px solid var(--keyline); border-radius:0 6px 6px 0; padding:8px 16px; margin:8px 0 14px}
+  .explain b,.explain strong{color:var(--soft); font-style:italic}
+  .explain .tag{font-style:normal; font-weight:700; font-size:11px; letter-spacing:1px; color:var(--accent);
+    text-transform:uppercase; display:block; margin-bottom:3px}
+
+  /* ---- Deep-dive link: for material that's genuinely optional for the exam — goes
+     to the Foothold course instead of being inlined, so exam-only readers can skip it. ---- */
+  .deeplink{display:inline-flex; align-items:center; gap:7px; font-size:14.5px; font-style:normal;
+    background:#eef4ff; border:1px solid var(--keyline); border-radius:7px; padding:7px 14px; margin:8px 0 14px;
+    color:var(--accent); text-decoration:none; font-weight:600}
+  .deeplink:hover{background:var(--keybg)}
+  .deeplink .arrow{font-size:16px}
+  .deeplink .note{display:block; font-weight:400; font-style:italic; color:var(--soft); font-size:13px; margin-top:2px}
+
+
+  /* ---- Question boxes (one after each topic) ---- */
+  .qbox{background:#fffdf8; border:1px solid var(--line); border-left:4px solid var(--accent2); border-radius:8px; padding:12px 20px; margin:16px 0}
+  .qbox h4{color:var(--accent2); font-size:14px; letter-spacing:1px; margin:0 0 6px}
+  .qbox ol{margin:4px 0 4px 20px; padding:0}
+  .qbox li{font-size:15.5px; margin:6px 0}
+  .qbox .mk{color:var(--soft); font-weight:700; font-size:12.5px; white-space:nowrap}
+
+  /* ================= FIGURE PLATES (dark, embedded) ================= */
+  .plate{position:relative; background:#0D1117; border:1px solid #30363D; border-radius:10px; margin:16px 0 6px; padding:16px 14px; text-align:center; overflow-x:auto;
+    --accent:#58A6FF; --accentGlow:#1F6FEB; --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF; --red:#F85149; --orange:#F0883E; --teal:#39D0D8; --dtext:#E6EDF3; --dmuted:#C3D1E0; --ink:#0D1117}
+  .plate .plabel{color:#C3D1E0; font-size:15px; margin-top:10px; font-style:italic}
+  .plate .plabel b{color:#E6EDF3}
+  .tclip{position:relative; overflow:hidden; margin:0 auto}
+  .tscale{transform:scale(0.72); transform-origin:top left}
+  /* pipeline timing diagram */
+  .plate .stage-area{position:relative; width:1200px}
+  .plate .cyc-num{position:absolute; top:0; width:116px; text-align:center; font-size:22px; color:var(--dmuted)}
+  .plate .time-arrow{position:absolute; top:-2px; font-size:20px; color:var(--dmuted)}
+  .plate .rowlab{position:absolute; left:0; width:150px; font-size:22px; font-weight:700; color:var(--teal)}
+  .plate .stage{position:absolute; width:116px; height:56px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:23px; font-weight:800; color:var(--ink)}
+  .plate .stage.words{font-size:17px}
+  .plate .sF{background:var(--accent)} .plate .sD{background:var(--purple)} .plate .sC{background:var(--orange)} .plate .sM{background:var(--teal)} .plate .sW{background:var(--green)}
+  .plate .sBr{background:var(--yellow)} .plate .sTgt{background:var(--green)}
+  .plate .sBubble{background:transparent; color:var(--red); border:2px dashed var(--red); font-size:19px; font-weight:700}
+  .plate .discard{background:transparent; color:var(--red); border:2px dashed var(--red); font-size:18px; font-weight:800}
+  .plate .marker{position:absolute; font-size:20px; font-weight:700; text-align:center; width:200px}
+  .plate .penalty-bracket{position:absolute; border:3px solid var(--red); border-bottom:none; height:18px}
+  .plate .fwd-svg{position:absolute; left:0; top:0; overflow:visible; pointer-events:none}
+  /* block diagrams */
+  .plate .dp text{fill:var(--dtext); font-family:"Segoe UI",sans-serif}
+  .plate .dp .box{fill:#1C2333; stroke:var(--accent); stroke-width:2.5}
+  .plate .dp .stagebox,.plate .dp .unit{fill:#1C2333; stroke:var(--teal); stroke-width:2.5}
+  .plate .dp .buf,.plate .dp .q{fill:rgba(88,166,255,.16); stroke:var(--accentGlow); stroke-width:2}
+  .plate .dp .alu{fill:#161B22; stroke:var(--accent); stroke-width:2.5}
+  .plate .dp .wire{stroke:var(--dmuted); stroke-width:2.5; fill:none}
+  .plate .dp .fb{stroke:var(--green); stroke-width:3; fill:none}
+  /* FSM */
+  .plate .fsm text{fill:var(--dtext); font-weight:700}
+  .plate .fsm .st-node{stroke-width:3}
+  .plate .fsm .taken{fill:rgba(63,185,80,.18); stroke:var(--green)}
+  .plate .fsm .nottaken{fill:rgba(248,81,73,.15); stroke:var(--red)}
+  .plate .fsm .edge{stroke:var(--dmuted); stroke-width:2.5; fill:none}
+  .plate .fsm .elabel{fill:var(--dmuted); font-size:17px; font-weight:700}
+  /* code snippets inside plates */
+  .plate .codebox{background:#161B22; border:1px solid #30363D; border-radius:10px; padding:12px 16px; display:inline-block; vertical-align:top; text-align:left; margin:0 8px}
+  .plate .instr-line{font-family:Consolas,monospace; font-size:22px; margin:5px 0; color:var(--dtext)}
+  .plate .instr-line .rtn{color:var(--dmuted); font-size:18px}
+  .plate .reg{color:var(--teal); font-weight:700} .plate .br{color:var(--yellow); font-weight:700} .plate .mv{color:var(--green); font-weight:700} .plate .nop{color:var(--dmuted)} .plate .dim{color:var(--dmuted)}
+  .plate .cap{font-size:14px; color:var(--dmuted); font-style:italic; margin-top:8px}
+  .plate .arrow{font-size:40px; color:var(--accent); font-weight:800; display:inline-block; vertical-align:middle; margin:0 6px}
+
+  @media print{ body{font-size:11pt} .wrap{max-width:100%} a{color:var(--ink)} .plate{break-inside:avoid} .qbox{break-inside:avoid} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <div class="unit">Unit 3 · CO3</div>
+  <h1>Pipelining — Student Notes</h1>
+  <div class="meta">Computer Organization and Architecture (CSE23CT201) · Sri Ramachandra Faculty of Engineering and Technology<br>
+    A standalone reading handout — bullet points, all figures, and questions under each topic. Follows Hamacher, Vranesic &amp; Zaky, Chapter 6.</div>
+</header>
+
+<div class="toc">
+  <b>Contents</b>
+  <ol>
+    <li><a href="#c1">The Pipelining Idea</a></li>
+    <li><a href="#c2">Pipeline Performance</a></li>
+    <li><a href="#c3">Data Hazards</a></li>
+    <li><a href="#c4">Instruction (Control) Hazards</a></li>
+    <li><a href="#c5">Influence on Instruction Sets</a></li>
+    <li><a href="#c6">Datapath &amp; Control Considerations</a></li>
+    <li><a href="#c7">Superscalar Operation</a></li>
+  </ol>
+</div>
+
+<!-- =================================================================== CHAPTER 1 -->
+<h2 class="ch" id="c1"><span class="n">1.</span> The Pipelining Idea</h2>
+<div class="lead">Hamacher §6.1 – §6.2</div>
+
+<h3>1.1 Why pipelining?</h3>
+<ul>
+  <li>A program can be made faster in <b>two</b> broad ways:
+    <ul>
+      <li>use <b>faster circuitry</b>, or</li>
+      <li>arrange the hardware so that <b>more than one operation happens at the same time</b>.</li>
+    </ul>
+  </li>
+  <li>Pipelining takes the <b>second</b> route — it <b>overlaps</b> the execution of successive instructions.</li>
+  <li><b>Analogy — the assembly line:</b> a car takes hours to build, yet a finished car rolls off the line every few minutes, because every station is always working on a different car.</li>
+</ul>
+
+<h3>1.2 One instruction = five steps (recall from Unit 2)</h3>
+<ul>
+  <li>A single instruction executes in five steps: <b>Fetch → Decode → Compute → Memory → Write</b> (5 clock cycles).</li>
+  <li>Each step uses <b>different hardware</b>.</li>
+  <li>So the moment instruction I<sub>j</sub> leaves Fetch and enters Decode, the Fetch unit is <b>free</b> — it can fetch I<sub>j+1</sub> right away.</li>
+  <li>Overlapping the steps of successive instructions across dedicated hardware stages is <span class="term">pipelining</span>.</li>
+</ul>
+
+<h3>1.3 The ideal case</h3>
+<ul>
+  <li>Three instructions are overlapped so that every stage is busy with a <b>different</b> instruction (see figure).</li>
+  <li>Any one instruction still takes 5 cycles start-to-finish, <b>but</b> once the pipeline is <b>full</b>, a new instruction <b>completes every cycle</b>.</li>
+</ul>
+<div class="plate">
+  <div class="tclip" style="height:222px; width:864px">
+   <div class="tscale">
+    <div class="stage-area" style="height:300px">
+      <div class="time-arrow" style="left:1090px">Time →</div>
+      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+      <div class="rowlab" style="top:78px">I<sub>j</sub></div>
+      <div class="stage sF words" style="left:150px; top:78px">Fetch</div><div class="stage sD words" style="left:278px; top:78px">Decode</div><div class="stage sC words" style="left:406px; top:78px">Compute</div><div class="stage sM words" style="left:534px; top:78px">Memory</div><div class="stage sW words" style="left:662px; top:78px">Write</div>
+      <div class="rowlab" style="top:158px">I<sub>j+1</sub></div>
+      <div class="stage sF words" style="left:278px; top:158px">Fetch</div><div class="stage sD words" style="left:406px; top:158px">Decode</div><div class="stage sC words" style="left:534px; top:158px">Compute</div><div class="stage sM words" style="left:662px; top:158px">Memory</div><div class="stage sW words" style="left:790px; top:158px">Write</div>
+      <div class="rowlab" style="top:238px">I<sub>j+2</sub></div>
+      <div class="stage sF words" style="left:406px; top:238px">Fetch</div><div class="stage sD words" style="left:534px; top:238px">Decode</div><div class="stage sC words" style="left:662px; top:238px">Compute</div><div class="stage sM words" style="left:790px; top:238px">Memory</div><div class="stage sW words" style="left:918px; top:238px">Write</div>
+    </div>
+   </div>
+  </div>
+  <div class="plabel"><b>Figure 6.1</b> — Pipelined execution, the ideal case. Once full, one instruction completes every cycle.</div>
+</div>
+
+<div class="key"><b>Key idea.</b> Pipelining does <b>not</b> make one instruction faster. It increases <b>throughput</b> — instructions completed per unit time — by overlapping many instructions.</div>
+
+<h3>1.4 Pipeline organization &amp; interstage buffers</h3>
+<ul>
+  <li>Each of the five stages is <b>separate hardware</b>.</li>
+  <li>Between consecutive stages sit registers called <span class="term">interstage buffers</span> (B1–B4).</li>
+  <li>At the end of every clock cycle, each buffer <b>latches</b> its stage's result so the next stage can use it in the following cycle.</li>
+  <li>The buffers carry data, register identifiers <b>and</b> the control signals for later stages.</li>
+</ul>
+<div class="plate">
+  <svg class="dp" width="360" height="235" viewBox="0 0 720 470">
+    <rect class="box" x="270" y="8" width="180" height="46" rx="6"/><text x="360" y="37" text-anchor="middle" font-size="20" font-weight="700">Instruction fetch</text>
+    <rect class="buf" x="220" y="70" width="280" height="24" rx="4"/><text x="360" y="87" text-anchor="middle" font-size="16">Interstage buffer B1</text><path class="wire" d="M360,54 V70"/>
+    <rect class="stagebox" x="150" y="110" width="150" height="52" rx="6"/><text x="225" y="141" text-anchor="middle" font-size="18" font-weight="700">Register file</text>
+    <rect class="stagebox" x="420" y="110" width="150" height="52" rx="6"/><text x="495" y="135" text-anchor="middle" font-size="16" font-weight="700">Instruction</text><text x="495" y="153" text-anchor="middle" font-size="16" font-weight="700">decode</text>
+    <path class="wire" d="M300,82 H495 M225,94 V110 M495,94 V110"/>
+    <rect class="buf" x="150" y="178" width="420" height="24" rx="4"/><text x="360" y="195" text-anchor="middle" font-size="16">Interstage buffer B2</text><path class="wire" d="M225,162 V178 M495,162 V178"/>
+    <rect class="stagebox" x="150" y="218" width="150" height="50" rx="6"/><text x="225" y="248" text-anchor="middle" font-size="18" font-weight="700">Compute</text><path class="wire" d="M225,202 V218"/>
+    <rect class="buf" x="150" y="284" width="420" height="24" rx="4"/><text x="360" y="301" text-anchor="middle" font-size="16">Interstage buffer B3</text><path class="wire" d="M225,268 V284"/>
+    <rect class="stagebox" x="150" y="324" width="150" height="50" rx="6"/><text x="225" y="348" text-anchor="middle" font-size="17" font-weight="700">Memory access</text><path class="wire" d="M225,308 V324"/>
+    <rect class="buf" x="150" y="390" width="420" height="24" rx="4"/><text x="360" y="407" text-anchor="middle" font-size="16">Interstage buffer B4</text><path class="wire" d="M225,374 V390"/>
+    <path class="fb" d="M150,402 H70 V136 H150"/><text x="60" y="270" text-anchor="middle" font-size="14" fill="#3FB950" transform="rotate(-90 60 270)">Write result → register file</text>
+  </svg>
+  <div class="plabel"><b>Figure 6.2</b> — A five-stage pipeline (stage hardware + interstage buffers B1–B4).</div>
+</div>
+<ul>
+  <li><b>B1</b> → the newly fetched instruction, ready to decode.</li>
+  <li><b>B2</b> → the two operands read from registers, the immediate value, and the <b>control signals</b> for later stages.</li>
+  <li><b>B3</b> → the ALU result (data to write, or an address/data for memory).</li>
+  <li><b>B4</b> → the value to be written back into the register file.</li>
+  <li>Control signals travel <b>with</b> the instruction down the pipe — this is <span class="term">pipelined control</span>.</li>
+</ul>
+
+<div class="qbox">
+  <h4>QUESTIONS — Chapter 1</h4>
+  <ol>
+    <li>Define pipelining. <span class="mk">[1 mark · Remember]</span></li>
+    <li>Name the five stages of the pipeline used in this chapter. <span class="mk">[1 mark · Remember]</span></li>
+    <li>What is an interstage buffer? What does each of B1–B4 carry? <span class="mk">[2 marks · Understand]</span></li>
+    <li>With a neat diagram (Figure 6.1), explain the ideal overlapped execution of three instructions. <span class="mk">[5 marks · Apply]</span></li>
+  </ol>
+</div>
+
+<!-- =================================================================== CHAPTER 2 -->
+<h2 class="ch" id="c2"><span class="n">2.</span> Pipeline Performance</h2>
+<div class="lead">Hamacher §6.8 (basics)</div>
+
+<h3>2.1 Counting the cycles</h3>
+<ul>
+  <li>Take a pipeline of <b>k</b> stages executing <b>n</b> instructions.</li>
+  <li>The first instruction needs k cycles to reach the end; after that, one completes each cycle.</li>
+  <li>Total time = <b>k + (n − 1)</b> cycles &nbsp;—&nbsp; compared with <b>k × n</b> cycles with no overlap.</li>
+  <li>Example: k = 5, n = 100 → <b>104</b> cycles instead of 500 (≈ <b>4.8× faster</b>).</li>
+  <li>As n grows large, the speedup approaches <b>k</b> (the number of stages).</li>
+</ul>
+<div class="worked"><span class="tag">Worked example</span> A 5-stage pipeline (k = 5) runs a loop with n = 20 independent instructions.
+  Cycles needed = k + (n − 1) = 5 + 19 = <b>24 cycles</b>. Without pipelining it would take k × n = 5 × 20 = <b>100 cycles</b>.
+  Speedup = 100 / 24 ≈ <b>4.17×</b> — close to, but below, the ideal 5× because n is still small; as n grows the answer creeps closer to k.
+</div>
+<a class="deeplink" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
+  <span class="arrow">&#8594;</span>
+  <span>Go deeper, with more worked examples, in the Foothold course &mdash; open <b>Module 3 &rarr; 3.2 The Pipeline Idea &amp; Performance</b>
+  <span class="note">Optional — only if you want to go deeper. Not needed for the exam.</span></span>
+</a>
+
+<h3>2.2 The performance equation</h3>
+<ul>
+  <li>For a program with dynamic instruction count N:</li>
+</ul>
+<div class="eqbox">T = ( N × S ) / R
+  <div style="font-size:14px; color:var(--soft); font-style:italic; margin-top:6px; font-family:'Segoe UI',sans-serif">N = number of instructions · S = average cycles per instruction · R = clock rate</div></div>
+<ul>
+  <li><b>Throughput</b> = instructions executed per second:</li>
+</ul>
+<div class="eqbox">P<span class="sub">np</span> = R / S &nbsp;&nbsp;→&nbsp;&nbsp; ideal pipeline (S = 1): P<span class="sub">p</span> = R</div>
+<ul>
+  <li>Non-pipelined: S = 5. Ideal pipelined (no stalls): S = 1 → up to a <b>5× throughput</b> gain.</li>
+</ul>
+
+<h3>2.3 How many stages?</h3>
+<ul>
+  <li><b>More stages</b> → less work per stage → shorter clock period → <b>higher clock rate</b>.</li>
+  <li><b>But</b> more instructions in flight → more dependencies → more stalls.</li>
+  <li><b>And</b> the branch penalty grows if the branch decision moves to a later stage.</li>
+  <li>The clock is limited by the <b>slowest basic operation</b> (usually the ALU).</li>
+  <li>Gains <b>diminish</b> beyond a point — real designs use ~10–20 stages at several GHz.</li>
+</ul>
+
+<div class="key"><b>Key idea.</b> Ideal speedup approaches the number of stages; every stall pulls the real gain below the ideal — which is what the hazards (next) are about.</div>
+
+<div class="qbox">
+  <h4>QUESTIONS — Chapter 2</h4>
+  <ol>
+    <li>Differentiate <b>throughput</b> from the execution time of a single instruction. <span class="mk">[2 marks · Understand]</span></li>
+    <li>Derive the number of cycles for n instructions on a k-stage pipeline, and hence the speedup as n → ∞. <span class="mk">[2 marks · Apply]</span></li>
+    <li>Write the basic performance equation T = N·S/R and explain each term; give S for the non-pipelined and ideal-pipelined cases. <span class="mk">[2 marks · Understand]</span></li>
+    <li>Discuss the trade-offs in choosing the number of pipeline stages. <span class="mk">[5 marks · Analyse]</span></li>
+  </ol>
+</div>
+
+<!-- =================================================================== CHAPTER 3 -->
+<h2 class="ch" id="c3"><span class="n">3.</span> Data Hazards</h2>
+<div class="lead">Hamacher §6.3 – §6.5</div>
+
+<h3>3.1 The data dependency</h3>
+<ul>
+  <li>The ideal overlap assumes instructions are <b>independent</b> — real code often chains them.</li>
+  <li>Example: <span class="mono">Add R2,R3,#100</span> then <span class="mono">Subtract R9,R2,#30</span>.
+    <ul>
+      <li>R2 is <b>produced</b> by the Add and <b>consumed</b> by the Subtract — a <span class="term">data dependency</span>.</li>
+      <li>The Add writes R2 in cycle 5 (Write), but the Subtract reads it in cycle 3 (Decode) — a <b>read-before-write</b>.</li>
+    </ul>
+  </li>
+  <li>Any condition that forces the pipeline to wait is a <span class="term">hazard</span>; this one is a <span class="term">data hazard</span>. This particular kind — a later instruction depending on an earlier one's result — is called a <span class="term">RAW (Read-After-Write) hazard</span>.</li>
+</ul>
+<div class="explain"><span class="tag">Explanation</span>The name "Read <i>After</i> Write" can feel backwards right after reading "read-before-write" above — but the two phrases describe two different things. <b>RAW names the dependency</b>: in correct program order, the Write must happen, then the Read happens <i>after</i> it — that's simply what "R2 is produced by the Add and consumed by the Subtract" means. <b>The hazard is that pipelining breaks this order</b> — the Subtract's Decode tries to read R2 <i>before</i> the Add's Write has actually happened. So the dependency is named for the order that <i>should</i> hold (Write, then Read); the hazard is that the pipeline lets the Read jump ahead of it. The same logic gives WAR (Write-After-Read) and WAW (Write-After-Write) hazards elsewhere in the course.</div>
+
+<h3>3.2 The simplest cure — stall</h3>
+<ul>
+  <li><b>Stall</b> the Subtract in Decode until R2 is written — here for <b>3 cycles</b>.</li>
+  <li>Each idle cycle inserted is a <span class="term">bubble</span>; all following instructions are delayed too.</li>
+</ul>
+<div class="plate">
+  <div class="tclip" style="height:212px; width:864px"><div class="tscale">
+    <div class="stage-area" style="height:290px">
+      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div><div class="cyc-num" style="left:1046px">8</div>
+      <div class="rowlab" style="top:88px; font-size:22px">Add</div>
+      <div class="stage sF" style="left:150px; top:78px">F</div><div class="stage sD" style="left:278px; top:78px">D</div><div class="stage sC" style="left:406px; top:78px">C</div><div class="stage sM" style="left:534px; top:78px">M</div><div class="stage sW" style="left:662px; top:78px">W</div>
+      <div class="rowlab" style="top:178px; font-size:22px">Sub</div>
+      <div class="stage sF" style="left:278px; top:168px">F</div><div class="stage sD" style="left:406px; top:168px">D</div>
+      <div class="stage sBubble" style="left:534px; top:168px">bubble</div><div class="stage sBubble" style="left:662px; top:168px">bubble</div>
+      <div class="stage sC" style="left:790px; top:168px">C</div><div class="stage sM" style="left:918px; top:168px">M</div><div class="stage sW" style="left:1046px; top:168px">W</div>
+      <div class="marker" style="left:470px; top:250px; width:340px; color:var(--red)">▲ 3-cycle stall (bubbles)</div>
+      <div class="marker" style="left:850px; top:250px; width:320px; color:var(--green)">▲ R2 read safely — cycle 6</div>
+    </div>
+  </div></div>
+  <div class="plabel"><b>Figure 6.3</b> — Pipeline stall due to a data dependency (3-cycle stall).</div>
+</div>
+<div class="explain"><span class="tag">Explanation</span>Look carefully at the diagram: the Subtract's <b>D</b> box (cycle 3) is followed by only <b>two</b> cells marked "bubble" (cycles 4 and 5) — yet we call this a <b>3-cycle stall</b>. Both numbers are correct; they're just counting different things. Cycle 3 was already going to be Subtract's normal Decode cycle — it isn't "extra" time. Cycles 4 and 5 are the two <i>additional</i> idle cycles forced in because R2 isn't ready yet — those are the two bubbles you see drawn. Add them together — cycle 3 (held) + cycle 4 (bubble) + cycle 5 (bubble) — and Subtract is stuck in Decode for a <b>total of 3 cycles</b> before it can move to Compute in cycle 6. So: 2 bubbles = the extra delay injected; 3 cycles = the full time spent stalled. If you check this same example on the AVPS simulator, its own numbers agree exactly — it also stalls for 3 cycles — but because the simulator advances one cycle at a time, you'll only ever see up to two bubble cards on screen together at once (the third stalled cycle's bubble hasn't reached the next stage yet). That's a feature of how the animation plays out, not a disagreement with the textbook.</div>
+
+<h3>3.3 Operand forwarding — the better cure</h3>
+<ul>
+  <li>The value the Subtract needs actually <b>exists earlier</b> than the register write.</li>
+  <li>The Add's ALU produces R2 at the <b>end of cycle 3</b> and it is captured in register <b>RZ</b>.</li>
+  <li><span class="term">Operand forwarding</span>: route the result directly from RZ to the ALU input where it is needed — <b>no stall</b>.</li>
+</ul>
+<div class="plate">
+  <div class="tclip" style="height:196px; width:864px"><div class="tscale">
+    <div class="stage-area" style="height:270px">
+      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+      <div class="rowlab" style="top:88px; font-size:22px">Add</div>
+      <div class="stage sF" style="left:150px; top:78px">F</div><div class="stage sD" style="left:278px; top:78px">D</div><div class="stage sC" style="left:406px; top:78px">C</div><div class="stage sM" style="left:534px; top:78px">M</div><div class="stage sW" style="left:662px; top:78px">W</div>
+      <div class="rowlab" style="top:178px; font-size:22px">Sub</div>
+      <div class="stage sF" style="left:278px; top:168px">F</div><div class="stage sD" style="left:406px; top:168px">D</div><div class="stage sC" style="left:534px; top:168px">C</div><div class="stage sM" style="left:662px; top:168px">M</div><div class="stage sW" style="left:790px; top:168px">W</div>
+      <svg class="fwd-svg" width="1200" height="270" viewBox="0 0 1200 270">
+        <defs><marker id="af1" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3FB950"/></marker></defs>
+        <path d="M464,138 C500,158 540,150 585,166" stroke="#3FB950" stroke-width="4" fill="none" marker-end="url(#af1)"/>
+        <text x="452" y="258" fill="#3FB950" font-size="21" font-weight="700">forward the ALU result — no wait</text>
+      </svg>
+    </div>
+  </div></div>
+  <div class="plabel"><b>Figure 6.4</b> — Avoiding the stall by operand forwarding.</div>
+</div>
+<ul>
+  <li>The hardware needs a small change (see figure): a multiplexer (MuxA) before the ALU's InA input, and MuxB extended, so each input can select either a register value <b>or</b> the value forwarded from RZ.</li>
+  <li>Forwarding can also be extended from register <b>RY</b> to handle a result produced two instructions earlier.</li>
+</ul>
+<div class="plate">
+  <svg class="dp" width="450" height="263" viewBox="0 0 720 420">
+    <rect class="box" x="250" y="12" width="220" height="80" rx="6"/><text x="360" y="47" text-anchor="middle" font-size="22" font-weight="700">Register file</text>
+    <text x="285" y="86" text-anchor="middle" font-size="18">A</text><text x="435" y="86" text-anchor="middle" font-size="18">B</text>
+    <rect class="box" x="240" y="130" width="90" height="42" rx="5"/><text x="285" y="157" text-anchor="middle" font-size="20" font-weight="700">RA</text>
+    <rect class="box" x="390" y="130" width="90" height="42" rx="5"/><text x="435" y="157" text-anchor="middle" font-size="20" font-weight="700">RB</text>
+    <path class="wire" d="M285,92 V130"/><path class="wire" d="M435,92 V130"/>
+    <text x="600" y="196" font-size="16" fill="#C3D1E0">Immediate</text>
+    <polygon class="box" points="250,210 330,210 316,250 264,250"/><text x="290" y="235" text-anchor="middle" font-size="16">MuxA</text>
+    <polygon class="box" points="392,210 500,210 486,250 406,250"/><text x="446" y="235" text-anchor="middle" font-size="16">MuxB</text>
+    <path class="wire" d="M285,172 V210"/><path class="wire" d="M435,172 V210"/><path class="wire" d="M588,196 H470 M470,196 V210"/>
+    <polygon class="alu" points="255,290 465,290 430,360 290,360"/><text x="360" y="325" text-anchor="middle" font-size="22" font-weight="700" fill="#58A6FF">ALU</text>
+    <text x="292" y="286" font-size="15" fill="#C3D1E0">InA</text><text x="410" y="286" font-size="15" fill="#C3D1E0">InB</text>
+    <path class="wire" d="M290,250 V290"/><path class="wire" d="M446,250 V290"/>
+    <rect class="box" x="320" y="378" width="80" height="36" rx="5"/><text x="360" y="402" text-anchor="middle" font-size="20" font-weight="700" fill="#3FB950">RZ</text>
+    <path class="wire" d="M360,360 V378"/>
+    <path class="fb" d="M400,396 H650 V182 H300 V206" marker-end="url(#dm2)"/><path class="fb" d="M452,182 V206" marker-end="url(#dm3)"/>
+    <defs><marker id="dm2" markerWidth="12" markerHeight="12" refX="4" refY="6" orient="auto"><path d="M0,0 L8,0 L4,8 Z" fill="#3FB950"/></marker>
+      <marker id="dm3" markerWidth="12" markerHeight="12" refX="4" refY="6" orient="auto"><path d="M0,0 L8,0 L4,8 Z" fill="#3FB950"/></marker></defs>
+    <text x="498" y="286" font-size="17" font-weight="700" fill="#3FB950">RZ forwarded</text><text x="498" y="308" font-size="17" font-weight="700" fill="#3FB950">to ALU inputs</text>
+  </svg>
+  <div class="plabel"><b>Figure 6.5</b> — Datapath modified so RZ feeds back to the ALU inputs.</div>
+</div>
+
+<h3>3.4 Handling it in software</h3>
+<ul>
+  <li>Alternative to hardware forwarding: let the <b>compiler</b> fix it.</li>
+  <li><b>Insert 3 NOPs</b> between the dependent pair — creates the delay, but grows code and wastes cycles.</li>
+  <li><b>Better — reorder</b> independent instructions into those slots so the CPU does useful work: <span class="term">instruction scheduling</span>.</li>
+</ul>
+<div class="plate">
+  <div class="codebox">
+    <div class="instr-line">Add&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="reg">R2</span>, R3, #100</div>
+    <div class="instr-line nop">NOP</div><div class="instr-line nop">NOP</div><div class="instr-line nop">NOP</div>
+    <div class="instr-line">Subtract&nbsp;R9, <span class="reg">R2</span>, #30</div>
+    <div class="cap">Three NOPs give R2 time to be written before the Subtract reads it.</div>
+  </div>
+  <div class="plabel"><b>Figure 6.6</b> — Using NOP instructions (or reordering) to handle a dependency in software.</div>
+</div>
+
+<h3>3.5 Memory delays</h3>
+<ul>
+  <li><b>Cache miss:</b> if a Fetch or Load misses the cache, memory takes <b>many cycles</b> (10+), stalling all following instructions until the word arrives.</li>
+</ul>
+<div class="plate">
+  <div class="tclip" style="height:200px; width:864px"><div class="tscale">
+    <div class="stage-area" style="height:280px">
+      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+      <div class="rowlab" style="top:88px; font-size:20px">I<sub>j</sub>: Load</div>
+      <div class="stage sF" style="left:150px; top:78px">F</div><div class="stage sD" style="left:278px; top:78px">D</div><div class="stage sC" style="left:406px; top:78px">C</div>
+      <div class="stage sM" style="left:534px; top:78px; width:372px; background:var(--red)">Memory — cache miss (3 cycles)</div>
+      <div class="stage sW" style="left:918px; top:78px">W</div>
+      <div class="rowlab" style="top:168px; font-size:20px">I<sub>j+1</sub></div>
+      <div class="stage sF" style="left:278px; top:158px">F</div><div class="stage sD" style="left:406px; top:158px">D</div>
+      <div class="stage sBubble" style="left:534px; top:158px; width:244px">stalled</div>
+      <div class="stage sC" style="left:790px; top:158px">C</div><div class="stage sM" style="left:918px; top:158px">M</div>
+      <div class="marker" style="left:534px; top:246px; width:372px; color:var(--red)">▲ following instructions wait for the miss</div>
+    </div>
+  </div></div>
+  <div class="plabel"><b>Figure 6.7</b> — A cache miss delays the pipeline (shown as 3 cycles; real misses cost 10+).</div>
+</div>
+<ul>
+  <li><b>Load-use hazard:</b> a Load reads its data in the <b>Memory</b> stage — one stage after the ALU. So even with forwarding, a directly-following dependent instruction needs <b>one</b> unavoidable stall; after it, the value (now in RY) is forwarded.</li>
+  <li>A compiler can hide this one stall by moving an independent instruction between the Load and its user.</li>
+</ul>
+<div class="plate">
+  <div class="tclip" style="height:196px; width:864px"><div class="tscale">
+    <div class="stage-area" style="height:270px">
+      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+      <div class="rowlab" style="top:88px; font-size:20px">Load R2,(R3)</div>
+      <div class="stage sF" style="left:150px; top:78px">F</div><div class="stage sD" style="left:278px; top:78px">D</div><div class="stage sC" style="left:406px; top:78px">C</div><div class="stage sM" style="left:534px; top:78px">M</div><div class="stage sW" style="left:662px; top:78px">W</div>
+      <div class="rowlab" style="top:178px; font-size:20px">Sub R9,R2</div>
+      <div class="stage sF" style="left:278px; top:168px">F</div><div class="stage sD" style="left:406px; top:168px">D</div>
+      <div class="stage sBubble" style="left:534px; top:168px">bubble</div>
+      <div class="stage sC" style="left:662px; top:168px">C</div><div class="stage sM" style="left:790px; top:168px">M</div><div class="stage sW" style="left:918px; top:168px">W</div>
+      <svg class="fwd-svg" width="1200" height="270" viewBox="0 0 1200 270">
+        <defs><marker id="af2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3FB950"/></marker></defs>
+        <path d="M592,138 C640,158 670,150 713,166" stroke="#3FB950" stroke-width="4" fill="none" marker-end="url(#af2)"/>
+        <text x="760" y="258" fill="#3FB950" font-size="21" font-weight="700">forward from Memory</text>
+      </svg>
+      <div class="marker" style="left:470px; top:238px; width:260px; color:var(--red)">▲ one unavoidable stall</div>
+    </div>
+  </div></div>
+  <div class="plabel"><b>Figure 6.8</b> — A load-use hazard: forwarding still needs a single-cycle stall.</div>
+</div>
+
+<h3>3.6 Worked example — forwarding two results (Example 6.1)</h3>
+<ul>
+  <li>Sequence: <span class="mono">Add R4,R3,R2 · Or R7,R6,R5 · Subtract R8,R7,R4</span>.</li>
+  <li>The Subtract needs <b>both</b> R4 (from Add) and R7 (from Or).</li>
+  <li>When the Subtract reaches Compute (cycle 5): R7 is forwarded from RZ, R4 is forwarded from RY → <b>no stall</b>.</li>
+</ul>
+<div class="plate">
+  <div class="tclip" style="height:238px; width:864px"><div class="tscale">
+    <div class="stage-area" style="height:330px">
+      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+      <div class="rowlab" style="top:88px; font-size:20px">Add R4,R3,R2</div>
+      <div class="stage sF" style="left:150px; top:78px">F</div><div class="stage sD" style="left:278px; top:78px">D</div><div class="stage sC" style="left:406px; top:78px">C</div><div class="stage sM" style="left:534px; top:78px">M</div><div class="stage sW" style="left:662px; top:78px">W</div>
+      <div class="rowlab" style="top:168px; font-size:20px">Or R7,R6,R5</div>
+      <div class="stage sF" style="left:278px; top:158px">F</div><div class="stage sD" style="left:406px; top:158px">D</div><div class="stage sC" style="left:534px; top:158px">C</div><div class="stage sM" style="left:662px; top:158px">M</div><div class="stage sW" style="left:790px; top:158px">W</div>
+      <div class="rowlab" style="top:248px; font-size:20px">Subtract R8,R7,R4</div>
+      <div class="stage sF" style="left:406px; top:238px">F</div><div class="stage sD" style="left:534px; top:238px">D</div><div class="stage sC" style="left:662px; top:238px">C</div><div class="stage sM" style="left:790px; top:238px">M</div><div class="stage sW" style="left:918px; top:238px">W</div>
+      <svg class="fwd-svg" width="1200" height="330" viewBox="0 0 1200 330">
+        <defs><marker id="ag" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3FB950"/></marker>
+          <marker id="at" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#39D0D8"/></marker></defs>
+        <path d="M600,214 C630,224 660,230 690,236" stroke="#3FB950" stroke-width="3.5" fill="none" marker-end="url(#ag)"/>
+        <path d="M660,132 C705,178 725,200 748,236" stroke="#39D0D8" stroke-width="3.5" fill="none" marker-end="url(#at)"/>
+        <text x="360" y="308" fill="#3FB950" font-size="18" font-weight="700">R7 forwarded from Or</text>
+        <text x="812" y="308" fill="#39D0D8" font-size="18" font-weight="700">R4 forwarded from Add</text>
+      </svg>
+    </div>
+  </div></div>
+  <div class="plabel"><b>Figure 6.15</b> — Two operands forwarded into one instruction; no stall required.</div>
+</div>
+
+<div class="key"><b>Key idea.</b> A data hazard has a toolkit: <b>forward</b> in hardware, <b>stall</b> when you must, or <b>reschedule</b> in software. Forwarding removes most stalls — but a load-use pair, and any cache miss, still cost cycles.</div>
+
+<div class="qbox">
+  <h4>QUESTIONS — Chapter 3</h4>
+  <ol>
+    <li>State what a "hazard" means in a pipeline; define a data hazard. <span class="mk">[1 mark · Remember]</span></li>
+    <li>Explain operand forwarding in one or two sentences. <span class="mk">[2 marks · Understand]</span></li>
+    <li>Why does a load-use dependency cost at least one stall even with forwarding? <span class="mk">[2 marks · Apply]</span></li>
+    <li>For <span class="mono">Add R2,R3,#100</span> then <span class="mono">Subtract R9,R2,#30</span>, draw the pipeline timing <b>with</b> and <b>without</b> operand forwarding, and state the cycles saved. <span class="mk">[5 marks · Apply]</span></li>
+    <li>How can a compiler handle a data dependency in software? Compare NOP insertion with instruction reordering. <span class="mk">[5 marks · Analyse]</span></li>
+  </ol>
+</div>
+
+<!-- =================================================================== CHAPTER 4 -->
+<h2 class="ch" id="c4"><span class="n">4.</span> Instruction (Control) Hazards</h2>
+<div class="lead">Hamacher §6.6</div>
+
+<h3>4.1 The branch problem</h3>
+<ul>
+  <li>To stay full, the pipeline fetches the <b>next in sequence</b> every cycle.</li>
+  <li>A <b>branch</b> can redirect execution — but it must be <b>executed</b> before we know the outcome and target.</li>
+  <li>The instructions already fetched behind it may be wrong and must be <b>discarded</b> — a <span class="term">control (instruction) hazard</span>; the lost cycles are the <span class="term">branch penalty</span>.</li>
+</ul>
+
+<h3>4.2 The branch penalty, and reducing it</h3>
+<ul>
+  <li>If the target is computed in the <b>Compute</b> stage: two instructions are fetched wrongly → <b>2-cycle</b> penalty.</li>
+  <li>Branches are ~<b>20%</b> of instructions, so a 2-cycle penalty could add up to ~40% — worth attacking.</li>
+</ul>
+<div class="plate">
+  <div class="tclip" style="height:262px; width:864px"><div class="tscale">
+    <div class="stage-area" style="height:360px">
+      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div><div class="cyc-num" style="left:1046px">8</div>
+      <div class="rowlab" style="top:78px">I<sub>j</sub>: Branch→I<sub>k</sub></div>
+      <div class="stage sBr" style="left:150px; top:70px">F</div><div class="stage sBr" style="left:278px; top:70px">D</div><div class="stage sBr" style="left:406px; top:70px">C</div>
+      <div class="rowlab" style="top:158px">I<sub>j+1</sub></div>
+      <div class="stage discard" style="left:278px; top:150px">F ✗</div><div class="stage discard" style="left:406px; top:150px">D ✗</div>
+      <div class="rowlab" style="top:238px">I<sub>j+2</sub></div>
+      <div class="stage discard" style="left:406px; top:230px">F ✗</div>
+      <div class="rowlab" style="top:308px">I<sub>k</sub>: target</div>
+      <div class="stage sTgt" style="left:534px; top:300px">F</div><div class="stage sTgt" style="left:662px; top:300px">D</div><div class="stage sTgt" style="left:790px; top:300px">C</div><div class="stage sTgt" style="left:918px; top:300px">M</div><div class="stage sTgt" style="left:1046px; top:300px">W</div>
+      <div class="penalty-bracket" style="left:534px; top:212px; width:244px"></div>
+      <div class="marker" style="left:534px; top:176px; width:244px; color:var(--red)">2-cycle penalty</div>
+    </div>
+  </div></div>
+  <div class="plabel"><b>Figure 6.9</b> — Branch penalty when the target is determined in the Compute stage.</div>
+</div>
+<ul>
+  <li><b>Decide earlier:</b> add an adder (and, for a conditional branch, a comparator) so the target and condition are worked out in the <b>Decode</b> stage. Only <b>one</b> instruction is fetched wrongly → <b>1-cycle</b> penalty for all branches.</li>
+</ul>
+<div class="plate">
+  <div class="tclip" style="height:220px; width:864px"><div class="tscale">
+    <div class="stage-area" style="height:305px">
+      <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+      <div class="rowlab" style="top:88px">I<sub>j</sub>: Branch→I<sub>k</sub></div>
+      <div class="stage sBr" style="left:150px; top:80px">F</div><div class="stage sBr" style="left:278px; top:80px">D</div>
+      <div class="rowlab" style="top:168px">I<sub>j+1</sub></div>
+      <div class="stage discard" style="left:278px; top:160px">F ✗</div>
+      <div class="rowlab" style="top:248px">I<sub>k</sub>: target</div>
+      <div class="stage sTgt" style="left:406px; top:240px">F</div><div class="stage sTgt" style="left:534px; top:240px">D</div><div class="stage sTgt" style="left:662px; top:240px">C</div><div class="stage sTgt" style="left:790px; top:240px">M</div><div class="stage sTgt" style="left:918px; top:240px">W</div>
+      <div class="penalty-bracket" style="left:406px; top:212px; width:116px"></div>
+      <div class="marker" style="left:352px; top:176px; width:224px; color:var(--green)">1-cycle penalty</div>
+    </div>
+  </div></div>
+  <div class="plabel"><b>Figure 6.10</b> — Resolving the branch in Decode cuts the penalty from two cycles to one.</div>
+</div>
+
+<h3>4.3 The branch delay slot</h3>
+<ul>
+  <li>The instruction location right after a branch is the <span class="term">branch delay slot</span> — it is fetched anyway.</li>
+  <li><b>Idea:</b> always execute it, and let the compiler move a useful instruction there.</li>
+  <li>Branching then takes effect one instruction later — <span class="term">delayed branching</span>.</li>
+  <li>Compilers fill the slot usefully about <b>70%</b> of the time (else a NOP is used).</li>
+</ul>
+<div class="plate">
+  <div class="codebox">
+    <div class="instr-line mv">Add&nbsp;&nbsp;R7, R8, R9</div>
+    <div class="instr-line"><span class="br">Branch_if&lt;R3=0&gt;</span> TARGET</div>
+    <div class="instr-line" style="color:#F85149">NOP&nbsp;&nbsp;<span class="dim">← wasted slot</span></div>
+    <div class="cap">Before: a NOP wastes the slot.</div>
+  </div>
+  <span class="arrow">→</span>
+  <div class="codebox">
+    <div class="instr-line"><span class="br">Branch_if&lt;R3=0&gt;</span> TARGET</div>
+    <div class="instr-line mv">Add&nbsp;&nbsp;R7, R8, R9 &nbsp;<span class="dim">← delay slot</span></div>
+    <div class="instr-line dim">…</div>
+    <div class="cap">After: the Add moves into the slot — always executed.</div>
+  </div>
+  <div class="plabel"><b>Figure 6.11</b> — Filling the branch delay slot with a useful instruction.</div>
+</div>
+
+<h3>4.4 Branch prediction</h3>
+<ul>
+  <li><b>Static prediction</b> — same guess every time:
+    <ul>
+      <li><b>Assume not-taken</b> — keep fetching in sequence (~50% right for a random branch).</li>
+      <li><b>Use direction</b> — a backward branch (loop end) is usually taken; predict by the sign of the offset.</li>
+      <li>A compiler-set <b>hint bit</b> can say "expect taken / not-taken".</li>
+    </ul>
+  </li>
+  <li><b>Dynamic prediction</b> — learn from recent behaviour with a <b>2-bit</b> saturating counter (four states):
+    <ul>
+      <li>States: Strongly-Not-Taken, Likely-Not-Taken, Likely-Taken, Strongly-Taken.</li>
+      <li>Predict taken in the two "taken" states, not-taken in the two "not-taken" states.</li>
+      <li>It takes <b>two</b> wrong guesses in a row to flip — so one odd iteration won't fool it. For a loop run many times, only the exit pass is mispredicted.</li>
+    </ul>
+  </li>
+</ul>
+<div class="plate">
+  <svg class="fsm" width="864" height="200" viewBox="0 0 1080 250">
+    <defs><marker id="ea" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#C3D1E0"/></marker></defs>
+    <circle class="st-node nottaken" cx="140" cy="130" r="66"/><text x="140" y="124" text-anchor="middle" font-size="26">SNT</text><text x="140" y="150" text-anchor="middle" font-size="15" fill="#F85149">predict ✗</text>
+    <circle class="st-node nottaken" cx="420" cy="130" r="66"/><text x="420" y="124" text-anchor="middle" font-size="26">LNT</text><text x="420" y="150" text-anchor="middle" font-size="15" fill="#F85149">predict ✗</text>
+    <circle class="st-node taken" cx="700" cy="130" r="66"/><text x="700" y="124" text-anchor="middle" font-size="26">LT</text><text x="700" y="150" text-anchor="middle" font-size="15" fill="#3FB950">predict ✓</text>
+    <circle class="st-node taken" cx="980" cy="130" r="66"/><text x="980" y="124" text-anchor="middle" font-size="26">ST</text><text x="980" y="150" text-anchor="middle" font-size="15" fill="#3FB950">predict ✓</text>
+    <path class="edge" d="M206,108 Q280,72 354,108" marker-end="url(#ea)"/><path class="edge" d="M486,108 Q560,72 634,108" marker-end="url(#ea)"/><path class="edge" d="M766,108 Q840,72 914,108" marker-end="url(#ea)"/>
+    <text class="elabel" x="280" y="66" text-anchor="middle">taken →</text><text class="elabel" x="560" y="66" text-anchor="middle">taken →</text><text class="elabel" x="840" y="66" text-anchor="middle">taken →</text>
+    <path class="edge" d="M1030,96 Q1075,130 1030,164" marker-end="url(#ea)"/>
+    <path class="edge" d="M634,156 Q560,192 486,156" marker-end="url(#ea)"/><path class="edge" d="M354,156 Q280,192 206,156" marker-end="url(#ea)"/><path class="edge" d="M914,156 Q840,192 766,156" marker-end="url(#ea)"/>
+    <text class="elabel" x="560" y="210" text-anchor="middle">← not taken</text><text class="elabel" x="280" y="210" text-anchor="middle">← not taken</text><text class="elabel" x="840" y="210" text-anchor="middle">← not taken</text>
+    <path class="edge" d="M90,164 Q45,130 90,96" marker-end="url(#ea)"/>
+  </svg>
+  <div class="plabel"><b>Figure 6.12</b> — A 2-bit predictor: it flips its guess only after two misses in a row.</div>
+</div>
+<ul>
+  <li><b>Branch target buffer (BTB):</b> to predict in <b>cycle 1</b> (while still fetching the branch), a small fast table keyed by the branch address stores the prediction state bits and the target address. A hit tells the processor "this is a taken branch" and where to go, so the right instruction is fetched next cycle (~1024 entries).</li>
+</ul>
+
+<div class="key"><b>Key idea.</b> Control hazards shrink three ways: decide the branch <b>early</b>, fill the <b>delay slot</b> with useful work, and <b>predict</b> the branch (static, dynamic 2-bit, and the BTB for cycle-1 prediction).</div>
+
+<div class="qbox">
+  <h4>QUESTIONS — Chapter 4</h4>
+  <ol>
+    <li>What is the branch delay slot? <span class="mk">[1 mark · Understand]</span></li>
+    <li>Explain how a 2-bit branch predictor avoids being fooled by one unusual loop iteration. <span class="mk">[2 marks · Understand]</span></li>
+    <li>With diagrams, explain the branch penalty when the branch is resolved in the Compute stage versus the Decode stage. <span class="mk">[5 marks · Apply]</span></li>
+    <li>Compare the three techniques for reducing the branch penalty (early decision, delay slot, branch prediction), giving one advantage and one limitation of each. <span class="mk">[5 marks · Evaluate]</span></li>
+    <li>What is a branch target buffer and why is it needed? <span class="mk">[2 marks · Understand]</span></li>
+  </ol>
+</div>
+
+<!-- =================================================================== CHAPTER 5 -->
+<h2 class="ch" id="c5"><span class="n">5.</span> Influence on Instruction Sets</h2>
+<div class="lead">Hamacher §6.10</div>
+
+<h3>5.1 Pipelining rewards simple instructions</h3>
+<ul>
+  <li>The five-stage pipeline is <b>tailored to RISC-style</b> instructions; the wish to pipeline actually shaped instruction-set design.</li>
+  <li><b>RISC — pipeline-friendly:</b>
+    <ul>
+      <li><b>Uniform length</b> (one word), few formats → simple, fast Fetch and Decode.</li>
+      <li><b>Load–Store</b> architecture: only Load/Store touch memory; arithmetic is register-to-register → predictable timing.</li>
+      <li>Simple, regular <b>addressing</b> → simple operand-stage control.</li>
+    </ul>
+  </li>
+  <li><b>CISC — pipeline friction:</b>
+    <ul>
+      <li><b>Variable length</b> → several cycles just to fetch.</li>
+      <li><b>Multiple memory operands</b> per instruction → extra stalls.</li>
+      <li>Complex addressing → <b>side effects</b> and condition codes.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>5.2 Side effects and condition codes</h3>
+<ul>
+  <li>A <span class="term">side effect</span> changes a location other than the named destination.</li>
+  <li>Example: <span class="mono">Move R5, (R8)+</span> (autoincrement) writes R5 <b>and</b> also changes R8 — a hidden dependency that needs extra stall/forward logic.</li>
+  <li><b>Condition codes</b> are another side effect: a <span class="mono">Compare</span> sets flags that a following <span class="mono">Branch</span> silently depends on.</li>
+  <li>Modern CPUs keep CISC instruction sets but internally <b>crack each into simple RISC-like micro-operations</b>.</li>
+</ul>
+
+<div class="key"><b>Key idea.</b> The instruction set and the pipeline are designed <b>together</b>. Simplicity and regularity — uniform length, load-store, simple addressing — are what let overlapping pay off.</div>
+
+<div class="qbox">
+  <h4>QUESTIONS — Chapter 5</h4>
+  <ol>
+    <li>List three features of a RISC instruction set that make it easy to pipeline. <span class="mk">[2 marks · Understand]</span></li>
+    <li>What is a "side effect"? Give an example and explain the problem it causes in a pipeline. <span class="mk">[2 marks · Apply]</span></li>
+    <li>Explain how pipelining influenced instruction-set design, contrasting RISC and CISC. <span class="mk">[5 marks · Analyse]</span></li>
+  </ol>
+</div>
+
+<!-- =================================================================== CHAPTER 6 -->
+<h2 class="ch" id="c6"><span class="n">6.</span> Datapath &amp; Control Considerations</h2>
+<div class="lead">Hamacher §6.2, §6.7, §6.8.1</div>
+
+<h3>6.1 Per-stage hardware and pipelined control</h3>
+<ul>
+  <li>Each stage must have its <b>own hardware</b> — if two stages shared a unit, they couldn't both work in one cycle and the overlap would be lost.</li>
+  <li>Each stage owns a <b>buffer register</b> (B1–B4) to hold its result for the next stage.</li>
+  <li><span class="term">Pipelined control</span>: control signals are generated in Decode and travel <b>with</b> the instruction down the pipe.</li>
+</ul>
+
+<h3>6.2 Structural hazards</h3>
+<ul>
+  <li>A <span class="term">structural hazard</span> occurs when two stages need the <b>same hardware resource</b> in the same cycle.</li>
+  <li>Classic case: a single cache serves both <b>Fetch</b> (every cycle) and <b>Memory access</b> (loads/stores). Together they collide → one must stall.</li>
+  <li><b>Remedy:</b> provide <b>separate instruction and data caches</b> so Fetch and Memory proceed together.</li>
+</ul>
+<div class="plate">
+  <svg class="dp" width="830" height="249" viewBox="0 0 1000 300">
+    <rect class="stagebox" x="40" y="30" width="150" height="48" rx="6" style="stroke:#58A6FF"/><text x="115" y="60" text-anchor="middle" font-size="18" font-weight="700">Fetch</text>
+    <rect class="stagebox" x="40" y="200" width="150" height="48" rx="6" style="stroke:#39D0D8"/><text x="115" y="230" text-anchor="middle" font-size="18" font-weight="700">Memory</text>
+    <rect x="290" y="110" width="150" height="60" rx="8" fill="rgba(248,81,73,.14)" stroke="#F85149" stroke-width="2.5"/><text x="365" y="146" text-anchor="middle" font-size="19" font-weight="700" fill="#F85149">One cache</text>
+    <path class="wire" d="M190,54 H250 Q280,54 290,120" stroke="#F85149"/><path class="wire" d="M190,224 H250 Q280,224 290,160" stroke="#F85149"/>
+    <text x="365" y="205" text-anchor="middle" font-size="19" font-weight="800" fill="#F85149">💥 collision — stall!</text>
+    <text x="240" y="20" font-size="17" fill="#F85149" font-weight="700">Both want it the same cycle</text>
+    <text x="520" y="150" font-size="40" font-weight="800" fill="#58A6FF">→</text>
+    <rect class="stagebox" x="600" y="30" width="150" height="48" rx="6" style="stroke:#58A6FF"/><text x="675" y="60" text-anchor="middle" font-size="18" font-weight="700">Fetch</text>
+    <rect class="stagebox" x="600" y="200" width="150" height="48" rx="6" style="stroke:#39D0D8"/><text x="675" y="230" text-anchor="middle" font-size="18" font-weight="700">Memory</text>
+    <rect x="820" y="24" width="150" height="56" rx="8" fill="rgba(63,185,80,.14)" stroke="#3FB950" stroke-width="2.5"/><text x="895" y="57" text-anchor="middle" font-size="18" font-weight="700" fill="#3FB950">I-cache</text>
+    <rect x="820" y="196" width="150" height="56" rx="8" fill="rgba(63,185,80,.14)" stroke="#3FB950" stroke-width="2.5"/><text x="895" y="229" text-anchor="middle" font-size="18" font-weight="700" fill="#3FB950">D-cache</text>
+    <path class="wire" d="M750,54 H820" stroke="#3FB950"/><path class="wire" d="M750,224 H820" stroke="#3FB950"/>
+    <text x="785" y="150" text-anchor="middle" font-size="18" font-weight="800" fill="#3FB950">no clash ✓</text>
+  </svg>
+  <div class="plabel"><b>§6.7</b> — Separate instruction &amp; data caches remove the structural hazard.</div>
+</div>
+
+<h3>6.3 Putting numbers on the stalls</h3>
+<ul>
+  <li>The ideal is S = 1. Each kind of stall adds a penalty term, and the terms are <b>additive</b>:</li>
+</ul>
+<div class="eqbox">S = 1 + δ<span class="sub">stall</span> + δ<span class="sub">branch</span> + δ<span class="sub">miss</span></div>
+<ul>
+  <li><b>δ<sub>stall</sub></b> (load-use): e.g. 0.25 × 0.40 × 1 = <b>0.10</b>.</li>
+  <li><b>δ<sub>branch</sub></b> (mispredict): e.g. 0.20 × 0.10 × 1 = <b>0.02</b>.</li>
+  <li><b>δ<sub>miss</sub></b> (cache — often the <b>biggest</b>): e.g. (0.05 + 0.30 × 0.10) × 10 = <b>0.8</b>.</li>
+</ul>
+<div class="worked"><span class="tag">EXAMPLE 6.2</span>
+  <ul style="margin-top:6px">
+    <li><b>Given:</b> 20% branches, static not-taken prediction (1-cycle penalty), no other stalls.</li>
+    <li>30% taken → δ<sub>branch</sub> = 0.20 × 0.30 = 0.06 → <b>S = 1.06</b>.</li>
+    <li>70% taken → δ<sub>branch</sub> = 0.20 × 0.70 = 0.14 → <b>S = 1.14</b>.</li>
+    <li>Speedup of the faster case = (1.14 / 1.06 − 1) × 100 ≈ <b>7.5%</b>.</li>
+  </ul>
+</div>
+
+<div class="key"><b>Key idea.</b> Give every stage its own hardware and duplicate the shared resources that would clash; when you put numbers on the stalls, the <b>cache-miss</b> term usually dominates.</div>
+
+<div class="qbox">
+  <h4>QUESTIONS — Chapter 6</h4>
+  <ol>
+    <li>Define a structural hazard and give one example. <span class="mk">[1 mark · Remember]</span></li>
+    <li>How do separate instruction and data caches remove a structural hazard? <span class="mk">[2 marks · Understand]</span></li>
+    <li>A program has 20% branches with a 1-cycle penalty and static not-taken prediction. Derive S and the % slowdown when 30% vs 70% of branches are taken (Example 6.2). <span class="mk">[5 marks · Analyse]</span></li>
+  </ol>
+</div>
+
+<!-- =================================================================== CHAPTER 7 -->
+<h2 class="ch" id="c7"><span class="n">7.</span> Superscalar Operation</h2>
+<div class="lead">Hamacher §6.9</div>
+
+<h3>7.1 Multiple issue</h3>
+<ul>
+  <li>A single pipeline tops out at <b>one instruction per cycle</b>.</li>
+  <li>A <span class="term">superscalar</span> processor has <b>several execution units</b> and issues multiple instructions each cycle (<span class="term">multiple-issue</span>).</li>
+  <li>A <b>fetch unit</b> fetches 2+ instructions per cycle into an <b>instruction queue</b>; a <b>dispatch unit</b> sends independent instructions to different execution units.</li>
+</ul>
+<div class="plate">
+  <svg class="dp" width="864" height="255" viewBox="0 0 1120 330">
+    <rect class="box" x="20" y="130" width="150" height="70" rx="8"/><text x="95" y="160" text-anchor="middle" font-size="18" font-weight="700">Fetch</text><text x="95" y="182" text-anchor="middle" font-size="18" font-weight="700">unit</text>
+    <rect class="q" x="230" y="135" width="220" height="60" rx="8"/><line x1="285" y1="135" x2="285" y2="195" stroke="#1F6FEB"/><line x1="340" y1="135" x2="340" y2="195" stroke="#1F6FEB"/><line x1="395" y1="135" x2="395" y2="195" stroke="#1F6FEB"/><text x="340" y="220" text-anchor="middle" font-size="17" fill="#C3D1E0">Instruction queue</text><path class="wire" d="M170,165 H230"/>
+    <rect class="box" x="500" y="130" width="150" height="70" rx="8"/><text x="575" y="160" text-anchor="middle" font-size="18" font-weight="700">Dispatch</text><text x="575" y="182" text-anchor="middle" font-size="18" font-weight="700">unit</text><path class="wire" d="M450,165 H500"/>
+    <rect class="unit" x="720" y="60" width="180" height="60" rx="8"/><text x="810" y="96" text-anchor="middle" font-size="18" font-weight="700">Arithmetic unit</text><path class="wire" d="M650,150 Q690,150 690,90 H720"/>
+    <rect class="unit" x="720" y="205" width="180" height="60" rx="8"/><text x="810" y="233" text-anchor="middle" font-size="18" font-weight="700">Load / Store</text><text x="810" y="253" text-anchor="middle" font-size="15" fill="#C3D1E0">(two-stage)</text><path class="wire" d="M650,180 Q690,180 690,235 H720"/>
+    <rect class="box" x="950" y="130" width="150" height="70" rx="8"/><text x="1025" y="160" text-anchor="middle" font-size="18" font-weight="700">Write</text><text x="1025" y="182" text-anchor="middle" font-size="18" font-weight="700">results</text><path class="wire" d="M900,90 Q940,90 940,150 H950"/><path class="wire" d="M900,235 Q940,235 940,180 H950"/>
+  </svg>
+  <div class="plabel"><b>Figure 6.13</b> — A superscalar processor with two execution units.</div>
+</div>
+<ul>
+  <li>Here an arithmetic instruction and a Load/Store can be <b>issued together</b> each cycle, so a four-instruction sequence finishes far sooner.</li>
+</ul>
+<div class="plate">
+  <div class="tclip" style="height:196px; width:610px"><div class="tscale">
+    <div class="stage-area" style="width:820px; height:270px">
+      <div class="cyc-num" style="left:230px; width:96px">1</div><div class="cyc-num" style="left:326px; width:96px">2</div><div class="cyc-num" style="left:422px; width:96px">3</div><div class="cyc-num" style="left:518px; width:96px">4</div><div class="cyc-num" style="left:614px; width:96px">5</div><div class="cyc-num" style="left:710px; width:96px">6</div>
+      <div class="rowlab" style="top:56px; font-family:Consolas,monospace; font-size:19px; width:210px">Add R2,R3,#100</div>
+      <div class="stage sF" style="left:230px; top:48px; width:92px; height:46px">F</div><div class="stage sD" style="left:326px; top:48px; width:92px; height:46px">D</div><div class="stage sC" style="left:422px; top:48px; width:92px; height:46px">C</div><div class="stage sW" style="left:518px; top:48px; width:92px; height:46px">W</div>
+      <div class="rowlab" style="top:108px; font-family:Consolas,monospace; font-size:19px; width:210px">Load R5,16(R6)</div>
+      <div class="stage sF" style="left:230px; top:100px; width:92px; height:46px">F</div><div class="stage sD" style="left:326px; top:100px; width:92px; height:46px">D</div><div class="stage sC" style="left:422px; top:100px; width:92px; height:46px">C</div><div class="stage sM" style="left:518px; top:100px; width:92px; height:46px">M</div><div class="stage sW" style="left:614px; top:100px; width:92px; height:46px">W</div>
+      <div class="rowlab" style="top:160px; font-family:Consolas,monospace; font-size:19px; width:210px">Subtract R7,R8,R9</div>
+      <div class="stage sF" style="left:326px; top:152px; width:92px; height:46px">F</div><div class="stage sD" style="left:422px; top:152px; width:92px; height:46px">D</div><div class="stage sC" style="left:518px; top:152px; width:92px; height:46px">C</div><div class="stage sW" style="left:614px; top:152px; width:92px; height:46px">W</div>
+      <div class="rowlab" style="top:212px; font-family:Consolas,monospace; font-size:19px; width:210px">Store R10,24(R11)</div>
+      <div class="stage sF" style="left:326px; top:204px; width:92px; height:46px">F</div><div class="stage sD" style="left:422px; top:204px; width:92px; height:46px">D</div><div class="stage sC" style="left:518px; top:204px; width:92px; height:46px">C</div><div class="stage sM" style="left:614px; top:204px; width:92px; height:46px">M</div><div class="stage sW" style="left:710px; top:204px; width:92px; height:46px">W</div>
+    </div>
+  </div></div>
+  <div class="plabel"><b>Figure 6.14</b> — Two instructions issued per cycle (arithmetic + Load/Store).</div>
+</div>
+
+<h3>7.2 Keeping many-in-flight correct</h3>
+<ul>
+  <li>With several units running, instructions may finish <b>out of order</b>; extra hardware keeps results correct and exceptions <b>precise</b>:</li>
+  <li><span class="term">Reservation stations</span> — hold a dispatched instruction until all its operands arrive.</li>
+  <li><span class="term">Out-of-order execution</span> — independent instructions run as soon as they are ready.</li>
+  <li><span class="term">Register renaming</span> — temporary registers avoid false conflicts.</li>
+  <li><span class="term">Reorder buffer</span> — commits results <b>in program order</b> → precise exceptions.</li>
+</ul>
+
+<h3>7.3 The three hazards — summary</h3>
+<ul>
+  <li><b>Data hazard</b> — cause: an instruction needs a result not yet produced. Remedy: forwarding; stall; instruction scheduling.</li>
+  <li><b>Control (instruction) hazard</b> — cause: branch outcome/target not yet known. Remedy: decide early; delay slot; branch prediction + BTB.</li>
+  <li><b>Structural hazard</b> — cause: two stages need the same hardware resource. Remedy: duplicate resources (separate I-cache / D-cache).</li>
+</ul>
+
+<div class="key"><b>Key idea.</b> Pipelining approaches one instruction per cycle; superscalar operation pushes past it to <b>several per cycle</b>. Realising the potential depends on the instruction set, the pipeline hardware, and the compiler working together.</div>
+
+<div class="qbox">
+  <h4>QUESTIONS — Chapter 7</h4>
+  <ol>
+    <li>What is a superscalar processor? How does it differ from a simple pipeline? <span class="mk">[2 marks · Understand]</span></li>
+    <li>Name and explain any two mechanisms that keep out-of-order execution correct. <span class="mk">[2 marks · Understand]</span></li>
+    <li>Draw the organization of a superscalar processor with two execution units and explain how two instructions are issued per cycle. <span class="mk">[5 marks · Apply]</span></li>
+    <li>Tabulate the three hazard types with their cause and one remedy each. <span class="mk">[5 marks · Understand]</span></li>
+  </ol>
+</div>
+
+<p class="src">Source: C. Hamacher, Z. Vranesic, S. Zaky, <i>Computer Organization and Embedded Systems</i>, 5th edition, McGraw-Hill, 2011 — Chapter 6 (Pipelining). Figures redrawn in colour from the textbook. Companion to the classroom deck.</p>
+
+</div>
+</body>
+</html>
