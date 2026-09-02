@@ -14,3 +14,7 @@ ziJg0CQA
 
 # Copyrighted textbook chapter (not mine to publish)
 Unit 3/Hamacher_Ch06_Pipelining.pdf
+
+# Class-only copies that embed textbook figures — never publish to the public repo
+*_CLASS.html
+*_CLASS.*.png
