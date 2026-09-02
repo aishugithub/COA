@@ -199,18 +199,48 @@
   <li>The buffers carry data, register identifiers <b>and</b> the control signals for later stages.</li>
 </ul>
 <div class="plate">
-  <svg class="dp" width="360" height="235" viewBox="0 0 720 470">
-    <rect class="box" x="270" y="8" width="180" height="46" rx="6"/><text x="360" y="37" text-anchor="middle" font-size="20" font-weight="700">Instruction fetch</text>
-    <rect class="buf" x="220" y="70" width="280" height="24" rx="4"/><text x="360" y="87" text-anchor="middle" font-size="16">Interstage buffer B1</text><path class="wire" d="M360,54 V70"/>
-    <rect class="stagebox" x="150" y="110" width="150" height="52" rx="6"/><text x="225" y="141" text-anchor="middle" font-size="18" font-weight="700">Register file</text>
-    <rect class="stagebox" x="420" y="110" width="150" height="52" rx="6"/><text x="495" y="135" text-anchor="middle" font-size="16" font-weight="700">Instruction</text><text x="495" y="153" text-anchor="middle" font-size="16" font-weight="700">decode</text>
-    <path class="wire" d="M300,82 H495 M225,94 V110 M495,94 V110"/>
-    <rect class="buf" x="150" y="178" width="420" height="24" rx="4"/><text x="360" y="195" text-anchor="middle" font-size="16">Interstage buffer B2</text><path class="wire" d="M225,162 V178 M495,162 V178"/>
-    <rect class="stagebox" x="150" y="218" width="150" height="50" rx="6"/><text x="225" y="248" text-anchor="middle" font-size="18" font-weight="700">Compute</text><path class="wire" d="M225,202 V218"/>
-    <rect class="buf" x="150" y="284" width="420" height="24" rx="4"/><text x="360" y="301" text-anchor="middle" font-size="16">Interstage buffer B3</text><path class="wire" d="M225,268 V284"/>
-    <rect class="stagebox" x="150" y="324" width="150" height="50" rx="6"/><text x="225" y="348" text-anchor="middle" font-size="17" font-weight="700">Memory access</text><path class="wire" d="M225,308 V324"/>
-    <rect class="buf" x="150" y="390" width="420" height="24" rx="4"/><text x="360" y="407" text-anchor="middle" font-size="16">Interstage buffer B4</text><path class="wire" d="M225,374 V390"/>
-    <path class="fb" d="M150,402 H70 V136 H150"/><text x="60" y="270" text-anchor="middle" font-size="14" fill="#3FB950" transform="rotate(-90 60 270)">Write result → register file</text>
+  <svg class="dp" width="430" height="300" viewBox="0 0 760 530">
+    <!-- Hamacher Fig 6.2 - vertical five-stage datapath. Flow is top->bottom:
+         Instruction fetch -> B1 -> (Register file + Instruction decode) -> B2 ->
+         Compute -> B3 -> Memory access -> B4. Results return up the far-left lane
+         to the register file (write-back). Three lanes run down through the wide
+         buffers B2-B4; the three labels at the very bottom name what each carries. -->
+    <defs><marker id="f62a" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#C3D1E0"/></marker></defs>
+    <!-- stage 1: Instruction fetch -->
+    <rect class="box" x="300" y="10" width="200" height="48" rx="6"/><text x="400" y="40" text-anchor="middle" font-size="19" font-weight="700">Instruction fetch</text>
+    <path class="wire" d="M400,58 V80"/>
+    <!-- interstage buffer B1: carries the newly-fetched instruction into Decode -->
+    <rect class="buf" x="270" y="80" width="260" height="26" rx="4"/><text x="400" y="98" text-anchor="middle" font-size="15">Interstage buffer B1</text>
+    <!-- B1 fans out to the Register file (left) and Instruction decode (right) -->
+    <path class="wire" d="M400,106 V120 M230,120 H560 M230,120 V134 M560,120 V134"/>
+    <rect class="stagebox" x="155" y="134" width="150" height="54" rx="6"/><text x="230" y="166" text-anchor="middle" font-size="17" font-weight="700">Register file</text>
+    <rect class="stagebox" x="485" y="134" width="150" height="54" rx="6"/><text x="560" y="159" text-anchor="middle" font-size="15" font-weight="700">Instruction</text><text x="560" y="177" text-anchor="middle" font-size="15" font-weight="700">decode</text>
+    <!-- Decode reads its operands out of the register file -->
+    <path class="wire" d="M305,161 H485" marker-end="url(#f62a)"/>
+    <!-- interstage buffer B2: operands + register identifiers + control signals -->
+    <path class="wire" d="M230,188 V206 M560,188 V206"/>
+    <rect class="buf" x="120" y="206" width="540" height="26" rx="4"/><text x="325" y="224" text-anchor="middle" font-size="15">Interstage buffer B2</text>
+    <!-- stage 3: Compute (ALU) -->
+    <path class="wire" d="M230,232 V248"/>
+    <rect class="stagebox" x="155" y="248" width="150" height="52" rx="6"/><text x="230" y="279" text-anchor="middle" font-size="17" font-weight="700">Compute</text>
+    <!-- interstage buffer B3: holds the ALU result (data to write, or address/data for memory) -->
+    <path class="wire" d="M230,300 V316"/>
+    <rect class="buf" x="120" y="316" width="540" height="26" rx="4"/><text x="325" y="334" text-anchor="middle" font-size="15">Interstage buffer B3</text>
+    <!-- stage 4: Memory access -->
+    <path class="wire" d="M230,342 V358"/>
+    <rect class="stagebox" x="155" y="358" width="150" height="52" rx="6"/><text x="230" y="389" text-anchor="middle" font-size="16" font-weight="700">Memory access</text>
+    <!-- interstage buffer B4: value to be written in the Write stage -->
+    <path class="wire" d="M230,410 V426"/>
+    <rect class="buf" x="120" y="426" width="540" height="26" rx="4"/><text x="325" y="444" text-anchor="middle" font-size="15">Interstage buffer B4</text>
+    <!-- middle + right lanes run straight down the right of the buffers to the labels -->
+    <path class="wire" d="M445,232 V452 M615,232 V452" opacity="0.45"/>
+    <!-- write-back: results return up the far-left lane into the register file -->
+    <path class="fb" d="M155,439 H80 V161 H155"/>
+    <!-- the three lanes named (matches the three columns at the foot of the book figure) -->
+    <path class="wire" d="M230,452 V470 M445,452 V470 M615,452 V470"/>
+    <text x="230" y="486" text-anchor="middle" font-size="13" fill="#C3D1E0">Datapath operands</text><text x="230" y="502" text-anchor="middle" font-size="13" fill="#C3D1E0">and results</text>
+    <text x="445" y="486" text-anchor="middle" font-size="13" fill="#C3D1E0">Source/destination register</text><text x="445" y="502" text-anchor="middle" font-size="13" fill="#C3D1E0">identifiers and other info</text>
+    <text x="615" y="486" text-anchor="middle" font-size="13" fill="#C3D1E0">Control signals</text><text x="615" y="502" text-anchor="middle" font-size="13" fill="#C3D1E0">for different stages</text>
   </svg>
   <div class="plabel"><b>Figure 6.2</b> — A five-stage pipeline (stage hardware + interstage buffers B1–B4).</div>
 </div>
