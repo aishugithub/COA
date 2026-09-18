@@ -1,0 +1,242 @@
+[
+  {
+    "figure": "Figure 8.1",
+    "page": 3,
+    "book_page": 269,
+    "file": "figs/Fig_8_1.png",
+    "w": 1321,
+    "h": 857
+  },
+  {
+    "figure": "Figure 8.2",
+    "page": 5,
+    "book_page": 271,
+    "file": "figs/Fig_8_2.png",
+    "w": 1617,
+    "h": 1279
+  },
+  {
+    "figure": "Figure 8.3",
+    "page": 6,
+    "book_page": 272,
+    "file": "figs/Fig_8_3.png",
+    "w": 1498,
+    "h": 1133
+  },
+  {
+    "figure": "Figure 8.4",
+    "page": 6,
+    "book_page": 272,
+    "file": "figs/Fig_8_4.png",
+    "w": 1182,
+    "h": 926
+  },
+  {
+    "figure": "Figure 8.5",
+    "page": 7,
+    "book_page": 273,
+    "file": "figs/Fig_8_5.png",
+    "w": 1254,
+    "h": 1017
+  },
+  {
+    "figure": "Figure 8.6",
+    "page": 8,
+    "book_page": 274,
+    "file": "figs/Fig_8_6.png",
+    "w": 862,
+    "h": 685
+  },
+  {
+    "figure": "Figure 8.7",
+    "page": 9,
+    "book_page": 275,
+    "file": "figs/Fig_8_7.png",
+    "w": 1268,
+    "h": 1814
+  },
+  {
+    "figure": "Figure 8.8",
+    "page": 11,
+    "book_page": 277,
+    "file": "figs/Fig_8_8.png",
+    "w": 1484,
+    "h": 1379
+  },
+  {
+    "figure": "Figure 8.9",
+    "page": 12,
+    "book_page": 278,
+    "file": "figs/Fig_8_9.png",
+    "w": 1446,
+    "h": 1988
+  },
+  {
+    "figure": "Figure 8.10",
+    "page": 14,
+    "book_page": 280,
+    "file": "figs/Fig_8_10.png",
+    "w": 1631,
+    "h": 1802
+  },
+  {
+    "figure": "Figure 8.11",
+    "page": 17,
+    "book_page": 283,
+    "file": "figs/Fig_8_11.png",
+    "w": 1359,
+    "h": 1821
+  },
+  {
+    "figure": "Figure 8.12",
+    "page": 20,
+    "book_page": 286,
+    "file": "figs/Fig_8_12.png",
+    "w": 1424,
+    "h": 1304
+  },
+  {
+    "figure": "Figure 8.13",
+    "page": 21,
+    "book_page": 287,
+    "file": "figs/Fig_8_13.png",
+    "w": 1034,
+    "h": 1353
+  },
+  {
+    "figure": "Figure 8.14",
+    "page": 22,
+    "book_page": 288,
+    "file": "figs/Fig_8_14.png",
+    "w": 1860,
+    "h": 2379
+  },
+  {
+    "figure": "Figure 8.15",
+    "page": 24,
+    "book_page": 290,
+    "file": "figs/Fig_8_15.png",
+    "w": 1084,
+    "h": 1132
+  },
+  {
+    "figure": "Figure 8.16",
+    "page": 26,
+    "book_page": 292,
+    "file": "figs/Fig_8_16.png",
+    "w": 1155,
+    "h": 2121
+  },
+  {
+    "figure": "Figure 8.17",
+    "page": 27,
+    "book_page": 293,
+    "file": "figs/Fig_8_17.png",
+    "w": 1347,
+    "h": 1388
+  },
+  {
+    "figure": "Figure 8.18",
+    "page": 29,
+    "book_page": 295,
+    "file": "figs/Fig_8_18.png",
+    "w": 1348,
+    "h": 1813
+  },
+  {
+    "figure": "Figure 8.19",
+    "page": 31,
+    "book_page": 297,
+    "file": "figs/Fig_8_19.png",
+    "w": 1460,
+    "h": 1286
+  },
+  {
+    "figure": "Figure 8.20",
+    "page": 32,
+    "book_page": 298,
+    "file": "figs/Fig_8_20.png",
+    "w": 1770,
+    "h": 1233
+  },
+  {
+    "figure": "Figure 8.21",
+    "page": 32,
+    "book_page": 298,
+    "file": "figs/Fig_8_21.png",
+    "w": 1481,
+    "h": 853
+  },
+  {
+    "figure": "Figure 8.22",
+    "page": 33,
+    "book_page": 299,
+    "file": "figs/Fig_8_22.png",
+    "w": 917,
+    "h": 854
+  },
+  {
+    "figure": "Figure 8.23",
+    "page": 34,
+    "book_page": 300,
+    "file": "figs/Fig_8_23.png",
+    "w": 918,
+    "h": 954
+  },
+  {
+    "figure": "Figure 8.24",
+    "page": 40,
+    "book_page": 306,
+    "file": "figs/Fig_8_24.png",
+    "w": 954,
+    "h": 1471
+  },
+  {
+    "figure": "Figure 8.25",
+    "page": 41,
+    "book_page": 307,
+    "file": "figs/Fig_8_25.png",
+    "w": 1371,
+    "h": 1631
+  },
+  {
+    "figure": "Figure 8.26",
+    "page": 43,
+    "book_page": 309,
+    "file": "figs/Fig_8_26.png",
+    "w": 1494,
+    "h": 1736
+  },
+  {
+    "figure": "Figure 8.27",
+    "page": 46,
+    "book_page": 312,
+    "file": "figs/Fig_8_27.png",
+    "w": 1526,
+    "h": 1573
+  },
+  {
+    "figure": "Figure 8.28",
+    "page": 48,
+    "book_page": 314,
+    "file": "figs/Fig_8_28.png",
+    "w": 1102,
+    "h": 949
+  },
+  {
+    "figure": "Figure 8.29",
+    "page": 53,
+    "book_page": 319,
+    "file": "figs/Fig_8_29.png",
+    "w": 1495,
+    "h": 1941
+  },
+  {
+    "figure": "Figure 8.30",
+    "page": 57,
+    "book_page": 323,
+    "file": "figs/Fig_8_30.png",
+    "w": 1396,
+    "h": 556
+  }
+]

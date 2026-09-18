@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  COA · UNIT 2 · EXAM READY RECKONER & QUESTION BANK
+  Course: CSE23CT201 — Computer Organization & Architecture
+  Unit 2: Processing Units (Register Transfers, ALU, Instruction Execution,
+          Bus Organization, Control Unit)
+  ----------------------------------------------------------------------------
+  WHAT THIS FILE IS  (identical mechanism to the Unit 1 reckoner)
+  --------------------------------------------------------------
+  A single self-contained HTML page. It shows only the QUESTIONS first (all the
+  ways an examiner can phrase each Unit 2 topic) and reveals the EXAM-READY
+  ANSWER when the student clicks a question. No internet, no external files.
+
+  HOW THE PIECES FIT TOGETHER
+  ---------------------------
+  1. <head><style>  — the same "Foothold" dark palette + the .reg / .reg-lbl /
+                      .reg-val SVG classes used by Unit2_Deck.html, so the
+                      diagrams pasted in from the classroom deck render
+                      identically here.
+  2. <header>       — sticky bar: title + Expand-all / Collapse-all buttons.
+  3. <nav>          — nine chips, one per topic, in the exam order the
+                      professor specified (bus organization BEFORE execution).
+  4. <main>         — nine <section> topics. Every question is a native
+                      <details> element (the browser's built-in accordion), so
+                      "click to reveal" needs zero JavaScript.
+  5. <script>       — only Expand/Collapse-all + a scrollspy that highlights the
+                      nav chip of the topic currently on screen.
+  ============================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COA · Unit 2 · Exam Ready Reckoner &amp; Question Bank</title>
+<style>
+  /* ========================================================================
+     1) PALETTE — copied from the deck so every reused diagram keeps its colours
+     ======================================================================== */
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#56D364; --yellow:#F2C94C; --purple:#D2A8FF;
+    --red:#FF7B72; --orange:#F0883E; --teal:#56D4DD;
+    --text:#F5F8FC; --muted:#B9C4D0; --border:#5A6472;
+    --maxw:1000px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg); color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    line-height:1.55; padding-bottom:80px}
+
+  /* ---- 2) STICKY HEADER ---- */
+  header{position:sticky; top:0; z-index:50; background:#0D1117F2;
+    backdrop-filter:blur(6px); border-bottom:1px solid var(--border);
+    padding:16px 26px}
+  .htop{display:flex; align-items:center; justify-content:space-between;
+    gap:18px; flex-wrap:wrap; max-width:var(--maxw); margin:0 auto}
+  header h1{font-size:26px; line-height:1.2}
+  header .sub{font-size:14px; color:var(--muted); font-weight:600;
+    letter-spacing:1px; text-transform:uppercase; margin-top:2px}
+  .btns{display:flex; gap:10px}
+  .btn{cursor:pointer; border:1px solid var(--border); background:var(--card);
+    color:var(--text); font-size:13px; font-weight:700; padding:8px 14px;
+    border-radius:999px; transition:.15s}
+  .btn:hover{border-color:var(--accent); color:var(--accent)}
+
+  /* ---- 3) NAV CHIPS ---- */
+  nav{max-width:var(--maxw); margin:18px auto 0; padding:0 26px;
+    display:flex; gap:10px; flex-wrap:wrap}
+  nav a{font-size:13px; font-weight:700; text-decoration:none;
+    color:var(--muted); background:var(--surface);
+    border:1px solid var(--border); padding:7px 13px; border-radius:999px;
+    transition:.15s}
+  nav a:hover{color:var(--text); border-color:var(--accent)}
+  nav a.active{color:var(--bg); background:var(--accent); border-color:var(--accent)}
+
+  /* ---- 4) READING COLUMN + SECTION HEADINGS ---- */
+  main{max-width:var(--maxw); margin:0 auto; padding:0 26px}
+  .howto{margin:22px 0 8px; background:#58A6FF12;
+    border:1px solid var(--accent); border-radius:14px; padding:16px 20px;
+    font-size:15px; color:var(--muted)}
+  .howto b{color:var(--text)}
+  section.topic{margin-top:40px; scroll-margin-top:150px}
+  .topic > h2{font-size:23px; display:flex; align-items:baseline; gap:12px;
+    padding-bottom:10px; border-bottom:2px solid var(--border)}
+  .topic > h2 .n{font-size:34px; font-weight:800; color:var(--accentGlow)}
+  .askline{font-size:14px; color:var(--yellow); font-style:italic; margin:10px 0 4px}
+
+  /* ---- 5) THE ACCORDION (one question = one <details class="q">) ---- */
+  .q{background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; margin-top:12px; overflow:hidden}
+  .q[open]{border-color:var(--accent)}
+  .q > summary{cursor:pointer; list-style:none; padding:15px 18px;
+    display:flex; gap:12px; align-items:flex-start; font-size:16px;
+    font-weight:600; color:var(--text)}
+  .q > summary::-webkit-details-marker{display:none}
+  .q > summary::before{content:"▸"; color:var(--accent); font-size:15px;
+    line-height:1.5; transition:transform .2s; flex:none}
+  .q[open] > summary::before{transform:rotate(90deg)}
+  .q > summary:hover{background:var(--card)}
+  .marks{margin-left:auto; font-size:11px; font-weight:700; color:var(--muted);
+    border:1px solid var(--border); border-radius:999px; padding:2px 9px;
+    white-space:nowrap; flex:none}
+  .ans{padding:2px 20px 20px 42px; font-size:15px; color:var(--muted)}
+  .ans p{margin:10px 0}
+  .ans b, .ans strong{color:var(--text)}
+  .ans ul, .ans ol{margin:10px 0 10px 22px}
+  .ans li{margin:6px 0}
+  code, .mono{font-family:Consolas,'Courier New',monospace; color:var(--teal);
+    background:#56D4DD14; padding:1px 6px; border-radius:5px; font-size:.94em}
+  .ans.g{border-left:3px solid var(--green)}
+  .ans.y{border-left:3px solid var(--yellow)}
+  .ans.p{border-left:3px solid var(--purple)}
+  .ans.t{border-left:3px solid var(--teal)}
+  .ans.o{border-left:3px solid var(--orange)}
+  .tip{margin:12px 0; background:#3FB95012; border:1px solid var(--green);
+    border-left:4px solid var(--green); border-radius:0 10px 10px 0;
+    padding:12px 16px; color:var(--text); font-size:14.5px}
+  .tip b{color:var(--green)}
+  .oneliner{color:var(--green); font-weight:700}
+
+  /* ---- 6) TABLES ---- */
+  table.tbl{width:100%; border-collapse:collapse; margin:12px 0; font-size:14px}
+  table.tbl th{background:var(--card); color:var(--text); text-align:left;
+    padding:9px 12px; border:1px solid var(--border); font-size:13px}
+  table.tbl td{padding:9px 12px; border:1px solid var(--border);
+    vertical-align:top; color:var(--muted)}
+  table.tbl td b{color:var(--text)}
+  /* monospace RTL cells inside tables read like code */
+  table.tbl td.rtl{font-family:Consolas,'Courier New',monospace; color:var(--teal); font-size:13px}
+
+  /* ---- 7) SVG PICTURE FRAME (reused deck diagrams) ---- */
+  .pic{background:#0D111780; border:1px solid var(--border);
+    border-radius:12px; padding:12px; margin:14px 0}
+  .pic svg{width:100%; height:auto; display:block}
+  .pic .cap{font-size:13px; color:var(--muted); text-align:center;
+    margin-top:6px; font-style:italic}
+  .reg{fill:var(--card); stroke:var(--border); stroke-width:2}
+  .reg-lbl{fill:var(--text); font-size:23px; font-weight:700}
+  .reg-val{fill:var(--teal); font-size:22px; font-weight:700}
+
+  footer{max-width:var(--maxw); margin:60px auto 0; padding:22px 26px;
+    border-top:1px solid var(--border); color:var(--muted); font-size:13px;
+    text-align:center}
+
+  /* ---- 8) RESPONSIVE ---- */
+  @media(max-width:640px){
+    header h1{font-size:20px}
+    .topic > h2{font-size:19px}
+    .q > summary{font-size:15px}
+    .ans{padding-left:20px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== STICKY HEADER ===================== -->
+<header>
+  <div class="htop">
+    <div>
+      <h1>Unit&nbsp;2 · Exam Ready Reckoner &amp; Question Bank</h1>
+      <div class="sub">CSE23CT201 · Computer Organization &amp; Architecture · Processing Units</div>
+    </div>
+    <div class="btns">
+      <button class="btn" onclick="toggleAll(true)">＋ Expand all</button>
+      <button class="btn" onclick="toggleAll(false)">－ Collapse all</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== NAV CHIPS (exam order) ===================== -->
+<nav id="nav">
+  <a href="#s1">1 · Microoperations</a>
+  <a href="#s2">2 · RTN</a>
+  <a href="#s3">3 · Control Signal</a>
+  <a href="#s4">4 · Common Bus</a>
+  <a href="#s5">5 · Memory Transfers</a>
+  <a href="#s6">6 · ALU</a>
+  <a href="#s7">7 · Bus Organisation</a>
+  <a href="#s8">8 · Instruction Execution</a>
+  <a href="#s9">9 · Control Unit</a>
+</nav>
+
+<main>
+
+  <div class="howto">
+    <b>How to use this reckoner.</b> Each box is a way the question can be asked — read it, try the answer in your head, then
+    <b>click to reveal the exam-ready version</b>. Unit 2 is about what happens <b>inside</b> the processor: the tiny steps
+    (microoperations), the ALU, how a full instruction runs, and how the control unit drives it all. Keep the classroom deck for
+    understanding; keep this for the last-minute revision.
+  </div>
+
+  <!-- ======================================================================
+       SECTION 1 · MICROOPERATIONS
+       ====================================================================== -->
+  <section class="topic" id="s1">
+    <h2><span class="n">1</span> Microoperations</h2>
+    <div class="askline">Ways this is asked → “Define a microoperation”, “Microoperation vs instruction”, “Give an example of a microoperation with RTL”.</div>
+
+    <details class="q">
+      <summary>What is a microoperation? Give one example with its RTL. <span class="marks">3–5 marks</span></summary>
+      <div class="ans t">
+        <p>A <b>microoperation</b> is an <b>elementary operation performed on the data stored in registers, carried out in one clock pulse</b> (one clock cycle). Typical microoperations are <b>load, clear, count, shift, add</b> on register contents.</p>
+        <p><b>Example with RTL:</b> <code>R1 ← R1 + R2</code> — in one clock, the adder adds the contents of R1 and R2 and latches the sum back into R1. Another: <code>R2 ← R1</code> (a transfer microoperation).</p>
+        <div class="tip"><b>Key contrast (often the second half of the question):</b> one <b>instruction</b> is what the programmer writes (opcode + operands, e.g. <code>ADD R1, R2</code>); the CPU carries it out as a <b>sequence of microoperations</b>. So <b>one instruction = a sequence of microoperations</b>.</div>
+        <p>For example, <code>ADD R1, R2</code> unfolds into: <code>MAR ← PC</code>; <code>MDR ← M[MAR], PC ← PC+1</code>; <code>IR ← MDR</code>; <code>R1 ← R1 + R2</code> — four microoperations across four clocks.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 2 · REGISTER TRANSFER NOTATION (RTN / RTL)
+       ====================================================================== -->
+  <section class="topic" id="s2">
+    <h2><span class="n">2</span> Register Transfer Notation (RTN / RTL)</h2>
+    <div class="askline">Ways this is asked → “Explain register transfer notation”, “What do [ ], ← and the comma mean?”, “Write the RTL for …”.</div>
+
+    <details class="q">
+      <summary>Explain Register Transfer Notation with the meaning of each symbol. <span class="marks">3–5 marks</span></summary>
+      <div class="ans t">
+        <p><b>Register Transfer Notation (RTN)</b>, also called Register Transfer Language (RTL), is a symbolic notation used to describe the movement of information between registers and memory. It uses just four elements:</p>
+        <table class="tbl">
+          <tr><th>Symbol</th><th>Meaning</th><th>Example</th></tr>
+          <tr><td><b>Letters (and numbers)</b></td><td>the name of a register</td><td><code>MAR</code>, <code>R2</code>, <code>PC</code></td></tr>
+          <tr><td><b>Parentheses ( )</b></td><td>a part / field of a register</td><td><code>R2(0–7)</code>, <code>R2(L)</code></td></tr>
+          <tr><td><b>Arrow ←</b></td><td>transfer; the <b>source is unchanged</b>, the destination is overwritten</td><td><code>R2 ← R1</code></td></tr>
+          <tr><td><b>Comma ,</b></td><td>two (or more) transfers in the <b>same</b> clock pulse</td><td><code>R2 ← R1, R4 ← R3</code></td></tr>
+        </table>
+        <div class="tip"><b>Also worth a line:</b> square brackets denote <b>contents of</b> — <code>R2 ← [A]</code> means “the contents of location A are copied into R2”. The source keeps its value; only the destination changes.</div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 3 · REGISTER TRANSFER NEEDS A CONTROL SIGNAL
+       ====================================================================== -->
+  <section class="topic" id="s3">
+    <h2><span class="n">3</span> Register Transfer Happens Only on a Control Signal</h2>
+    <div class="askline">Ways this is asked → “What is a control function?”, “Explain P : R2 ← R1”, “Why doesn’t a register transfer happen on its own?”.</div>
+
+    <details class="q">
+      <summary>How is a register transfer made to happen at the right time? Explain the control function P : R2 ← R1. <span class="marks">3–5 marks</span></summary>
+      <div class="ans p">
+        <p>RTL says <em>what</em> moves, but never <em>when</em>. A real register transfer must wait for a <b>control signal</b> that says “now”. This is written as a <b>control function</b>:</p>
+        <p style="font-size:17px"><code>P : R2 ← R1</code></p>
+        <p>meaning the transfer <code>R2 ← R1</code> occurs <b>only when the control signal P = 1</b> (at the clock edge).</p>
+        <ul>
+          <li>The two registers are permanently joined by <b>n parallel wires</b> (n = word width, e.g. 32 lines in a 32-bit CPU), so R1’s value is always <em>present</em> on the wires.</li>
+          <li>If <b>P = 0</b>, R2’s <b>load line stays shut</b> — the value is on the wires but <b>nothing is latched</b>, so nothing moves.</li>
+          <li>If <b>P = 1</b>, R2 latches R1’s value on the clock edge.</li>
+        </ul>
+        <p class="oneliner">In one line: control turns a permanent wire connection into a timed transfer.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 4 · THE COMMON BUS (specs only, no implementation detail)
+       ====================================================================== -->
+  <section class="topic" id="s4">
+    <h2><span class="n">4</span> Register Transfer on Hardware — the Common Bus</h2>
+    <div class="askline">Ways this is asked → “How is a common bus built?”, “What are the two ways to build a bus?”.</div>
+
+    <details class="q">
+      <summary>How is a common bus built so any register can transfer over it? <span class="marks">2–3 marks</span></summary>
+      <div class="ans t">
+        <p>A <b>common bus</b> is one shared path that any register can send to (instead of a private wire between every pair). Only one source may drive it at a time. It can be built in <b>two ways</b>:</p>
+        <ul>
+          <li><b>Multiplexers</b> — the select lines choose which register reaches the bus. (For k registers of n bits: n multiplexers, each k×1.)</li>
+          <li><b>Tri-state (three-state) buffers</b> — each register drives the bus through a buffer; a <b>decoder</b> enables exactly one, while all the others sit in the <b>high-impedance</b> state (electrically absent).</li>
+        </ul>
+        <div class="tip"><b>Answer in one line:</b> a common bus is built either from <b>multiplexers</b> or from <b>tri-state buffers with a decoder</b> — either way, <b>one source drives the bus at a time</b>. <span style="color:var(--muted)">(No further circuit detail is needed for the exam.)</span></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 5 · MEMORY TRANSFERS  (detailed fresh piece: 3 buses + RTL + signals)
+       ====================================================================== -->
+  <section class="topic" id="s5">
+    <h2><span class="n">5</span> Memory Transfers — Read &amp; Write (in full)</h2>
+    <div class="askline">Ways this is asked → “Explain memory Read and Write operations in detail”, “What travels on the address/data/control bus during Read/Write?”, “Write the RTL and the control signals for a memory Read and a Write”.</div>
+
+    <details class="q">
+      <summary>Explain a memory READ and a memory WRITE in full — the RTL, the control signals fired, and what travels on the address, data and control buses. <span class="marks">10 marks</span></summary>
+      <div class="ans t">
+        <p>The processor reaches memory through two registers: the <b>MAR (Memory Address Register)</b> holds the <b>address</b>, and the <b>MDR (Memory Data Register)</b> holds the <b>data</b>. <b>All data to and from memory passes through the MDR</b> — a register such as R1 never reaches memory directly. (In Morris Mano these are named AR and DR.)</p>
+        <p>The processor and memory are joined by the <b>three buses</b> from Unit 1 — but here we say <em>exactly</em> what each carries, what the control unit fires, and the RTL for each beat.</p>
+        <!-- reused three-bus picture (address one-way, data both ways, control) -->
+        <div class="pic">
+          <svg viewBox="0 0 1160 300" preserveAspectRatio="xMidYMid meet">
+            <rect x="40" y="70" width="190" height="170" rx="12" class="reg" style="stroke:var(--purple);stroke-width:2.5"/><text x="135" y="162" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)" font-size="21">PROCESSOR</text>
+            <rect x="930" y="70" width="190" height="170" rx="12" class="reg" style="stroke:var(--teal);stroke-width:2.5"/><text x="1025" y="162" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)" font-size="21">MEMORY</text>
+            <line x1="230" y1="105" x2="930" y2="105" stroke="var(--teal)" stroke-width="6"/>
+            <text x="580" y="93" text-anchor="middle" fill="var(--teal)" font-size="17" font-weight="700">ADDRESS BUS — from MAR (one-way →)</text>
+            <g><animateMotion dur="2.2s" repeatCount="indefinite" path="M 236 105 L 924 105"/><rect x="-28" y="-13" width="56" height="26" rx="5" fill="var(--teal)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">addr</text></g>
+            <line x1="230" y1="160" x2="930" y2="160" stroke="var(--green)" stroke-width="6"/>
+            <text x="580" y="148" text-anchor="middle" fill="var(--green)" font-size="17" font-weight="700">DATA BUS — through MDR (both ways ↔)</text>
+            <g><animateMotion dur="2.2s" repeatCount="indefinite" path="M 924 160 L 236 160"/><rect x="-28" y="-13" width="56" height="26" rx="5" fill="var(--green)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="14" font-weight="800">data</text></g>
+            <line x1="230" y1="215" x2="930" y2="215" stroke="var(--yellow)" stroke-width="6"/>
+            <text x="580" y="203" text-anchor="middle" fill="var(--yellow)" font-size="17" font-weight="700">CONTROL BUS — Read / Write line</text>
+            <g><animateMotion dur="2.2s" repeatCount="indefinite" path="M 236 215 L 924 215"/><rect x="-32" y="-13" width="64" height="26" rx="5" fill="var(--yellow)"/><text x="0" y="5" text-anchor="middle" fill="#0D1117" font-size="13" font-weight="800">R/W</text></g>
+          </svg>
+          <div class="cap">MAR drives the address bus; MDR sits on the data bus; the control unit drives the Read/Write line.</div>
+        </div>
+
+        <p><b>① MEMORY READ — fetch a word (e.g. bring the value of location A into the CPU):</b></p>
+        <table class="tbl">
+          <tr><th>Beat</th><th>Control signals fired</th><th>RTL</th><th>What travels</th></tr>
+          <tr><td>1</td><td><b>PC<sub>out</sub>, MAR<sub>in</sub></b> (latch the address into MAR)</td><td class="rtl">MAR ← [PC]</td><td><b>Address bus</b> carries the address (MAR → memory, one-way)</td></tr>
+          <tr><td>2</td><td><b>Read = 1</b> on the control bus</td><td class="rtl">Read</td><td><b>Control bus</b> tells memory this is a read</td></tr>
+          <tr><td>3</td><td><b>MDR<sub>in</sub></b> (latch the returned word)</td><td class="rtl">MDR ← M[MAR]</td><td><b>Data bus</b> carries the word (memory → MDR)</td></tr>
+        </table>
+        <p>The addressed word is copied to the CPU; <b>memory is left unchanged</b>. In one line of RTL: <code>MAR ← [PC]; Read; MDR ← M[MAR]</code>.</p>
+
+        <p><b>② MEMORY WRITE — store a word (e.g. write R1 to location A):</b></p>
+        <table class="tbl">
+          <tr><th>Beat</th><th>Control signals fired</th><th>RTL</th><th>What travels</th></tr>
+          <tr><td>1</td><td><b>MAR<sub>in</sub></b> (address into MAR)</td><td class="rtl">MAR ← A</td><td><b>Address bus</b> carries the address (MAR → memory)</td></tr>
+          <tr><td>2</td><td><b>R1<sub>out</sub>, MDR<sub>in</sub></b> (data into MDR)</td><td class="rtl">MDR ← [R1]</td><td>internal — data moves R1 → MDR</td></tr>
+          <tr><td>3</td><td><b>Write = 1</b> on the control bus</td><td class="rtl">Write; M[MAR] ← [MDR]</td><td><b>Data bus</b> carries the word (MDR → memory); <b>control bus</b> asserts Write</td></tr>
+        </table>
+        <p>Memory <b>overwrites</b> the addressed word. In RTL: <code>MAR ← A; MDR ← [R1]; Write; M[MAR] ← [MDR]</code>.</p>
+
+        <div class="tip"><b>The three things an examiner checks:</b> (1) the <b>address bus</b> is <b>one-way</b> and is always driven by <b>MAR</b>; (2) the <b>data bus is bidirectional</b> and always passes through <b>MDR</b> — its direction (in on Read, out on Write) is decided by the <b>control bus</b>; (3) the <b>control unit fires MAR<sub>in</sub> → Read/Write → MDR<sub>in</sub></b> in that order. <b>Everything to and from memory passes through MDR.</b></div>
+        <p class="oneliner">One-liner: Read = MDR ← M[MAR]; Write = M[MAR] ← MDR — address on the address bus, data on the data bus, Read/Write on the control bus.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 6 · ALU (overview, arithmetic, logic, shift)
+       ====================================================================== -->
+  <section class="topic" id="s6">
+    <h2><span class="n">6</span> Operations of the ALU</h2>
+    <div class="askline">Ways this is asked → “Explain the arithmetic/logic/shift microoperations”, “How does one adder do add/subtract/increment/decrement?”, “How is subtraction done?”, “Explain the shift microoperations”.</div>
+
+    <!-- 6.0 overview (end-of-ALU-chapter combined diagram) -->
+    <details class="q">
+      <summary>Give an overview of the ALU (the Arithmetic–Logic–Shift Unit). <span class="marks">3–5 marks</span></summary>
+      <div class="ans t">
+        <p>The <b>ALU</b> is one unit that folds together three circuits — <b>arithmetic</b>, <b>logic</b> and <b>shift</b>. Both operands A and B feed <b>all three in parallel</b>; a final <b>multiplexer</b> passes just one result, chosen by select lines.</p>
+        <table class="tbl">
+          <tr><th>Block</th><th>Does</th><th>Chosen by</th></tr>
+          <tr><td><b>Arithmetic circuit</b></td><td>add / subtract / increment / decrement</td><td>S1 S0 and C<sub>in</sub></td></tr>
+          <tr><td><b>Logic circuit</b></td><td>AND / OR / XOR / NOT</td><td>S1 S0</td></tr>
+          <tr><td><b>Shifter</b></td><td>shift left / shift right</td><td>shift control</td></tr>
+          <tr><td><b>Final 4→1 MUX</b></td><td>picks which block’s result comes out</td><td>S3 S2 (00 arith · 01 logic · 10 shr · 11 shl)</td></tr>
+        </table>
+        <div class="tip"><b>One-liner:</b> full ALU select = <b>S3 S2 S1 S0 + C<sub>in</sub></b> — S3 S2 pick the block, S1 S0 + C<sub>in</sub> pick the operation inside it. Multiply and divide are <b>not</b> separate boxes — they are add/shift sequences.</div>
+      </div>
+    </details>
+
+    <!-- 6.1 arithmetic: one adder + MUX -->
+    <details class="q">
+      <summary>How does a single adder perform add, subtract, increment and decrement? (the one-adder + MUX arithmetic circuit) <span class="marks">5 marks</span></summary>
+      <div class="ans g">
+        <p>Put a <b>MUX on the second input Y</b> of one n-bit adder and let the <b>control unit</b> choose the word fed in, together with the carry-in <b>C<sub>in</sub></b>. The <em>same</em> adder then does four operations (worked for <b>A = 0101 = 5</b>):</p>
+        <table class="tbl">
+          <tr><th>Operation</th><th>Select S1 S0</th><th>Y (MUX output)</th><th>C<sub>in</sub></th><th>Adder computes</th><th>Result</th></tr>
+          <tr><td class="rtl">ADD (A+B)</td><td>00</td><td>B = 0011</td><td>0</td><td>A + B</td><td>1000 = 8</td></tr>
+          <tr><td class="rtl">SUB (A−B)</td><td>01</td><td>B̄ = 1100</td><td>1</td><td>A + B̄ + 1</td><td>0010 = 2</td></tr>
+          <tr><td class="rtl">INC (A+1)</td><td>10</td><td>0…0 = 0000</td><td>1</td><td>A + 0 + 1</td><td>0110 = 6</td></tr>
+          <tr><td class="rtl">DEC (A−1)</td><td>11</td><td>1…1 = 1111</td><td>0</td><td>A + (−1)</td><td>0100 = 4</td></tr>
+        </table>
+        <div class="tip"><b>Read the table this way:</b> the control unit’s <b>select lines choose what enters Y</b> (B, its complement B̄, all-0s, or all-1s) and <b>set C<sub>in</sub></b>. One adder + one MUX = four operations. The carry-out is dropped.</div>
+      </div>
+    </details>
+
+    <!-- 6.2 subtraction via 2's complement / adder-subtractor -->
+    <details class="q">
+      <summary>How is subtraction done without a subtractor? (method of complements / adder–subtractor) <span class="marks">3–5 marks</span></summary>
+      <div class="ans p">
+        <p>Subtraction is turned into addition using the <b>method of complements</b>: <b>A − B = A + (2’s complement of B)</b>, and the 2’s complement is “<b>flip every bit, then add 1</b>”.</p>
+        <p><b>Worked: 5 − 3.</b> B = <code>0011</code> → flip → <code>1100</code> → +1 → <code>1101</code>. Now add: <code>0101 + 1101 = 1 0010</code>; drop the carried 1 → <code>0010 = 2</code>. ✓ same answer, using only addition.</p>
+        <p>In hardware this is one circuit — an <b>adder–subtractor</b> — controlled by a mode line <b>M</b>:</p>
+        <table class="tbl">
+          <tr><th>M</th><th>B into adder</th><th>C<sub>in</sub></th><th>Adder computes</th><th>Operation</th></tr>
+          <tr><td>0</td><td>B (unchanged)</td><td>0</td><td>A + B</td><td><b>ADD</b></td></tr>
+          <tr><td>1</td><td>B̄ (flipped, via XOR)</td><td>1</td><td>A + B̄ + 1 = A − B</td><td><b>SUBTRACT</b></td></tr>
+        </table>
+        <p>The one mode line <b>M</b> feeds every B-XOR <em>and</em> the carry-in — so <b>C<sub>in</sub> = 1</b> is exactly the “+1” that completes the 2’s complement. Flipping is one XOR per bit (a controlled NOT).</p>
+      </div>
+    </details>
+
+    <!-- 6.3 logic operations -->
+    <details class="q">
+      <summary>Explain the logic (bitwise) microoperations — how OR sets a bit and AND clears a bit — with an example, and why they matter. <span class="marks">5 marks</span></summary>
+      <div class="ans y">
+        <p>A logic microoperation applies a Boolean op to <b>each bit position on its own</b>. A second word we choose — a <b>mask</b> — decides which bits to touch. The two everyday jobs are:</p>
+        <ul>
+          <li><b>OR sets a bit</b> — where the mask has a <b>1</b>, that bit is forced to 1; where the mask is 0, the bit is left alone.</li>
+          <li><b>AND clears a bit</b> — where the mask has a <b>0</b>, that bit is cleared; where the mask is 1, the bit passes through unchanged.</li>
+        </ul>
+        <table class="tbl">
+          <tr><th>Job</th><th>Worked example (8-bit)</th><th>Effect</th></tr>
+          <tr><td><b>AND — clear / mask</b></td><td class="rtl">1011 0110 AND 0000 1111 = 0000 0110</td><td>high nibble cleared to 0; low nibble kept</td></tr>
+          <tr><td><b>OR — set</b></td><td class="rtl">1011 0000 OR 0000 1111 = 1011 1111</td><td>low nibble forced to 1; high nibble left alone</td></tr>
+        </table>
+        <div class="tip"><b>Why they matter (keep it brief):</b> these bit ops let you <b>set, clear or test individual flags / control bits</b> — status-register flags, permission bits, or an IoT <b>GPIO</b> pin driven high or low — without disturbing the neighbouring bits. Each is a single, cheap ALU clock pulse. <span style="color:var(--muted)">(Extract/insert of a field is the same masking idea and can be skipped for the exam.)</span></div>
+      </div>
+    </details>
+
+    <!-- 6.4 shift microoperations -->
+    <details class="q">
+      <summary>Explain the shift microoperations — logical left, logical right, arithmetic right and circular — with one example each. <span class="marks">5 marks</span></summary>
+      <div class="ans t">
+        <p>A shift = <b>① move every bit one place</b>, then <b>② fill the vacated end</b>. The four types differ only in what fills that end:</p>
+        <table class="tbl">
+          <tr><th>Shift</th><th>What fills the vacated end</th><th>Example (one place)</th><th>Meaning</th></tr>
+          <tr><td><b>Logical left (shl)</b></td><td>a fresh <b>0</b> enters at the right</td><td class="rtl">0110 → 1100 &nbsp;(6 → 12)</td><td><b>× 2</b></td></tr>
+          <tr><td><b>Logical right (shr)</b></td><td>a fresh <b>0</b> enters at the left</td><td class="rtl">0110 → 0011 &nbsp;(6 → 3)</td><td><b>÷ 2</b> (unsigned)</td></tr>
+          <tr><td><b>Arithmetic right (ashr)</b></td><td>the <b>sign bit is copied</b> back in</td><td class="rtl">1110 1100 → 1111 0110 &nbsp;(−20 → −10)</td><td><b>signed ÷ 2</b></td></tr>
+          <tr><td><b>Circular (rotate)</b></td><td>the bit that <b>falls off wraps</b> to the other end</td><td class="rtl">1001 →(right) 1100</td><td>no bit lost</td></tr>
+        </table>
+        <div class="tip"><b>The one-liner examiners want:</b> left shift ≈ <b>×2</b>, right shift ≈ <b>÷2</b> — shifting by k means <b>×2<sup>k</sup></b> or <b>÷2<sup>k</sup></b>. A shift is just rewiring in one clock, far cheaper than a full multiply. <b>Arithmetic right</b> is special because it <b>copies the sign bit</b>, so a negative number still halves correctly. <span style="color:var(--muted)">(How a general multiply is actually done is not needed for this exam.)</span></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 7 · BUS ORGANISATION  (before execution, as instructed)
+       ====================================================================== -->
+  <section class="topic" id="s7">
+    <h2><span class="n">7</span> Bus Organisation of the Processor</h2>
+    <div class="askline">Ways this is asked → “Single-bus vs multiple-bus (three-bus) organisation”, “How many clocks does an ALU op take on each?”, “Advantages / trade-off”.</div>
+
+    <details class="q">
+      <summary>Explain the single-bus and the three-bus (multiple-bus) organisation of the processor, and how each affects the number of clocks. <span class="marks">5–10 marks</span></summary>
+      <div class="ans t">
+        <p>This is the bus <b>inside</b> the processor (Unit 1’s bus was <em>between</em> the CPU, memory and I/O; here we open the CPU lid and look at the internal lanes joining the registers and the ALU).</p>
+        <p><b>Single-bus organisation.</b> Everything inside the processor — the registers, the ALU, MAR and MDR — hangs off <b>one shared internal bus</b>. Only <b>one value can be on the bus per clock</b>. So adding two numbers means shuttling the operands across the bus <b>one at a time</b>, and an ALU operation spreads over <b>several clocks</b>. Main memory is outside; the CPU reaches it only through MAR (address) and MDR (data).</p>
+        <div class="pic">
+          <svg viewBox="0 0 1120 300" preserveAspectRatio="xMidYMid meet">
+            <line x1="120" y1="130" x2="1000" y2="130" stroke="var(--accent)" stroke-width="6"/>
+            <text x="470" y="112" text-anchor="middle" fill="var(--accent)" font-size="22" font-weight="700">single internal processor bus</text>
+            <g font-size="18">
+              <rect x="150" y="44" width="120" height="46" class="reg" style="stroke:var(--teal)"/><text x="210" y="74" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Registers</text><line x1="210" y1="90" x2="210" y2="130" stroke="var(--border)" stroke-width="2"/>
+              <rect x="330" y="44" width="120" height="46" class="reg" style="stroke:var(--purple)"/><text x="390" y="74" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">ALU</text><line x1="390" y1="90" x2="390" y2="130" stroke="var(--border)" stroke-width="2"/>
+              <rect x="560" y="44" width="120" height="46" class="reg" style="stroke:var(--yellow)"/><text x="620" y="74" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">MDR</text><line x1="620" y1="90" x2="620" y2="130" stroke="var(--border)" stroke-width="2"/>
+              <rect x="760" y="44" width="120" height="46" class="reg" style="stroke:var(--yellow)"/><text x="820" y="74" text-anchor="middle" class="reg-lbl" style="fill:var(--yellow)">MAR</text><line x1="820" y1="90" x2="820" y2="130" stroke="var(--border)" stroke-width="2"/>
+            </g>
+            <text x="290" y="200" text-anchor="middle" fill="var(--yellow)" font-size="22" font-weight="700">only ONE value on the bus per clock</text>
+          </svg>
+          <div class="cap">Single-bus: cheap and simple, but one transfer per clock (the bottleneck).</div>
+        </div>
+        <p><b>Three-bus (multiple-bus) organisation.</b> Two source buses (<b>Bus A</b> and <b>Bus B</b>) carry <b>both operands to the ALU at once</b>, and <b>Bus C</b> returns the result to the register file — so a register-to-register operation finishes in <b>one step</b>.</p>
+        <div class="pic">
+          <svg viewBox="0 0 1120 320" preserveAspectRatio="xMidYMid meet">
+            <rect x="120" y="120" width="180" height="90" class="reg" style="stroke:var(--teal)"/><text x="210" y="170" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Register file</text>
+            <polygon points="640,110 760,150 760,200 640,240" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/><text x="685" y="180" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">ALU</text>
+            <line x1="300" y1="140" x2="640" y2="140" stroke="var(--green)" stroke-width="5"/><text x="470" y="130" text-anchor="middle" fill="var(--green)" font-size="20" font-weight="700">Bus A</text>
+            <line x1="300" y1="200" x2="640" y2="200" stroke="var(--yellow)" stroke-width="5"/><text x="470" y="225" text-anchor="middle" fill="var(--yellow)" font-size="20" font-weight="700">Bus B</text>
+            <path d="M 760 175 L 900 175 L 900 275 L 210 275 L 210 212" stroke="var(--purple)" stroke-width="5" fill="none" marker-end="url(#u2c4c)"/><text x="520" y="298" text-anchor="middle" fill="var(--purple)" font-size="20" font-weight="700">Bus C — result back to the register file</text>
+            <defs><marker id="u2c4c" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--purple)"/></marker></defs>
+          </svg>
+          <div class="cap">Three-bus: Bus A + Bus B feed the ALU together, Bus C returns the result — one step.</div>
+        </div>
+        <div class="tip"><b>The exam contrast:</b> <code>Add R4, R2, R3</code> takes <b>several clocks</b> on a single bus (move R2, then R3, then the result), but <b>one clock</b> on a three-bus datapath (R2 on Bus A, R3 on Bus B, result on Bus C). <b>More buses → fewer clocks per instruction, at the cost of more wiring.</b></div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 8 · EXECUTION OF A COMPLETE INSTRUCTION
+       ====================================================================== -->
+  <section class="topic" id="s8">
+    <h2><span class="n">8</span> Execution of a Complete Instruction</h2>
+    <div class="askline">Ways this is asked → “Draw the datapath”, “Explain the five phases”, “Trace C = A + B beat by beat with RTL”, “How is the effective address computed?”.</div>
+
+    <!-- 8.1 datapath + five beats -->
+    <details class="q">
+      <summary>Draw the processor datapath and explain the five phases (beats) an instruction goes through. <span class="marks">5–10 marks</span></summary>
+      <div class="ans t">
+        <p>The <b>datapath</b> is the fixed lane of registers and wires that data travels along. It uses <b>interstage registers</b> — <b>RA, RB</b> (the two operands), <b>RZ</b> (the ALU result), <b>RY</b> (the value to write back) and <b>RM</b> (data to/from memory) — each just parks a value between one step and the next.</p>
+        <div class="pic">
+          <svg viewBox="0 0 1150 340" preserveAspectRatio="xMidYMid meet">
+            <rect x="80" y="120" width="180" height="110" class="reg" style="stroke:var(--teal)"/>
+            <text x="170" y="170" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Register file</text>
+            <text x="170" y="200" text-anchor="middle" fill="var(--muted)" font-size="18">out A · out B · in C</text>
+            <rect x="330" y="120" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="375" y="150" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RA</text>
+            <rect x="330" y="184" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="375" y="214" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RB</text>
+            <path d="M 260 150 L 328 150 M 260 200 L 328 205" stroke="var(--border)" stroke-width="2"/>
+            <polygon points="470,120 580,160 580,200 470,240" class="reg" style="fill:#58A6FF1C; stroke:var(--accent)"/>
+            <text x="510" y="185" text-anchor="middle" class="reg-lbl" style="fill:var(--accent)">ALU</text>
+            <path d="M 420 143 L 468 158 M 420 207 L 468 200" stroke="var(--border)" stroke-width="2"/>
+            <rect x="620" y="157" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="665" y="187" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RZ</text>
+            <path d="M 580 180 L 618 180" stroke="var(--border)" stroke-width="2"/>
+            <rect x="620" y="230" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="665" y="260" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RM</text>
+            <text x="620" y="298" fill="var(--muted)" font-size="15">data to / from memory (Load / Store)</text>
+            <rect x="760" y="157" width="90" height="46" class="reg" style="stroke:var(--purple)"/><text x="805" y="187" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">RY</text>
+            <text x="742" y="222" fill="var(--muted)" font-size="15">value to write back</text>
+            <path d="M 710 180 L 758 180" stroke="var(--border)" stroke-width="2"/>
+            <path d="M 805 157 C 805 60, 170 60, 170 118" stroke="var(--teal)" stroke-width="3" fill="none" marker-end="url(#u2c3w)"/>
+            <text x="430" y="52" fill="var(--teal)" font-size="18">write-back to register file (in C)</text>
+            <defs><marker id="u2c3w" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="var(--teal)"/></marker></defs>
+          </svg>
+          <div class="cap">Datapath: register file → RA/RB → ALU → RZ → RY → back to the register file; RM branches off for memory.</div>
+        </div>
+        <p>Every instruction rides the same <b>five beats</b>, one per clock:</p>
+        <table class="tbl">
+          <tr><th>Beat</th><th>Phase</th><th>What happens</th></tr>
+          <tr><td>1</td><td><b>Fetch</b></td><td>read the instruction at <code>[PC]</code>; increment the PC</td></tr>
+          <tr><td>2</td><td><b>Decode</b></td><td>work out the operation; read the source registers</td></tr>
+          <tr><td>3</td><td><b>Compute</b></td><td>ALU performs the operation, or computes an address</td></tr>
+          <tr><td>4</td><td><b>Memory</b></td><td>read/write data — only for Load / Store</td></tr>
+          <tr><td>5</td><td><b>Write-back</b></td><td>result returns to the destination register</td></tr>
+        </table>
+      </div>
+    </details>
+
+    <!-- 8.2 the C = A + B program trace (slide 45 table) -->
+    <details class="q">
+      <summary>Trace the program C = A + B one beat at a time, showing the RTL in each of the five phases. <span class="marks">10 marks</span></summary>
+      <div class="ans p">
+        <p>The program is four instructions; each walks all five phases before the next one’s Fetch begins (no overlap). <b>Fetch always runs the same MAR→MDR→IR chain.</b> Only the indexed load and the Add give the ALU real work in Compute — the two absolute ops have nothing to compute.</p>
+        <table class="tbl">
+          <tr><th>Instruction</th><th>① Fetch</th><th>② Decode</th><th>③ Compute</th><th>④ Memory</th><th>⑤ Write-back</th></tr>
+          <tr>
+            <td><b>Load R2, A</b><br><span style="color:var(--muted)">absolute</span></td>
+            <td class="rtl">MAR←[PC];<br>MDR←M[MAR];<br>IR←[MDR];<br>PC+=4</td>
+            <td class="rtl">decode Load;<br>dest = R2</td>
+            <td>— no ALU work<br><span style="color:var(--muted)">A is the address</span></td>
+            <td class="rtl">MAR←A;<br>MDR←M[MAR];<br>RY←[MDR]</td>
+            <td class="rtl">R2←[RY]</td>
+          </tr>
+          <tr>
+            <td><b>Load R3, 4(R7)</b><br><span style="color:var(--muted)">indexed ★</span></td>
+            <td class="rtl">MAR←[PC];<br>MDR←M[MAR];<br>IR←[MDR];<br>PC+=4</td>
+            <td class="rtl">RA←[R7];<br>dest = R3</td>
+            <td class="rtl">RZ←[RA]+4<br>«ALU adds»</td>
+            <td class="rtl">MAR←[RZ];<br>MDR←M[MAR];<br>RY←[MDR]</td>
+            <td class="rtl">R3←[RY]</td>
+          </tr>
+          <tr>
+            <td><b>Add R4, R2, R3</b><br><span style="color:var(--muted)">register–register</span></td>
+            <td class="rtl">MAR←[PC];<br>MDR←M[MAR];<br>IR←[MDR];<br>PC+=4</td>
+            <td class="rtl">RA←[R2];<br>RB←[R3];<br>dest = R4</td>
+            <td class="rtl">RZ←[RA]+[RB]</td>
+            <td class="rtl">RY←[RZ]<br><span style="color:var(--muted)">no memory</span></td>
+            <td class="rtl">R4←[RY]</td>
+          </tr>
+          <tr>
+            <td><b>Store R4, C</b><br><span style="color:var(--muted)">absolute</span></td>
+            <td class="rtl">MAR←[PC];<br>MDR←M[MAR];<br>IR←[MDR];<br>PC+=4</td>
+            <td class="rtl">RM←[R4];<br>addr = C</td>
+            <td>— no ALU work<br><span style="color:var(--muted)">C is the address</span></td>
+            <td class="rtl">MAR←C;<br>MDR←[RM];<br>M[MAR]←[MDR]</td>
+            <td>— idle</td>
+          </tr>
+        </table>
+        <div class="tip"><b>Count the beats:</b> 4 instructions × 5 phases = <b>20 clock beats</b> with no overlap. Each instruction waits for the one before it to finish — a steady, predictable rhythm.</div>
+      </div>
+    </details>
+
+    <!-- 8.3 effective address -->
+    <details class="q">
+      <summary>How is the effective address computed? <span class="marks">3–5 marks</span></summary>
+      <div class="ans g">
+        <p>The <b>effective address (EA)</b> is the actual memory address the instruction finally uses. For an indexed / based operand it is built by the ALU in the <b>Compute</b> beat:</p>
+        <p style="font-size:17px"><code>effective address = [base register] + offset</code></p>
+        <p><b>Worked:</b> <code>Load R5, 20(R7)</code> with R7 = 1000. Step 2 (Decode) reads the base <code>RA ← [R7]</code>; Step 3 (Compute) adds the offset <code>RZ ← [R7] + 20 = 1020</code>; Steps 4–5 read <code>M[1020]</code> through MDR and write it into R5.</p>
+        <div class="tip"><b>Key line:</b> the ALU that does arithmetic is the <b>same adder</b> that builds the address. <b>Absolute addressing is just the special case</b> where the full address is already in the instruction, so no base register is added and the Compute beat is idle. This is also how you walk an array (fix the base, change the offset) and how code stays relocatable.</div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ======================================================================
+       SECTION 9 · CONTROL UNIT
+       ====================================================================== -->
+  <section class="topic" id="s9">
+    <h2><span class="n">9</span> The Control Unit</h2>
+    <div class="askline">Ways this is asked → “What does the control unit do?”, “Explain hardwired control”, “Explain microprogrammed control”, “Difference between hardwired and microprogrammed control” (very important).</div>
+
+    <!-- 9.1 job -->
+    <details class="q">
+      <summary>What is the job of the control unit? <span class="marks">2–3 marks</span></summary>
+      <div class="ans t">
+        <p>Every clock, the control unit <b>raises the exact control signals the current step needs — no more, no less</b>. It reads three inputs — the <b>IR</b> (which instruction), a <b>step counter</b> (which beat, T1…T5), and the <b>condition flags</b> (Z, N, C, V) — and drives the <b>control points</b>: register load lines (MAR<sub>in</sub>, MDR<sub>in</sub>…), bus enables (PC<sub>out</sub>…), the ALU function, and memory Read/Write.</p>
+        <p class="oneliner">It can be built <b>two ways</b>: hardwired or microprogrammed.</p>
+      </div>
+    </details>
+
+    <!-- 9.2 hardwired -->
+    <details class="q">
+      <summary>Explain hardwired control. <span class="marks">5 marks</span></summary>
+      <div class="ans t">
+        <p>In <b>hardwired</b> control the decision “which signals, which beat” is <b>frozen into logic gates</b>. Inside the box are three parts:</p>
+        <div class="pic">
+          <svg viewBox="0 0 1120 320" preserveAspectRatio="xMidYMid meet">
+            <rect x="40" y="40" width="150" height="52" class="reg"/><text x="115" y="72" text-anchor="middle" class="reg-lbl">IR</text>
+            <rect x="40" y="140" width="150" height="60" class="reg"/><text x="115" y="165" text-anchor="middle" class="reg-lbl">Step counter</text><text x="115" y="188" text-anchor="middle" fill="var(--muted)" font-size="16">T1 · T2 · T3 · T4 · T5</text>
+            <rect x="40" y="248" width="150" height="52" class="reg"/><text x="115" y="280" text-anchor="middle" class="reg-lbl">Flags Z N C V</text>
+            <path d="M 190 66 L 288 66" stroke="var(--border)" stroke-width="2" marker-end="url(#u2c5ha)"/>
+            <rect x="290" y="38" width="185" height="56" class="reg" style="stroke:var(--teal)"/>
+            <text x="382" y="63" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">Instruction</text>
+            <text x="382" y="84" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">decoder</text>
+            <rect x="560" y="70" width="270" height="185" class="reg" style="stroke:var(--accent)"/>
+            <text x="695" y="150" text-anchor="middle" class="reg-lbl" style="fill:var(--accent); font-size:22px">Control signal</text>
+            <text x="695" y="178" text-anchor="middle" class="reg-lbl" style="fill:var(--accent); font-size:22px">generator</text>
+            <text x="695" y="212" text-anchor="middle" fill="var(--muted)" font-size="16">(combinational logic)</text>
+            <path d="M 475 66  C 520 66, 520 110, 558 110" stroke="var(--teal)" stroke-width="2.5" fill="none" marker-end="url(#u2c5ht)"/>
+            <path d="M 190 170 L 558 165" stroke="var(--border)" stroke-width="2.5" marker-end="url(#u2c5ha)"/>
+            <path d="M 190 274 C 360 274, 400 220, 558 218" stroke="var(--border)" stroke-width="2.5" fill="none" marker-end="url(#u2c5ha)"/>
+            <path d="M 830 120 L 940 120 M 830 150 L 940 150 M 830 180 L 940 180 M 830 210 L 940 210" stroke="var(--yellow)" stroke-width="4" marker-end="url(#u2c5hy)"/>
+            <text x="952" y="118" fill="var(--yellow)" font-size="18" font-weight="700">Read / Write</text>
+            <text x="952" y="150" fill="var(--yellow)" font-size="18" font-weight="700">PCout · MARin</text>
+            <text x="952" y="180" fill="var(--yellow)" font-size="18" font-weight="700">MDRin · Zin</text>
+            <text x="952" y="210" fill="var(--yellow)" font-size="18" font-weight="700">ALU function…</text>
+            <defs>
+              <marker id="u2c5ha" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--border)"/></marker>
+              <marker id="u2c5ht" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--teal)"/></marker>
+              <marker id="u2c5hy" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--yellow)"/></marker>
+            </defs>
+          </svg>
+          <div class="cap">Hardwired = instruction decoder + step counter + control-signal generator (combinational logic).</div>
+        </div>
+        <ul>
+          <li>The <b>instruction decoder</b> says <em>which</em> instruction (reads the opcode).</li>
+          <li>The <b>step counter</b> says <em>which</em> beat (T1…T5).</li>
+          <li>The <b>control-signal generator</b> (combinational logic) ANDs/ORs these into the signals.</li>
+        </ul>
+        <p>Each control signal is just a <b>Boolean equation</b> — the OR of the steps that need it. For example:</p>
+        <p style="font-size:16px"><code>Read = T1 + T4·LOAD</code></p>
+        <p>Fetch always reads on T1; a Load also reads its operand on T4. Wire up one such gate per signal and the control unit is built.</p>
+        <div class="tip"><b>Trade-off:</b> hardwired control is <b>fast</b> (signals appear in one gate delay, no memory to consult) but <b>rigid</b> (a new/changed instruction means redesigning the logic and re-fabricating the chip). RISC keeps its signals simple, so modern RISC CPUs are hardwired.</div>
+      </div>
+    </details>
+
+    <!-- 9.3 microprogrammed (bird's eye) -->
+    <details class="q">
+      <summary>Explain microprogrammed control (in brief). <span class="marks">3–5 marks</span></summary>
+      <div class="ans p">
+        <p>In <b>microprogrammed</b> control the signals are not <em>computed</em> by gates — they are <b>stored in a small on-chip memory</b> (the <b>control store</b>) and <b>looked up</b>. Each step is one <b>microinstruction</b>: its bits <em>are</em> the control signals for that beat, plus a field saying where the next microinstruction is.</p>
+        <ul>
+          <li>A <b>μPC (micro-program counter) / CAR</b> holds the address of the next microinstruction.</li>
+          <li>Each beat <b>reads one word</b> out of the control store; those bits drive the control points.</li>
+          <li>An <b>address generator</b> sequences through the words (increment, branch, opcode-map, End).</li>
+        </ul>
+        <p class="oneliner">In one line: microprogrammed control keeps the signals as microcode in memory and reads one word per step. Change the design → just rewrite the microcode.</p>
+      </div>
+    </details>
+
+    <!-- 9.4 the differences (the important one) -->
+    <details class="q">
+      <summary>Differentiate hardwired and microprogrammed control. <span class="marks">5 marks · important</span></summary>
+      <div class="ans y">
+        <p>Both produce the same control signals; they differ only in <b>where the decision lives</b> — and everything else follows from that one line.</p>
+        <table class="tbl">
+          <tr><th>Property</th><th>Hardwired</th><th>Microprogrammed</th></tr>
+          <tr><td>Decision lives in</td><td>fixed logic gates</td><td>a control store (memory)</td></tr>
+          <tr><td>Speed</td><td><b>faster</b> — one gate delay</td><td>slower — a memory read per step</td></tr>
+          <tr><td>Flexibility</td><td>rigid — must rewire to change</td><td><b>flexible</b> — just rewrite microcode</td></tr>
+          <tr><td>Complex instruction sets</td><td>hard (huge logic)</td><td>easy (just more microcode)</td></tr>
+          <tr><td>Design effort / cost to change</td><td>high (redesign + re-fabricate)</td><td>low (edit the control store)</td></tr>
+          <tr><td>Best fit</td><td><b>RISC</b> (simple, regular)</td><td><b>CISC</b> (rich, complex)</td></tr>
+        </table>
+        <div class="tip"><b>One sentence to memorise:</b> hardwired control <b>trades flexibility for speed</b>; microprogrammed control <b>trades speed for flexibility</b>.</div>
+      </div>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  COA · CSE23CT201 · Unit 2 — Exam Ready Reckoner &amp; Question Bank &nbsp;·&nbsp;
+  Sri Ramachandra Faculty of Engineering &amp; Technology &nbsp;·&nbsp;
+  Answers condensed from the Unit 2 classroom deck (Hamacher / Mano).
+</footer>
+
+<!-- ===================== SCRIPT (conveniences only) ===================== -->
+<script>
+  /* toggleAll(open) — open/close every question at once (header buttons). */
+  function toggleAll(open){
+    document.querySelectorAll('details.q').forEach(function(d){ d.open = open; });
+  }
+  /* SCROLLSPY — light up the nav chip of the topic currently on screen. */
+  var links = document.querySelectorAll('#nav a');
+  var byId = {};
+  links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(a){ a.classList.remove('active'); });
+        var chip = byId[e.target.id];
+        if(chip){ chip.classList.add('active'); }
+      }
+    });
+  }, { rootMargin:'-45% 0px -45% 0px' });
+  document.querySelectorAll('section.topic').forEach(function(s){ observer.observe(s); });
+</script>
+
+</body>
+</html>

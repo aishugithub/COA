@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Classroom Deck — TEMPLATE (copy me)</title>
+<!-- Aishu classroom deck starter. Copy this file, keep the <style> + <script>,
+     and author slides using the six example patterns below. -->
+<style>
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF;
+    --red:#F85149; --orange:#F0883E; --teal:#39D0D8;
+    --text:#E6EDF3; --muted:#8B949E; --border:#30363D;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%; background:var(--bg); color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden}
+  .slide{display:none; position:absolute; inset:0; padding:64px 92px 88px;
+    flex-direction:column; justify-content:center}
+  .slide.active{display:flex}
+  .kicker{font-size:24px; font-weight:700; letter-spacing:3px; color:var(--accent);
+    text-transform:uppercase; margin-bottom:16px}
+  h1{font-size:70px; line-height:1.1}
+  h2{font-size:52px; line-height:1.15; margin-bottom:28px}
+  p, li{font-size:33px; line-height:1.45}
+  .muted{color:var(--muted)} .big{font-size:44px; line-height:1.4}
+  .em-y{color:var(--yellow)} .em-p{color:var(--purple)} .em-t{color:var(--teal)}
+  .em-g{color:var(--green)} .em-a{color:var(--accent)} .em-o{color:var(--orange)}
+
+  /* stepwise reveal — one keypress per .frag */
+  .frag{opacity:0; transform:translateY(16px); transition:opacity .5s, transform .5s}
+  .frag.on{opacity:1; transform:none}
+
+  .row{display:flex; gap:24px; margin-top:12px}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px 28px; flex:1}
+  .card h3{font-size:30px; margin-bottom:8px} .card p{font-size:25px; color:var(--muted)}
+  .tint-green{border-color:var(--green); background:#3FB95014}
+  .tint-red{border-color:var(--red); background:#F8514914}
+  .tint-yellow{border-color:var(--yellow); background:#D2992214}
+  .tint-purple{border-color:var(--purple); background:#BC8CFF14}
+  .tint-teal{border-color:var(--teal); background:#39D0D814}
+
+  .divider{align-items:flex-start}
+  .divider .chnum{font-size:120px; font-weight:800; color:var(--accentGlow); line-height:1}
+  .divider h1{margin:8px 0 26px}
+  .divider .hook{font-size:38px; color:var(--yellow); font-style:italic; max-width:1150px}
+
+  /* importance badge — top-right */
+  .badge{position:absolute; top:34px; right:40px; display:flex; align-items:center; gap:10px;
+    padding:11px 20px; border-radius:999px; font-size:22px; font-weight:700; letter-spacing:1px; text-transform:uppercase}
+  .badge .dot{width:14px; height:14px; border-radius:50%}
+  .b-core{background:#BC8CFF1C; border:1.5px solid var(--purple); color:var(--purple)} .b-core .dot{background:var(--purple)}
+  .b-sup{background:#D299221C; border:1.5px solid var(--yellow); color:var(--yellow)} .b-sup .dot{background:var(--yellow)}
+  .b-ext{background:#58A6FF1C; border:1.5px solid var(--accent); color:var(--accent)} .b-ext .dot{background:var(--accent)}
+
+  /* concept-hook question (NO mic icon) */
+  .qslide .qmark{position:absolute; top:40px; left:60px; font-size:230px; font-weight:800; color:#BC8CFF14; line-height:1}
+  .qslide .qlabel{font-size:24px; font-weight:700; letter-spacing:3px; color:var(--purple); text-transform:uppercase; margin-bottom:22px}
+  .qslide .q{font-size:56px; line-height:1.25; max-width:1150px; font-weight:600}
+  .qslide .qans{margin-top:40px; font-size:36px; color:var(--green); max-width:1120px; padding:26px 34px;
+    border-left:5px solid var(--green); background:#3FB95012; border-radius:0 14px 14px 0}
+
+  /* 🧠 "commit to memory" exam slide */
+  .memslide .mhead{display:flex; align-items:center; gap:22px; margin-bottom:30px}
+  .memslide .micon{font-size:64px}
+  .memslide .mtitle{font-size:30px; font-weight:800; letter-spacing:2px; text-transform:uppercase; color:var(--green)}
+  .memslide .msub{font-size:23px; color:var(--muted); margin-top:4px}
+  .memcard{background:#3FB9500F; border:2px solid var(--green); border-radius:20px; padding:34px 44px; max-width:1200px}
+  .memcard h3{font-size:38px; margin-bottom:18px} .memcard p, .memcard li{font-size:30px; line-height:1.5}
+  .memcard ul{padding-left:34px; margin-top:6px} .memcard .term{color:var(--teal); font-weight:700}
+
+  /* key insight */
+  .keyslide{align-items:center; text-align:center}
+  .keyslide .kicon{font-size:70px; margin-bottom:24px}
+  .keybox{background:#BC8CFF14; border:2px solid var(--purple); border-radius:24px; padding:54px 66px;
+    font-size:50px; line-height:1.4; max-width:1250px}
+  .keybox .k{color:var(--purple); font-weight:800}
+
+  table{border-collapse:collapse; margin-top:14px}
+  th,td{border:1px solid var(--border); padding:12px 28px; font-size:26px; text-align:center}
+  th{background:var(--surface); color:var(--accent)}
+
+  svg text{font-family:'Segoe UI',system-ui,sans-serif}
+  .reg{fill:var(--card); stroke:var(--border); stroke-width:2}
+  .reg-lbl{fill:var(--text); font-size:23px; font-weight:700}
+  .reg-val{fill:var(--teal); font-size:22px; font-weight:700}
+
+  /* hero animation slide: SVG fills the stage */
+  .heroslide{padding:44px 64px 34px}
+  .heroslide .herotitle{font-size:44px; margin-bottom:6px}
+  .animwrap{flex:1; min-height:0; display:flex; align-items:center; justify-content:center}
+  .animwrap svg{width:100%; height:100%; max-height:100%}
+  .animwrap iframe{width:100%; height:100%; border:2px solid var(--border); border-radius:14px; background:#fff}
+  .credit{margin-top:12px; font-size:22px; color:var(--muted)} .credit a{color:var(--accent); text-decoration:none}
+
+  /* data-packet animation: fires when its .frag turns .on. PAIR PACKET + CAPTION IN ONE FRAG. */
+  .packet{opacity:0; offset-distance:0%}
+  .frag.on .packet{opacity:1; animation:flow 1.35s cubic-bezier(.45,0,.2,1) forwards}
+  @keyframes flow{from{offset-distance:0%} 6%{opacity:1} 94%{opacity:1} to{offset-distance:100%; opacity:1}}
+  .packet rect{fill:var(--yellow)} .packet text{fill:#0D1117; font-size:19px; font-weight:800}
+
+  #bar{position:fixed; top:0; left:0; height:6px; background:var(--green); width:0; transition:width .3s; z-index:5}
+  #counter{position:fixed; bottom:20px; right:32px; font-size:21px; color:var(--muted)}
+  #chlabel{position:fixed; bottom:20px; left:32px; font-size:21px; color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="bar"></div><div id="chlabel"></div><div id="counter"></div>
+
+<!-- 1) CHAPTER DIVIDER -->
+<section class="slide divider" data-ch="Ch 1 · Chapter Title">
+  <div class="kicker">Chapter 1 of N · CO1 · Textbook §x.y</div>
+  <div class="chnum">1</div>
+  <h1>Chapter Title</h1>
+  <p class="hook frag">A one-line hook question the professor reads aloud to open the chapter.</p>
+</section>
+
+<!-- 2) CORE CONCEPT SLIDE with badge + scaffold + textbook wording -->
+<section class="slide" data-ch="Ch 1 · Concept">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2>Concept name — stated plainly here</h2>
+  <p class="frag big">Plain-language explanation a second-year can follow.</p>
+  <div class="row" style="margin-top:22px">
+    <div class="card frag"><h3>Why it matters</h3><p>Concrete, relatable reason.</p></div>
+    <div class="card frag"><h3>Textbook line</h3><p>"The exact wording from Hamacher/Mano" — redundancy is welcome.</p></div>
+  </div>
+</section>
+
+<!-- 3) CONCEPT-HOOK QUESTION (no mic icon; reveal the answer) -->
+<section class="slide qslide" data-ch="Ch 1 · The big question">
+  <div class="qmark">?</div>
+  <div class="qlabel">Think about it</div>
+  <div class="q">An intriguing question that exposes a gap the class can't yet fill.</div>
+  <div class="qans frag">The revealed answer — crisp, satisfying, one idea.</div>
+</section>
+
+<!-- 4) ANIMATED DATAPATH — packet + caption revealed together, caption band INSIDE the svg -->
+<section class="slide heroslide" data-ch="Ch 1 · Animation">
+  <div class="badge b-core"><span class="dot"></span>Core</div>
+  <h2 class="herotitle">Watch it move: <span class="em-a">one transfer</span></h2>
+  <div class="animwrap"><svg viewBox="0 0 1160 492" preserveAspectRatio="xMidYMid meet">
+    <rect x="80" y="120" width="220" height="90" rx="12" class="reg" style="stroke:var(--purple)"/>
+    <text x="190" y="172" text-anchor="middle" class="reg-lbl" style="fill:var(--purple)">SOURCE</text>
+    <rect x="860" y="120" width="220" height="90" rx="12" class="reg" style="stroke:var(--teal)"/>
+    <text x="970" y="172" text-anchor="middle" class="reg-lbl" style="fill:var(--teal)">DEST</text>
+    <!-- STEP 1: packet + its caption together in one .frag -->
+    <g class="frag"><g class="packet" style="offset-path:path('M 300 165 L 860 165')"><rect x="-40" y="-17" width="80" height="34" rx="6"/><text x="0" y="6" text-anchor="middle">data</text></g>
+      <rect x="30" y="446" width="1100" height="42" fill="var(--bg)"/><text x="50" y="475" font-size="25" fill="var(--text)">① the value travels source → destination.</text></g>
+  </svg></div>
+</section>
+
+<!-- 5) 🧠 COMMIT-TO-MEMORY exam slide (after each concept / sub-concept) -->
+<section class="slide memslide" data-ch="Ch 1 · Commit to memory">
+  <div class="mhead"><div class="micon">🧠</div>
+    <div><div class="mtitle">Get this into your memory</div>
+    <div class="msub">The exact lines to reproduce in the exam.</div></div></div>
+  <div class="memcard">
+    <ul>
+      <li><span class="term">Term</span> — the crisp definition worth a mark.</li>
+      <li><span class="term">Term</span> — another exam-ready line.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 6) KEY INSIGHT — ends every chapter -->
+<section class="slide keyslide" data-ch="Ch 1 · Key insight">
+  <div class="kicon">🔑</div>
+  <div class="keybox frag"><span class="k">The one sentence to remember.</span><br>A second line that lands it.</div>
+</section>
+
+<!-- (Simulator embed pattern, when useful — always credit + fallback link)
+<section class="slide heroslide" data-ch="Ch X · Live">
+  <div class="badge b-sup"><span class="dot"></span>Supporting</div>
+  <h2 class="herotitle">Run it yourself</h2>
+  <div class="animwrap"><iframe src="https://SIMULATOR" title="sim" allowfullscreen></iframe></div>
+  <p class="credit">Simulator © owner — <a href="https://SIMULATOR" target="_blank" rel="noopener">link</a> (open in new tab if blank).</p>
+</section> -->
+
+<script>
+/* Deck engine: slides + stepwise fragment reveal. One keypress = next .frag, then next slide. */
+const slides=[...document.querySelectorAll('.slide')];
+let si=0, fi=0;
+const bar=document.getElementById('bar'), counter=document.getElementById('counter'), chlabel=document.getElementById('chlabel');
+const frags=s=>[...s.querySelectorAll('.frag')];
+function render(){
+  slides.forEach((s,i)=>s.classList.toggle('active',i===si));
+  const s=slides[si]; frags(s).forEach((el,i)=>el.classList.toggle('on',i<fi));
+  bar.style.width=(si/(slides.length-1))*100+'%';
+  counter.textContent=`slide ${si+1} / ${slides.length}`;
+  chlabel.textContent=s.dataset.ch||'';
+}
+function next(){const f=frags(slides[si]); if(fi<f.length){fi++;render();} else if(si<slides.length-1){si++;fi=0;render();}}
+function prev(){if(fi>0){fi--;render();} else if(si>0){si--;fi=frags(slides[si]).length;render();}}
+document.addEventListener('keydown',e=>{
+  if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();next();}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();prev();}
+  else if(e.key==='Home'){si=0;fi=0;render();}
+  else if(e.key==='End'){si=slides.length-1;fi=frags(slides[si]).length;render();}
+});
+document.addEventListener('click',()=>next());
+render();
+</script>
+</body>
+</html>

@@ -168,6 +168,22 @@
   #navb button{width:52px; height:52px; border-radius:50%; border:1px solid var(--border);
     background:var(--surface); color:var(--muted); font-size:26px; cursor:pointer}
   #navb button:hover{border-color:var(--accent); color:var(--accent)}
+  /* Download-as-PDF button (title slide) */
+  .pdfbtn{display:inline-block; margin-top:38px; padding:14px 26px; border-radius:12px;
+    border:2px solid var(--accent); background:#58A6FF1a; color:var(--accent);
+    font-size:22px; font-weight:700; text-decoration:none; cursor:pointer}
+  .pdfbtn:hover{background:#58A6FF33}
+  /* PRINT / SAVE-AS-PDF: reveal every slide, one per page */
+  @media print{
+    @page{size:landscape; margin:0}
+    html,body{height:auto; overflow:visible; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+    #bar,#counter,#chlabel,#navb,.no-print{display:none !important}
+    .slide{display:flex !important; position:relative !important; inset:auto !important;
+      width:100%; height:100vh; padding:46px 66px; page-break-after:always; break-after:page;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact}
+    .slide:last-of-type{page-break-after:auto}
+    .frag{opacity:1 !important; transform:none !important}
+  }
 </style>
 </head>
 <body>
@@ -185,6 +201,8 @@
   <h1>Computer Organization<br>&amp; Architecture</h1>
   <p class="big" style="margin-top:24px">Unit 0 — Before the Machine<br><span class="muted">How a computer really works — from gates to running programs.</span></p>
   <p class="muted" style="margin-top:50px; font-size:23px">→ / Space / click = next &nbsp;·&nbsp; ← = back &nbsp;·&nbsp; keys 0–4 = jump to chapter &nbsp;·&nbsp; F11 = fullscreen</p>
+  <a class="pdfbtn no-print" onclick="window.print();return false;">⬇ Download this deck as PDF</a>
+  <p class="muted no-print" style="margin-top:10px; font-size:17px">In the print dialog: choose <b>Save as PDF</b>, Layout <b>Landscape</b>, and turn on <b>Background graphics</b>.</p>
 </section>
 
 <!-- Slide 2: Roadmap -->

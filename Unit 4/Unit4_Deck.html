@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COA Unit 4 · Memory Organizations — Classroom Deck</title>
+<!--
+  Classroom teaching deck for CSE23CT201 Unit 4 (Memory Organizations).
+  16:9 landscape, dark, presenter-paced. → / Space / click = next reveal or slide;
+  ← = back; Home/End = first/last. Built from the Foothold COA course (content +
+  animations) with coverage following the Unit 4 notes. Palette + foothold scaffolding
+  per the classroom-lesson-builder skill. Light comments only (section dividers).
+-->
+<style>
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF;
+    --red:#F85149; --orange:#F0883E; --teal:#39D0D8;
+    --text:#E6EDF3; --muted:#8B949E; --border:#30363D;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%; overflow:hidden}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---- deck + slide frame ---- */
+  #deck{position:fixed; inset:0}
+  .slide{
+    position:absolute; inset:0; display:none;
+    flex-direction:column; justify-content:center;
+    padding:5vh 6vw; gap:1.6vh;
+  }
+  .slide.active{display:flex; animation:slidein .35s ease}
+  @keyframes slidein{from{opacity:0} to{opacity:1}}
+
+  /* ---- content-slide typography ---- */
+  .kicker{
+    font-size:clamp(14px,1.5vw,22px); font-weight:800; letter-spacing:3px;
+    text-transform:uppercase; color:var(--accentGlow);
+  }
+  h2.title{
+    font-size:clamp(34px,4.4vw,66px); font-weight:800; line-height:1.05;
+    color:var(--text); max-width:1300px;
+  }
+  .body{font-size:clamp(22px,2.3vw,34px); line-height:1.4; max-width:1180px; color:var(--text)}
+  .small{font-size:clamp(16px,1.6vw,22px); color:var(--muted)}
+  b.hl{color:var(--accent); font-weight:800}
+  b.g{color:var(--green)} b.y{color:var(--yellow)} b.p{color:var(--purple)}
+  b.r{color:var(--red)} b.t{color:var(--teal)} b.o{color:var(--orange)}
+  code{font-family:"Consolas",monospace; background:#0b0f15; border:1px solid var(--border);
+    border-radius:6px; padding:.05em .4em; color:var(--text); font-size:.92em}
+
+  /* ---- foothold (verbatim spec, scaled up slightly for projector) ---- */
+  .foothold{font-size:clamp(20px,2vw,26px); color:var(--muted); font-style:italic; line-height:1.35;
+    margin:2px 0 10px; padding-left:18px; border-left:4px solid var(--accentGlow); max-width:1180px}
+  .foothold b{color:var(--accent); font-style:normal; font-weight:700}
+  .foothold .lbl{color:var(--accentGlow); font-style:normal; font-weight:800;
+    text-transform:uppercase; letter-spacing:1px; font-size:.82em}
+
+  /* ---- fragments (presenter reveal) ---- */
+  .frag{opacity:0; transform:translateY(14px); transition:opacity .45s ease, transform .45s ease}
+  .frag.show{opacity:1; transform:none}
+
+  /* ---- lists ---- */
+  ul.pts{list-style:none; display:flex; flex-direction:column; gap:1.2vh; max-width:1200px}
+  ul.pts li{font-size:clamp(20px,2.15vw,32px); line-height:1.35; padding-left:1.4em; position:relative}
+  ul.pts li::before{content:"▸"; position:absolute; left:0; color:var(--accent)}
+
+  /* ---- chapter divider ---- */
+  .divider{align-items:flex-start; justify-content:center}
+  .divider .chno{font-size:clamp(80px,14vw,220px); font-weight:900; line-height:.9;
+    color:var(--accentGlow); opacity:.9}
+  .divider .chname{font-size:clamp(38px,5.4vw,84px); font-weight:800; color:var(--text); margin-top:1vh}
+  .divider .hook{font-size:clamp(22px,2.5vw,38px); font-style:italic; color:var(--teal);
+    margin-top:2.5vh; max-width:1200px; line-height:1.35}
+  .divider .src{margin-top:3vh; font-size:clamp(15px,1.5vw,22px); color:var(--muted); letter-spacing:1px}
+
+  /* ---- ask-the-class + key-insight ---- */
+  .badge{display:inline-flex; align-items:center; gap:.4em; font-size:clamp(15px,1.6vw,22px);
+    font-weight:800; letter-spacing:2px; text-transform:uppercase; padding:.35em .9em; border-radius:999px}
+  .badge.mic{background:rgba(240,136,62,.16); color:var(--orange); border:1px solid rgba(240,136,62,.5)}
+  .badge.key{background:rgba(188,140,255,.16); color:var(--purple); border:1px solid rgba(188,140,255,.5)}
+  .ask{font-size:clamp(30px,3.6vw,56px); font-weight:800; line-height:1.15; max-width:1200px; color:var(--text)}
+  .answer{font-size:clamp(22px,2.4vw,34px); line-height:1.35; max-width:1180px;
+    background:rgba(63,185,80,.1); border:1px solid rgba(63,185,80,.45); border-radius:12px; padding:2.2vh 2vw; color:var(--text)}
+  .keyslide{align-items:center; justify-content:center; text-align:center}
+  .keyslide .ktext{font-size:clamp(30px,3.8vw,58px); font-weight:800; line-height:1.2; max-width:1240px; color:var(--text)}
+  .keyslide .ksub{font-size:clamp(19px,2vw,28px); color:var(--muted); max-width:1080px; margin-top:2vh; line-height:1.4}
+
+  /* ---- diagram stage ---- */
+  .stage{width:100%; max-width:1300px; margin:0 auto}
+  .stage svg{width:100%; height:auto; display:block}
+  .cap{font-size:clamp(15px,1.5vw,21px); color:var(--muted); text-align:center; margin-top:1vh; font-style:italic}
+  svg text{font-family:"Segoe UI",system-ui,sans-serif}
+
+  /* ---- chrome: progress bar, counter, hint ---- */
+  #bar{position:fixed; left:0; bottom:0; height:5px; background:var(--accent);
+    width:0; transition:width .3s ease; z-index:20; box-shadow:0 0 8px var(--accentGlow)}
+  #counter{position:fixed; right:16px; bottom:12px; font-size:clamp(13px,1.3vw,18px);
+    color:var(--muted); z-index:20; letter-spacing:1px}
+  #hint{position:fixed; left:16px; bottom:10px; font-size:clamp(11px,1.1vw,15px);
+    color:var(--border); z-index:20}
+  .dot{position:fixed; right:16px; top:14px; z-index:20; font-size:clamp(12px,1.2vw,16px); color:var(--muted)}
+
+  /* ---- reusable motion ---- */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spin{transform-box:fill-box; transform-origin:center; animation:spin 3s linear infinite}
+  @keyframes leak{0%{height:42px; y:150px; fill:var(--teal)} 100%{height:8px; y:184px; fill:var(--red)}}
+  .frag.show .leakbar{animation:leak 2.4s ease-in-out infinite alternate}
+  /* disk seek: head arm slides in from parked outer edge when its slide opens */
+  @keyframes seek{0%{transform:translateX(70px); opacity:.4} 100%{transform:translateX(0); opacity:1}}
+  .seekarm{transform-box:fill-box}
+  .slide.active .seekarm{animation:seek 1.6s ease .3s both}
+  @keyframes dash{to{stroke-dashoffset:0}}
+  .flowline{stroke-dasharray:10 8; stroke-dashoffset:200}
+  .frag.show .flowline{animation:dash 1.1s linear forwards}
+  /* a value/packet slides along a bus when its fragment is revealed */
+  .pkt{opacity:0}
+  .frag.show .pkt{animation:pktmove 1.2s ease forwards}
+  @keyframes pktmove{0%{opacity:1; offset-distance:0%} 100%{opacity:1; offset-distance:100%}}
+</style>
+</head>
+<body>
+<div id="deck">
+
+<!-- ============================= TITLE ============================= -->
+<section class="slide active divider" data-slide>
+  <div class="kicker">Computer Organization &amp; Architecture · CSE23CT201</div>
+  <div class="chno" style="font-size:clamp(60px,9vw,150px)">UNIT&nbsp;4</div>
+  <div class="chname">Memory Organizations</div>
+  <div class="hook">From a single register to a full address translation — we build the whole memory system, one layer at a time.</div>
+  <div class="src frag">Sri Ramachandra Faculty of Engineering &amp; Technology &nbsp;·&nbsp; Press → or Space to begin</div>
+</section>
+
+<!-- ==================================================================== -->
+<!-- CHAPTER 1 · MEMORY HIERARCHY                                          -->
+<!-- ==================================================================== -->
+<section class="slide divider" data-slide>
+  <div class="chno">1</div>
+  <div class="chname">Memory Hierarchy</div>
+  <div class="hook">If one memory could be fast, huge and cheap all at once, this whole chapter would not exist. Why can't it?</div>
+  <div class="src">Notes Ch.1 · Foothold 4.1 · Hamacher §8.5 / Mano §12-1</div>
+</section>
+
+<!-- 1.1 Why not one memory -->
+<section class="slide" data-slide>
+  <div class="kicker">1 · Memory Hierarchy</div>
+  <h2 class="title">Why not one big, fast memory?</h2>
+  <div class="foothold"><span class="lbl">The gap ·</span> Before we name any solution, feel the problem: pick <b>one</b> memory technology for the whole machine and something always breaks.</div>
+  <div class="body frag" style="margin-top:1vh">
+    <b class="r">Build it all from register-speed memory</b> → blazing fast, but so costly per byte that an affordable machine holds barely one photo. <b class="r">Tiny.</b>
+  </div>
+  <div class="body frag">
+    <b class="o">Build it all from disk-speed memory</b> → petabytes for pocket change, but the CPU (nanoseconds) idles for milliseconds on every fetch. <b class="o">CPU starves.</b>
+  </div>
+  <div class="body frag" style="margin-top:1vh">
+    <b class="g">The real answer:</b> a little very-fast memory close to the CPU, backed by progressively bigger, cheaper, slower memory further away — a <b class="hl">hierarchy</b>.
+  </div>
+</section>
+
+<!-- 1.2 The pyramid (built level by level) -->
+<section class="slide" data-slide>
+  <div class="kicker">1 · Memory Hierarchy</div>
+  <h2 class="title">The pyramid — four levels, one job each</h2>
+  <div class="foothold"><span class="lbl">What we want ·</span> The CPU checks the <b>fastest, smallest</b> level first; only on a miss does it step down to a bigger, slower one. Watch it build.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 600" role="img" aria-label="Memory hierarchy pyramid">
+      <!-- registers -->
+      <g class="frag">
+        <polygon points="460,70 540,70 635.5,190 364.5,190" fill="rgba(188,140,255,.22)" stroke="#BC8CFF" stroke-width="2.5"/>
+        <text x="500" y="128" text-anchor="middle" fill="#BC8CFF" font-size="26" font-weight="800">CPU Registers</text>
+        <text x="500" y="158" text-anchor="middle" fill="#E6EDF3" font-size="20">&lt; 1 ns · a few hundred bytes</text>
+      </g>
+      <!-- cache -->
+      <g class="frag">
+        <polygon points="364.5,190 635.5,190 739,320 261,320" fill="rgba(88,166,255,.20)" stroke="#58A6FF" stroke-width="2.5"/>
+        <text x="500" y="250" text-anchor="middle" fill="#58A6FF" font-size="28" font-weight="800">Cache Memory</text>
+        <text x="500" y="282" text-anchor="middle" fill="#E6EDF3" font-size="20">≈ 2–10 ns · KB to a few MB</text>
+      </g>
+      <!-- main memory -->
+      <g class="frag">
+        <polygon points="261,320 739,320 850.4,460 149.6,460" fill="rgba(57,208,216,.18)" stroke="#39D0D8" stroke-width="2.5"/>
+        <text x="500" y="385" text-anchor="middle" fill="#39D0D8" font-size="30" font-weight="800">Main Memory (RAM)</text>
+        <text x="500" y="418" text-anchor="middle" fill="#E6EDF3" font-size="20">≈ 50–100 ns · gigabytes</text>
+      </g>
+      <!-- auxiliary -->
+      <g class="frag">
+        <polygon points="149.6,460 850.4,460 930,560 70,560" fill="rgba(240,136,62,.18)" stroke="#F0883E" stroke-width="2.5"/>
+        <text x="500" y="512" text-anchor="middle" fill="#F0883E" font-size="28" font-weight="800">Auxiliary / Secondary Storage</text>
+        <text x="500" y="542" text-anchor="middle" fill="#E6EDF3" font-size="20">≈ 5–10 ms · terabytes · non-volatile</text>
+      </g>
+      <!-- axis annotations -->
+      <g class="frag">
+        <line x1="55" y1="540" x2="55" y2="90" stroke="#3FB950" stroke-width="3" marker-end="url(#arrU)"/>
+        <text x="48" y="315" fill="#3FB950" font-size="19" font-weight="700" text-anchor="middle" transform="rotate(-90 48 315)">FASTER · SMALLER · COSTLIER / BYTE</text>
+        <line x1="960" y1="90" x2="960" y2="540" stroke="#F0883E" stroke-width="3" marker-end="url(#arrD)"/>
+        <text x="972" y="315" fill="#F0883E" font-size="19" font-weight="700" text-anchor="middle" transform="rotate(90 972 315)">BIGGER · CHEAPER · SLOWER</text>
+      </g>
+      <defs>
+        <marker id="arrU" markerWidth="10" markerHeight="10" refX="5" refY="1" orient="auto"><path d="M0,8 L5,0 L10,8" fill="#3FB950"/></marker>
+        <marker id="arrD" markerWidth="10" markerHeight="10" refX="5" refY="9" orient="auto"><path d="M0,2 L5,10 L10,2" fill="#F0883E"/></marker>
+      </defs>
+    </svg>
+  </div>
+</section>
+
+<!-- 1.3 ASK THE CLASS -->
+<section class="slide" data-slide>
+  <div class="kicker">1 · Memory Hierarchy</div>
+  <span class="badge mic">🎤 Ask the class</span>
+  <div class="ask" style="margin-top:1.5vh">Your program is running a loop. Where does the <b class="hl">loop counter <code>i</code></b> live right now — and where do <b class="o">last year's holiday photos</b> live?</div>
+  <div class="answer frag" style="margin-top:2vh">
+    <b class="p">i</b> is touched every few nanoseconds → pulled up to a <b class="p">register</b>. <b class="o">Old photos</b> are opened maybe once a year → they sit on <b class="o">auxiliary storage</b>. Nobody wrote code to place them — the hardware and OS move data up the pyramid by how <b class="g">hot</b> it is.
+  </div>
+</section>
+
+<!-- 1.4 Locality of reference -->
+<section class="slide" data-slide>
+  <div class="kicker">1 · Memory Hierarchy</div>
+  <h2 class="title">Locality of reference — why it actually works</h2>
+  <div class="foothold"><span class="lbl">Why now ·</span> A small fast level only helps if the next access is usually <b>already in it</b>. It is — because real programs don't scatter their accesses randomly.</div>
+  <div class="stage frag">
+    <svg viewBox="0 0 1000 300" role="img" aria-label="Locality in a loop">
+      <rect x="20" y="20" width="470" height="260" rx="10" fill="#0b0f15" stroke="#30363D"/>
+      <text x="45" y="60" fill="#8B949E" font-size="21" font-family="Consolas,monospace">sum = 0</text>
+      <text x="45" y="98" fill="#58A6FF" font-size="21" font-family="Consolas,monospace">for i in range(4):</text>
+      <text x="70" y="136" fill="#E6EDF3" font-size="21" font-family="Consolas,monospace">sum = sum + arr[i]</text>
+      <text x="45" y="174" fill="#8B949E" font-size="21" font-family="Consolas,monospace">print(sum)</text>
+      <text x="45" y="235" fill="#3FB950" font-size="19" font-weight="700">sum touched 6× — same address</text>
+      <text x="45" y="262" fill="#39D0D8" font-size="19" font-weight="700">arr[0]→[3] — neighbours, in order</text>
+      <!-- address chips -->
+      <g font-family="Consolas,monospace" font-size="18" font-weight="700">
+        <rect x="560" y="40" width="90" height="46" rx="8" fill="rgba(63,185,80,.2)" stroke="#3FB950" stroke-width="2"/>
+        <text x="605" y="69" text-anchor="middle" fill="#3FB950">sum</text>
+        <rect x="670" y="40" width="90" height="46" rx="8" fill="rgba(57,208,216,.14)" stroke="#39D0D8"/>
+        <text x="715" y="69" text-anchor="middle" fill="#39D0D8">arr[0]</text>
+        <rect x="780" y="40" width="90" height="46" rx="8" fill="rgba(57,208,216,.14)" stroke="#39D0D8"/>
+        <text x="825" y="69" text-anchor="middle" fill="#39D0D8">arr[1]</text>
+        <rect x="670" y="100" width="90" height="46" rx="8" fill="rgba(57,208,216,.14)" stroke="#39D0D8"/>
+        <text x="715" y="129" text-anchor="middle" fill="#39D0D8">arr[2]</text>
+        <rect x="780" y="100" width="90" height="46" rx="8" fill="rgba(57,208,216,.14)" stroke="#39D0D8"/>
+        <text x="825" y="129" text-anchor="middle" fill="#39D0D8">arr[3]</text>
+      </g>
+    </svg>
+  </div>
+  <div class="body frag"><b class="g">Temporal locality:</b> a just-used address (<code>sum</code>) is used again soon.</div>
+  <div class="body frag"><b class="t">Spatial locality:</b> an address next to a just-used one (<code>arr[1]</code> after <code>arr[0]</code>) is used soon too.</div>
+</section>
+
+<!-- 1.5 KEY INSIGHT -->
+<section class="slide keyslide" data-slide>
+  <span class="badge key">🔑 Key insight</span>
+  <div class="ktext frag">The hierarchy is an <b class="hl">illusion</b> of memory that is both large <em>and</em> fast — bought by keeping the fast part small.</div>
+  <div class="ksub frag">And it only pays off because of <b class="g">locality</b>: a small cache of "recently touched" data captures most of the traffic.</div>
+</section>
+<!-- ==================================================================== -->
+<!-- CHAPTER 2 · MAIN MEMORY — RAM & ROM CHIPS                             -->
+<!-- ==================================================================== -->
+<section class="slide divider" data-slide>
+  <div class="chno">2</div>
+  <div class="chname">Main Memory — RAM &amp; ROM Chips</div>
+  <div class="hook">The pyramid called it "Main Memory (RAM)". Now we open that box — what is inside a memory chip, and how is it wired?</div>
+  <div class="src">Notes Ch.2 · Foothold 4.2 · Hamacher §8.1–8.3 / Mano §12-2</div>
+</section>
+
+<!-- 2.1 Open the box -->
+<section class="slide" data-slide>
+  <div class="kicker">2 · Main Memory</div>
+  <h2 class="title">Opening the box — memory as real hardware</h2>
+  <div class="foothold"><span class="lbl">Recall ·</span> In Unit 1 memory was a wall of numbered lockers: give an address, get a byte. True from outside — but a real chip must <b>do</b> that with wires and transistors.</div>
+  <ul class="pts">
+    <li class="frag">You supply an <b class="hl">address</b> on the address lines and a <b class="y">read/write</b> command…</li>
+    <li class="frag">…the chip must physically <b class="g">select</b> exactly one location out of thousands…</li>
+    <li class="frag">…and move that location's <b class="t">bits</b> out (read) or in (write) on the data lines.</li>
+    <li class="frag">Inside the "black box": a <b class="hl">decoder</b> + a <b class="hl">grid of storage cells</b>. Let's build one.</li>
+  </ul>
+</section>
+
+<!-- 2.2 Chip anatomy (SIGNATURE build) -->
+<section class="slide" data-slide>
+  <div class="kicker">2 · Main Memory</div>
+  <h2 class="title">Chip anatomy — an 8-word × 4-bit RAM</h2>
+  <div class="foothold"><span class="lbl">Build it ·</span> A shrunk-down chip so every wire fits on screen. Three address lines, one decoder, a cell grid, control and data lines — revealed one part at a time.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 560" role="img" aria-label="Memory chip internal organization">
+      <!-- chip outline -->
+      <g class="frag">
+        <rect x="120" y="70" width="770" height="430" rx="14" fill="#161B22" stroke="#30363D" stroke-width="2.5"/>
+        <text x="505" y="45" text-anchor="middle" fill="#8B949E" font-size="22" font-weight="700">8 words × 4 bits  ·  n=3 address lines → 2³ = 8 locations</text>
+      </g>
+      <!-- address lines -->
+      <g class="frag">
+        <line x1="30" y1="150" x2="200" y2="150" stroke="#58A6FF" stroke-width="3"/>
+        <line x1="30" y1="200" x2="200" y2="200" stroke="#58A6FF" stroke-width="3"/>
+        <line x1="30" y1="250" x2="200" y2="250" stroke="#58A6FF" stroke-width="3"/>
+        <text x="24" y="145" text-anchor="end" fill="#58A6FF" font-size="20" font-weight="700">A2</text>
+        <text x="24" y="205" text-anchor="end" fill="#58A6FF" font-size="20" font-weight="700">A1</text>
+        <text x="24" y="255" text-anchor="end" fill="#58A6FF" font-size="20" font-weight="700">A0</text>
+      </g>
+      <!-- decoder -->
+      <g class="frag">
+        <rect x="200" y="120" width="130" height="320" rx="8" fill="rgba(88,166,255,.14)" stroke="#58A6FF" stroke-width="2.5"/>
+        <text x="265" y="270" text-anchor="middle" fill="#58A6FF" font-size="22" font-weight="800" transform="rotate(-90 265 270)">Decoder 3 → 8</text>
+      </g>
+      <!-- cell array + word lines -->
+      <g class="frag">
+        <rect x="430" y="120" width="380" height="320" fill="none" stroke="#39D0D8" stroke-width="2"/>
+        <text x="620" y="108" text-anchor="middle" fill="#39D0D8" font-size="20" font-weight="700">Cell array — 8 word-rows × 4 bit-columns</text>
+        <!-- grid rows/cols -->
+        <g stroke="#30363D" stroke-width="1">
+          <line x1="430" y1="160" x2="810" y2="160"/><line x1="430" y1="200" x2="810" y2="200"/>
+          <line x1="430" y1="240" x2="810" y2="240"/><line x1="430" y1="280" x2="810" y2="280"/>
+          <line x1="430" y1="320" x2="810" y2="320"/><line x1="430" y1="360" x2="810" y2="360"/>
+          <line x1="430" y1="400" x2="810" y2="400"/>
+          <line x1="525" y1="120" x2="525" y2="440"/><line x1="620" y1="120" x2="620" y2="440"/><line x1="715" y1="120" x2="715" y2="440"/>
+        </g>
+        <!-- 8 word lines from decoder to array -->
+        <g stroke="#8B949E" stroke-width="1.5">
+          <line x1="330" y1="140" x2="430" y2="140"/><line x1="330" y1="180" x2="430" y2="180"/>
+          <line x1="330" y1="220" x2="430" y2="220"/><line x1="330" y1="260" x2="430" y2="260"/>
+          <line x1="330" y1="300" x2="430" y2="300"/><line x1="330" y1="340" x2="430" y2="340"/>
+          <line x1="330" y1="380" x2="430" y2="380"/><line x1="330" y1="420" x2="430" y2="420"/>
+        </g>
+        <text x="360" y="470" fill="#8B949E" font-size="16">8 word lines</text>
+      </g>
+      <!-- selected word line (address 101 = word 5) -->
+      <g class="frag">
+        <line x1="200" y1="340" x2="810" y2="340" stroke="#3FB950" stroke-width="4"/>
+        <rect x="430" y="320" width="380" height="40" fill="rgba(63,185,80,.18)"/>
+        <text x="905" y="346" text-anchor="end" fill="#3FB950" font-size="19" font-weight="800">A₂A₁A₀ = 101 → word 5 selected</text>
+      </g>
+      <!-- data lines -->
+      <g class="frag">
+        <g stroke="#39D0D8" stroke-width="3">
+          <line x1="477" y1="440" x2="477" y2="520"/><line x1="572" y1="440" x2="572" y2="520"/>
+          <line x1="667" y1="440" x2="667" y2="520"/><line x1="762" y1="440" x2="762" y2="520"/>
+        </g>
+        <text x="477" y="545" text-anchor="middle" fill="#39D0D8" font-size="18" font-weight="700">D3</text>
+        <text x="572" y="545" text-anchor="middle" fill="#39D0D8" font-size="18" font-weight="700">D2</text>
+        <text x="667" y="545" text-anchor="middle" fill="#39D0D8" font-size="18" font-weight="700">D1</text>
+        <text x="762" y="545" text-anchor="middle" fill="#39D0D8" font-size="18" font-weight="700">D0</text>
+      </g>
+      <!-- control lines -->
+      <g class="frag">
+        <line x1="265" y1="120" x2="265" y2="60" stroke="#D29922" stroke-width="3"/>
+        <text x="265" y="52" text-anchor="middle" fill="#D29922" font-size="19" font-weight="800">CS</text>
+        <line x1="715" y1="120" x2="715" y2="60" stroke="#F0883E" stroke-width="3"/>
+        <text x="715" y="52" text-anchor="middle" fill="#F0883E" font-size="19" font-weight="800">R/W̄</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- 2.3 ASK THE CLASS -->
+<section class="slide" data-slide>
+  <div class="kicker">2 · Main Memory</div>
+  <span class="badge mic">🎤 Ask the class</span>
+  <div class="ask" style="margin-top:1.5vh">We put <code>A₂A₁A₀ = 011</code> on the address lines. Which <b class="hl">word line</b> does the 3→8 decoder assert — and how many bits come out?</div>
+  <div class="answer frag" style="margin-top:2vh">Binary <code>011</code> = <b class="g">word 3</b> — the decoder raises exactly one of its 8 outputs. All <b class="t">4</b> bits of that word appear on D3–D0 together. <b>n address lines always select one of 2ⁿ locations; add data lines, not address lines, to widen each word.</b></div>
+</section>
+
+<!-- 2.4 SRAM vs DRAM -->
+<section class="slide" data-slide>
+  <div class="kicker">2 · Main Memory</div>
+  <h2 class="title">RAM comes in two flavours: SRAM vs DRAM</h2>
+  <div class="foothold"><span class="lbl">A contrast ·</span> Both give random access in equal time, but they store a bit in completely different ways — and that difference decides where each is used.</div>
+  <div class="stage frag">
+    <svg viewBox="0 0 1000 250" role="img" aria-label="SRAM versus DRAM cell">
+      <rect x="40" y="20" width="440" height="210" rx="12" fill="rgba(88,166,255,.10)" stroke="#58A6FF" stroke-width="2"/>
+      <text x="260" y="55" text-anchor="middle" fill="#58A6FF" font-size="24" font-weight="800">SRAM cell</text>
+      <text x="260" y="92" text-anchor="middle" fill="#E6EDF3" font-size="19">two cross-coupled inverters (≈6 transistors)</text>
+      <text x="260" y="122" text-anchor="middle" fill="#E6EDF3" font-size="19">holds its bit while powered — <tspan fill="#3FB950" font-weight="700">no refresh</tspan></text>
+      <text x="260" y="160" text-anchor="middle" fill="#3FB950" font-size="19" font-weight="700">fast, but bulky &amp; costly per bit</text>
+      <text x="260" y="200" text-anchor="middle" fill="#8B949E" font-size="19">→ used for <tspan fill="#BC8CFF" font-weight="700">cache &amp; registers</tspan></text>
+    </svg>
+  </div>
+  <div class="stage frag" style="margin-top:-1vh">
+    <svg viewBox="0 0 1000 250" role="img" aria-label="DRAM cell leaking">
+      <rect x="520" y="20" width="440" height="210" rx="12" fill="rgba(240,136,62,.10)" stroke="#F0883E" stroke-width="2"/>
+      <text x="740" y="55" text-anchor="middle" fill="#F0883E" font-size="24" font-weight="800">DRAM cell</text>
+      <text x="740" y="92" text-anchor="middle" fill="#E6EDF3" font-size="19">1 transistor + 1 capacitor — stores a bit as charge</text>
+      <text x="740" y="122" text-anchor="middle" fill="#E6EDF3" font-size="19">charge <tspan fill="#F85149" font-weight="700">leaks</tspan> → needs periodic <tspan fill="#F85149" font-weight="700">refresh</tspan></text>
+      <!-- leaking charge bar -->
+      <rect x="905" y="150" width="18" height="42" class="leakbar" fill="#39D0D8"/>
+      <rect x="905" y="150" width="18" height="42" fill="none" stroke="#8B949E"/>
+      <text x="740" y="200" text-anchor="middle" fill="#3FB950" font-size="19" font-weight="700">dense &amp; cheap → main memory (RAM)</text>
+    </svg>
+  </div>
+  <div class="small frag">The whole reason main memory is DRAM: 1 transistor per cell packs far more bits for far less cost — refresh is the price.</div>
+</section>
+
+<!-- 2.5 ROM family -->
+<section class="slide" data-slide>
+  <div class="kicker">2 · Main Memory</div>
+  <h2 class="title">The ROM family — one story, five variants</h2>
+  <div class="foothold"><span class="lbl">Where this fits ·</span> ROM is non-volatile — it survives power loss. "Read-only" softened over the decades: each generation made ROM <b>easier to rewrite</b>.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 260" role="img" aria-label="ROM family progression">
+      <g font-size="19" font-weight="700" text-anchor="middle">
+        <g class="frag"><rect x="20" y="60" width="170" height="120" rx="10" fill="rgba(248,81,73,.12)" stroke="#F85149" stroke-width="2"/>
+          <text x="105" y="100" fill="#F85149" font-size="22">Mask ROM</text>
+          <text x="105" y="132" fill="#E6EDF3" font-size="17">written at</text><text x="105" y="154" fill="#E6EDF3" font-size="17">manufacture — never</text></g>
+        <g class="frag"><rect x="210" y="60" width="170" height="120" rx="10" fill="rgba(240,136,62,.12)" stroke="#F0883E" stroke-width="2"/>
+          <text x="295" y="100" fill="#F0883E" font-size="22">PROM</text>
+          <text x="295" y="132" fill="#E6EDF3" font-size="17">user writes</text><text x="295" y="154" fill="#E6EDF3" font-size="17">once</text></g>
+        <g class="frag"><rect x="400" y="60" width="170" height="120" rx="10" fill="rgba(210,153,34,.12)" stroke="#D29922" stroke-width="2"/>
+          <text x="485" y="100" fill="#D29922" font-size="22">EPROM</text>
+          <text x="485" y="132" fill="#E6EDF3" font-size="17">erase with</text><text x="485" y="154" fill="#E6EDF3" font-size="17">UV light</text></g>
+        <g class="frag"><rect x="590" y="60" width="170" height="120" rx="10" fill="rgba(63,185,80,.12)" stroke="#3FB950" stroke-width="2"/>
+          <text x="675" y="100" fill="#3FB950" font-size="22">EEPROM</text>
+          <text x="675" y="132" fill="#E6EDF3" font-size="17">electrical,</text><text x="675" y="154" fill="#E6EDF3" font-size="17">byte by byte</text></g>
+        <g class="frag"><rect x="780" y="60" width="190" height="120" rx="10" fill="rgba(88,166,255,.14)" stroke="#58A6FF" stroke-width="2.5"/>
+          <text x="875" y="100" fill="#58A6FF" font-size="22">Flash</text>
+          <text x="875" y="132" fill="#E6EDF3" font-size="17">electrical, fast</text><text x="875" y="154" fill="#E6EDF3" font-size="17">blocks → SSDs</text></g>
+      </g>
+      <g class="frag" stroke="#8B949E" stroke-width="2" marker-end="url(#romArr)">
+        <line x1="195" y1="120" x2="205" y2="120"/><line x1="385" y1="120" x2="395" y2="120"/>
+        <line x1="575" y1="120" x2="585" y2="120"/><line x1="765" y1="120" x2="775" y2="120"/>
+      </g>
+      <text class="frag" x="500" y="230" text-anchor="middle" fill="#BC8CFF" font-size="20" font-weight="700">"never" → "once" → "UV" → "byte-wise" → "fast blocks": each step, easier to rewrite.</text>
+      <defs><marker id="romArr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9" fill="#8B949E"/></marker></defs>
+    </svg>
+  </div>
+</section>
+
+<!-- 2.6 Build a larger module -->
+<section class="slide" data-slide>
+  <div class="kicker">2 · Main Memory</div>
+  <h2 class="title">Building a larger module from small chips</h2>
+  <div class="foothold"><span class="lbl">The payoff ·</span> No single chip is big enough for a real machine. Combine many small chips two ways — and the memory address map falls right out.</div>
+  <div class="stage frag">
+    <svg viewBox="0 0 1000 240" role="img" aria-label="Widening words by stacking chips">
+      <text x="30" y="35" fill="#3FB950" font-size="21" font-weight="800">① STACK for width — widen every word</text>
+      <g>
+        <rect x="40" y="55" width="80" height="90" rx="8" fill="rgba(57,208,216,.14)" stroke="#39D0D8"/><text x="80" y="105" text-anchor="middle" fill="#39D0D8" font-size="15">1K×1</text>
+        <rect x="130" y="55" width="80" height="90" rx="8" fill="rgba(57,208,216,.14)" stroke="#39D0D8"/><text x="170" y="105" text-anchor="middle" fill="#39D0D8" font-size="15">1K×1</text>
+        <rect x="220" y="55" width="80" height="90" rx="8" fill="rgba(57,208,216,.14)" stroke="#39D0D8"/><text x="260" y="105" text-anchor="middle" fill="#39D0D8" font-size="15">1K×1</text>
+        <rect x="310" y="55" width="80" height="90" rx="8" fill="rgba(57,208,216,.14)" stroke="#39D0D8"/><text x="350" y="105" text-anchor="middle" fill="#39D0D8" font-size="15">1K×1</text>
+      </g>
+      <text x="215" y="185" text-anchor="middle" fill="#E6EDF3" font-size="18">4 chips side-by-side → one <tspan fill="#3FB950" font-weight="700">1K × 4</tspan> module. Same address feeds all; no change to the decoder.</text>
+    </svg>
+  </div>
+  <div class="stage frag" style="margin-top:-1vh">
+    <svg viewBox="0 0 1000 230" role="img" aria-label="Extending address range by lining up chip groups">
+      <text x="30" y="35" fill="#F0883E" font-size="21" font-weight="800">② LINE UP for depth — extend the address range</text>
+      <rect x="40" y="55" width="150" height="80" rx="8" fill="rgba(240,136,62,.12)" stroke="#F0883E"/><text x="115" y="100" text-anchor="middle" fill="#F0883E" font-size="16">group 0 · 1K</text>
+      <rect x="210" y="55" width="150" height="80" rx="8" fill="rgba(240,136,62,.12)" stroke="#F0883E"/><text x="285" y="100" text-anchor="middle" fill="#F0883E" font-size="16">group 1 · 1K</text>
+      <text x="30" y="185" fill="#E6EDF3" font-size="18">2 groups → 2K words. One <tspan fill="#F0883E" font-weight="700">extra high address bit</tspan> picks which group answers.</text>
+      <text x="30" y="212" fill="#BC8CFF" font-size="19" font-weight="700">Address map: high bits select the chip/group, low bits select the word inside it.</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 2.7 KEY INSIGHT -->
+<section class="slide keyslide" data-slide>
+  <span class="badge key">🔑 Key insight</span>
+  <div class="ktext frag">A memory module is just a <b class="hl">decoder</b> + a <b class="t">grid of cells</b>, scaled up: <b>stack chips to widen the word, line them up to extend the address range.</b></div>
+  <div class="ksub frag">RAM (SRAM/DRAM) is volatile working memory; ROM is non-volatile — and the address map is simply "high bits pick the chip, low bits pick the word."</div>
+</section>
+<!-- ==================================================================== -->
+<!-- CHAPTER 3 · AUXILIARY MEMORY                                          -->
+<!-- ==================================================================== -->
+<section class="slide divider" data-slide>
+  <div class="chno">3</div>
+  <div class="chname">Auxiliary Memory</div>
+  <div class="hook">The pyramid's base was labelled "non-volatile". Pull the power on a RAM-only machine — what is left?</div>
+  <div class="src">Notes Ch.3 · Foothold 4.5 · Hamacher §8.9–8.11 / Mano §12-3</div>
+</section>
+
+<!-- 3.1 Why auxiliary -->
+<section class="slide" data-slide>
+  <div class="kicker">3 · Auxiliary Memory</div>
+  <h2 class="title">Why auxiliary storage has to exist</h2>
+  <div class="foothold"><span class="lbl">The gap ·</span> Main memory (DRAM) is fast enough — but it is <b>volatile</b>. The moment power is lost, every stored charge disappears.</div>
+  <ul class="pts">
+    <li class="frag">A machine built <b class="r">only</b> from RAM works fine — until you switch it off. Then it has <b class="r">nothing</b> left.</li>
+    <li class="frag"><b class="hl">Auxiliary (secondary) memory</b> is the opposite of RAM on the one axis that matters for permanence: <b class="g">non-volatile</b>.</li>
+    <li class="frag">The trade: your data survives power loss, at the cost of being <b class="o">far slower</b> to access (milliseconds, not nanoseconds).</li>
+    <li class="frag">It also lives <b class="t">outside</b> the CPU–cache–main-memory core, reached through the I/O system — magnetic disks, tape, optical.</li>
+  </ul>
+</section>
+
+<!-- 3.2 Disk anatomy -->
+<section class="slide" data-slide>
+  <div class="kicker">3 · Auxiliary Memory</div>
+  <h2 class="title">Magnetic disk — the anatomy</h2>
+  <div class="foothold"><span class="lbl">What we want ·</span> Before timing a read, name the parts. A disk stores bits magnetically on concentric rings, addressed by track and sector.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 440" role="img" aria-label="Magnetic disk anatomy">
+      <g class="frag">
+        <circle cx="330" cy="220" r="200" fill="#161B22" stroke="#30363D" stroke-width="2"/>
+        <circle cx="330" cy="220" r="150" fill="none" stroke="#30363D"/>
+        <circle cx="330" cy="220" r="110" fill="none" stroke="#30363D"/>
+        <circle cx="330" cy="220" r="70" fill="none" stroke="#30363D"/>
+        <circle cx="330" cy="220" r="14" fill="#8B949E"/>
+        <text x="330" y="255" text-anchor="middle" fill="#8B949E" font-size="16">spindle</text>
+        <text x="600" y="120" fill="#39D0D8" font-size="22" font-weight="700">Tracks — concentric rings</text>
+        <line x1="470" y1="130" x2="440" y2="150" stroke="#39D0D8" stroke-width="1.5"/>
+      </g>
+      <g class="frag">
+        <path d="M330,220 L330,20 A200,200 0 0,1 480,90 Z" fill="rgba(88,166,255,.16)" stroke="#58A6FF" stroke-width="1.5"/>
+        <text x="600" y="180" fill="#58A6FF" font-size="22" font-weight="700">Sector — a wedge of a track</text>
+        <line x1="470" y1="175" x2="420" y2="120" stroke="#58A6FF" stroke-width="1.5"/>
+      </g>
+      <g class="frag">
+        <rect x="330" y="205" width="330" height="30" rx="6" fill="rgba(240,136,62,.2)" stroke="#F0883E" stroke-width="2"/>
+        <rect x="640" y="200" width="60" height="40" rx="6" fill="#F0883E"/>
+        <text x="720" y="225" fill="#F0883E" font-size="22" font-weight="700">Read/write head on an arm</text>
+        <text x="720" y="252" fill="#8B949E" font-size="18">moves radially to reach a track</text>
+      </g>
+      <text class="frag" x="600" y="330" fill="#BC8CFF" font-size="20" font-weight="700">To read a byte: name a <tspan fill="#39D0D8">track</tspan> + a <tspan fill="#58A6FF">sector</tspan>. The head finds the track; the disk spins the sector under it.</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 3.3 Trace a read (spinning disk, signature) -->
+<section class="slide" data-slide>
+  <div class="kicker">3 · Auxiliary Memory</div>
+  <h2 class="title">Trace a read — three waits, back to back</h2>
+  <div class="foothold"><span class="lbl">Build it ·</span> Request: read sector 47 on track 12. One disk access hides <b>two completely different kinds of waiting</b> — watch the platter spin under a barely-moving head.</div>
+  <div class="stage" style="display:flex; gap:2vw; align-items:center">
+    <svg viewBox="0 0 460 460" style="width:38%" role="img" aria-label="Spinning disk read">
+      <circle cx="230" cy="230" r="200" fill="#161B22" stroke="#30363D" stroke-width="2"/>
+      <circle cx="230" cy="230" r="120" fill="none" stroke="#39D0D8" stroke-width="2.5"/>
+      <circle cx="230" cy="230" r="160" fill="none" stroke="#30363D"/>
+      <circle cx="230" cy="230" r="80" fill="none" stroke="#30363D"/>
+      <!-- spinning marker: radial line + target sector dot at track-12 radius -->
+      <g class="spin">
+        <line x1="230" y1="230" x2="230" y2="30" stroke="#30363D" stroke-width="2"/>
+        <circle cx="230" cy="110" r="13" fill="#58A6FF"/>
+        <text x="230" y="115" text-anchor="middle" fill="#0D1117" font-size="12" font-weight="800">47</text>
+      </g>
+      <circle cx="230" cy="230" r="12" fill="#8B949E"/>
+      <!-- head + arm, slides in on reveal -->
+      <g class="seekarm">
+        <rect x="350" y="216" width="110" height="28" rx="5" fill="#F0883E"/>
+        <rect x="338" y="212" width="24" height="36" rx="4" fill="#F0883E"/>
+        <text x="405" y="205" text-anchor="middle" fill="#F0883E" font-size="15" font-weight="700">head</text>
+      </g>
+      <text x="230" y="285" text-anchor="middle" fill="#39D0D8" font-size="15" font-weight="700">track 12</text>
+    </svg>
+    <div style="width:60%">
+      <div class="body frag" style="font-size:clamp(19px,2vw,30px)"><b class="y">① Seek</b> — the arm moves radially to <b class="t">track 12</b>. (mechanical — the slow part)</div>
+      <div class="body frag" style="font-size:clamp(19px,2vw,30px)"><b class="o">② Rotational wait</b> — head is on track 12, but sector 47 hasn't rotated under it yet.</div>
+      <div class="body frag" style="font-size:clamp(19px,2vw,30px)"><b class="g">③ Transfer</b> — bits stream off the track as it spins under the stationary head.</div>
+      <div class="answer frag" style="margin-top:1.5vh; font-size:clamp(18px,1.9vw,26px)"><b>T<sub>access</sub> = T<sub>seek</sub> + ½ rotation + T<sub>transfer</sub></b><br><span class="small" style="color:#E6EDF3">Rotational latency is an <b class="o">average</b> — the sector could be under the head already (0) or need a full spin (worst); half a revolution is the expected wait.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3.4 ASK THE CLASS -->
+<section class="slide" data-slide>
+  <div class="kicker">3 · Auxiliary Memory</div>
+  <span class="badge mic">🎤 Ask the class</span>
+  <div class="ask" style="margin-top:1.5vh">The head just reached track 12 — but sector 47 <b class="o">just passed by</b>. How long until it comes back around: best case, worst case, average?</div>
+  <div class="answer frag" style="margin-top:2vh"><b class="g">Best</b> ≈ 0 (it's already there next time), <b class="r">worst</b> ≈ one full revolution, <b class="y">average</b> ≈ ½ revolution. That ½-rotation is the rotational latency term — a statistical average, not a fixed number.</div>
+</section>
+
+<!-- 3.5 Compare media -->
+<section class="slide" data-slide>
+  <div class="kicker">3 · Auxiliary Memory</div>
+  <h2 class="title">Comparing the media</h2>
+  <div class="foothold"><span class="lbl">Where this fits ·</span> Not all auxiliary storage works the same way. The big divide: <b>random access</b> vs <b>sequential access</b>.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 300" role="img" aria-label="Comparison of storage media">
+      <g font-size="18">
+        <g class="frag"><rect x="20" y="40" width="230" height="220" rx="12" fill="rgba(88,166,255,.10)" stroke="#58A6FF" stroke-width="2"/>
+          <text x="135" y="80" text-anchor="middle" fill="#58A6FF" font-size="23" font-weight="800">Hard Disk</text>
+          <text x="135" y="120" text-anchor="middle" fill="#E6EDF3">random access</text>
+          <text x="135" y="150" text-anchor="middle" fill="#E6EDF3">fast, high capacity</text>
+          <text x="135" y="180" text-anchor="middle" fill="#8B949E">the workhorse of</text><text x="135" y="204" text-anchor="middle" fill="#8B949E">secondary storage</text></g>
+        <g class="frag"><rect x="265" y="40" width="230" height="220" rx="12" fill="rgba(210,153,34,.10)" stroke="#D29922" stroke-width="2"/>
+          <text x="380" y="80" text-anchor="middle" fill="#D29922" font-size="23" font-weight="800">Floppy Disk</text>
+          <text x="380" y="120" text-anchor="middle" fill="#E6EDF3">random access</text>
+          <text x="380" y="150" text-anchor="middle" fill="#E6EDF3">tiny, removable</text>
+          <text x="380" y="180" text-anchor="middle" fill="#8B949E">historic — the same</text><text x="380" y="204" text-anchor="middle" fill="#8B949E">track/sector model</text></g>
+        <g class="frag"><rect x="510" y="40" width="230" height="220" rx="12" fill="rgba(63,185,80,.10)" stroke="#3FB950" stroke-width="2"/>
+          <text x="625" y="80" text-anchor="middle" fill="#3FB950" font-size="23" font-weight="800">Optical</text>
+          <text x="625" y="120" text-anchor="middle" fill="#E6EDF3">CD / DVD / Blu-ray</text>
+          <text x="625" y="150" text-anchor="middle" fill="#E6EDF3">pits on a spiral track</text>
+          <text x="625" y="180" text-anchor="middle" fill="#8B949E">read by laser;</text><text x="625" y="204" text-anchor="middle" fill="#8B949E">removable, durable</text></g>
+        <g class="frag"><rect x="755" y="40" width="225" height="220" rx="12" fill="rgba(240,136,62,.10)" stroke="#F0883E" stroke-width="2"/>
+          <text x="867" y="80" text-anchor="middle" fill="#F0883E" font-size="23" font-weight="800">Magnetic Tape</text>
+          <text x="867" y="120" text-anchor="middle" fill="#F85149">sequential only</text>
+          <text x="867" y="150" text-anchor="middle" fill="#E6EDF3">lowest cost / byte</text>
+          <text x="867" y="180" text-anchor="middle" fill="#8B949E">backups you rarely read</text><text x="867" y="204" text-anchor="middle" fill="#8B949E">but must never lose</text></g>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- 3.6 KEY INSIGHT -->
+<section class="slide keyslide" data-slide>
+  <span class="badge key">🔑 Key insight</span>
+  <div class="ktext frag">Auxiliary memory buys <b class="g">permanence</b> — non-volatile, huge, cheap — by giving up <b class="o">speed</b>.</div>
+  <div class="ksub frag">Disk access = <b>T<sub>seek</sub> + ½ rotation + T<sub>transfer</sub></b>; tape trades away random access entirely for the lowest cost per byte of all.</div>
+</section>
+<!-- ==================================================================== -->
+<!-- CHAPTER 4 · ASSOCIATIVE MEMORY  (Mano-only topic)                     -->
+<!-- ==================================================================== -->
+<section class="slide divider" data-slide>
+  <div class="chno">4</div>
+  <div class="chname">Associative Memory</div>
+  <div class="hook">Every memory so far was found by its address. What if you know only what you're looking for — not where it is?</div>
+  <div class="src">Notes Ch.4 · Foothold 4.4 · Mano §12-4 (Hamacher has no dedicated section)</div>
+</section>
+
+<!-- 4.1 Why content -->
+<section class="slide" data-slide>
+  <div class="kicker">4 · Associative Memory</div>
+  <h2 class="title">Search by content, not by address</h2>
+  <div class="foothold"><span class="lbl">The gap ·</span> Ordinary RAM answers "what is <b>at</b> address A?" But often we ask the reverse: "<b>which</b> location holds this value?" — and we don't know the address.</div>
+  <ul class="pts">
+    <li class="frag">Address-by-address search means checking locations <b class="o">one at a time</b> — slow when the table is large.</li>
+    <li class="frag">An <b class="hl">associative memory</b> (a.k.a. <b class="hl">content-addressable memory, CAM</b>) compares <b class="g">every</b> word to the search value <b class="g">simultaneously</b>, in parallel.</li>
+    <li class="frag">The parallel-comparison hardware costs more per bit — so it's reserved for cases where <b class="p">search time is critical</b> (e.g. a fully-associative cache tag check, or the TLB in Ch.7).</li>
+  </ul>
+</section>
+
+<!-- 4.2 Anatomy -->
+<section class="slide" data-slide>
+  <div class="kicker">4 · Associative Memory</div>
+  <h2 class="title">Anatomy — four registers, no address input</h2>
+  <div class="foothold"><span class="lbl">Build it ·</span> Notice as it appears: there is <b>no address line anywhere</b>. You supply content and get back which words matched.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 420" role="img" aria-label="Associative memory block diagram">
+      <g class="frag">
+        <rect x="60" y="40" width="360" height="60" rx="8" fill="rgba(88,166,255,.16)" stroke="#58A6FF" stroke-width="2"/>
+        <text x="240" y="78" text-anchor="middle" fill="#58A6FF" font-size="22" font-weight="800">Argument register  A — the value we search for</text>
+      </g>
+      <g class="frag">
+        <rect x="60" y="115" width="360" height="60" rx="8" fill="rgba(210,153,34,.16)" stroke="#D29922" stroke-width="2"/>
+        <text x="240" y="153" text-anchor="middle" fill="#D29922" font-size="22" font-weight="800">Key register  K — which bit-fields to compare</text>
+      </g>
+      <g class="frag">
+        <rect x="60" y="215" width="560" height="170" rx="10" fill="rgba(57,208,216,.10)" stroke="#39D0D8" stroke-width="2.5"/>
+        <text x="340" y="250" text-anchor="middle" fill="#39D0D8" font-size="22" font-weight="800">Associative memory array — m words × n bits</text>
+        <g stroke="#30363D">
+          <line x1="60" y1="275" x2="620" y2="275"/><line x1="60" y1="310" x2="620" y2="310"/><line x1="60" y1="345" x2="620" y2="345"/>
+        </g>
+        <text x="340" y="298" text-anchor="middle" fill="#8B949E" font-size="17">every word compared to A (under mask K) at the same time</text>
+      </g>
+      <g class="frag">
+        <rect x="680" y="215" width="260" height="170" rx="10" fill="rgba(63,185,80,.14)" stroke="#3FB950" stroke-width="2.5"/>
+        <text x="810" y="250" text-anchor="middle" fill="#3FB950" font-size="22" font-weight="800">Match register M</text>
+        <text x="810" y="292" text-anchor="middle" fill="#E6EDF3" font-size="18">one bit per word:</text>
+        <text x="810" y="320" text-anchor="middle" fill="#E6EDF3" font-size="18">1 = this word matched</text>
+        <text x="810" y="348" text-anchor="middle" fill="#E6EDF3" font-size="18">0 = it did not</text>
+        <line x1="620" y1="300" x2="680" y2="300" stroke="#3FB950" stroke-width="3" marker-end="url(#mArr)"/>
+      </g>
+      <defs><marker id="mArr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10" fill="#3FB950"/></marker></defs>
+    </svg>
+  </div>
+</section>
+
+<!-- 4.3 Masked compare (SIGNATURE, worked example) -->
+<section class="slide" data-slide>
+  <div class="kicker">4 · Associative Memory</div>
+  <h2 class="title">Masked compare — the key decides what counts</h2>
+  <div class="foothold"><span class="lbl">A doubt to settle ·</span> Why a <b>Key</b> register at all? Because we often want to match only <b>part</b> of a word. The notes' worked example: compare just the first three bits.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 400" font-family="Consolas,monospace" role="img" aria-label="Masked comparison example">
+      <!-- Argument and Key -->
+      <g class="frag" font-size="24" font-weight="800">
+        <text x="30" y="55" fill="#8B949E" font-size="20">Argument A</text>
+        <text x="230" y="55" fill="#58A6FF">1 0 1</text><text x="360" y="55" fill="#58A6FF">1 0 1 1 0 1</text>
+        <text x="30" y="95" fill="#8B949E" font-size="20">Key K</text>
+        <text x="230" y="95" fill="#D29922">1 1 1</text><text x="360" y="95" fill="#8B949E">0 0 0 0 0 0</text>
+        <text x="620" y="75" fill="#D29922" font-size="19">K=1 → compare · K=0 → ignore</text>
+        <rect x="215" y="25" width="120" height="90" rx="6" fill="none" stroke="#D29922" stroke-width="2" stroke-dasharray="5 4"/>
+        <text x="275" y="140" text-anchor="middle" fill="#D29922" font-size="17">only these 3 bits are checked</text>
+      </g>
+      <!-- Word 1 : no match -->
+      <g class="frag" font-size="24" font-weight="800">
+        <text x="30" y="225" fill="#8B949E" font-size="20">Word 1</text>
+        <text x="230" y="225" fill="#F85149">0 1 1</text><text x="360" y="225" fill="#8B949E">1 0 1 1 0 1</text>
+        <text x="620" y="225" fill="#F85149" font-size="21">first 3 bits 011 ≠ 101 → M=0  ✗ no match</text>
+      </g>
+      <!-- Word 2 : match -->
+      <g class="frag" font-size="24" font-weight="800">
+        <text x="30" y="305" fill="#8B949E" font-size="20">Word 2</text>
+        <text x="230" y="305" fill="#3FB950">1 0 1</text><text x="360" y="305" fill="#8B949E">0 1 0 1 1 1</text>
+        <text x="620" y="305" fill="#3FB950" font-size="21">first 3 bits 101 = 101 → M=1  ✓ match</text>
+      </g>
+      <text class="frag" x="30" y="375" fill="#BC8CFF" font-size="21" font-weight="700">Word 2 matches even though its last 6 bits look nothing like A — because K=0 there, those positions are never even checked.</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 4.4 ASK THE CLASS -->
+<section class="slide" data-slide>
+  <div class="kicker">4 · Associative Memory</div>
+  <span class="badge mic">🎤 Ask the class</span>
+  <div class="ask" style="margin-top:1.5vh">With <code>A = 101 101101</code> and <code>K = 111 000000</code>, a word reads <code>101 000000</code>. Match or no match? And how many words <b class="hl">could</b> match at once?</div>
+  <div class="answer frag" style="margin-top:2vh"><b class="g">Match</b> — its first three bits are 101, and nothing else is compared. And <b class="hl">any number</b> of words can match simultaneously — every word whose first 3 bits are 101 sets its M-bit to 1. That's the power (and cost) of parallel content search.</div>
+</section>
+
+<!-- 4.5 Read / write / tag bits -->
+<section class="slide" data-slide>
+  <div class="kicker">4 · Associative Memory</div>
+  <h2 class="title">Reading, writing, and the tag bit</h2>
+  <div class="foothold"><span class="lbl">Recall ·</span> There's no address to write to. So how do we add or delete a word? A single extra <b>tag bit</b> per word tracks "in use / free".</div>
+  <ul class="pts">
+    <li class="frag"><b class="hl">Read:</b> supply content in A (and mask K); the matching words announce themselves through M. No address ever named.</li>
+    <li class="frag"><b class="g">Write (add):</b> the new word lands in the <b class="g">first location whose tag bit is 0</b> (free) — the tag then flips to 1 (in use).</li>
+    <li class="frag"><b class="r">Delete:</b> just <b class="r">clear the tag</b> to 0. The bits are still physically there — the location is simply marked unused and free to overwrite.</li>
+  </ul>
+</section>
+
+<!-- 4.6 KEY INSIGHT -->
+<section class="slide keyslide" data-slide>
+  <span class="badge key">🔑 Key insight</span>
+  <div class="ktext frag">Associative memory is accessed by <b class="hl">content, not address</b> — every word compared in parallel, the <b class="y">key</b> masking which bits count.</div>
+  <div class="ksub frag">Parallel hardware is costly per bit, so it's used only where search speed is critical — remember this: the <b class="p">TLB</b> in Chapter 7 <em>is</em> an associative memory.</div>
+</section>
+<!-- ==================================================================== -->
+<!-- CHAPTER 5 · CACHE MEMORY                                              -->
+<!-- ==================================================================== -->
+<section class="slide divider" data-slide>
+  <div class="chno">5</div>
+  <div class="chname">Cache Memory</div>
+  <div class="hook">Chapter 1 told us WHY a small fast cache works (locality). Now the hardware question: when a block arrives, WHERE in the cache does it go?</div>
+  <div class="src">Notes Ch.5 · Foothold 4.3 · Hamacher §8.6 / Mano §12-5</div>
+</section>
+
+<!-- 5.1 The placement problem -->
+<section class="slide" data-slide>
+  <div class="kicker">5 · Cache Memory</div>
+  <h2 class="title">The placement problem</h2>
+  <div class="foothold"><span class="lbl">Where this fits ·</span> Main memory has hundreds of thousands of blocks; the cache holds only a handful of lines. So two questions must be answered by hardware, fast.</div>
+  <ul class="pts">
+    <li class="frag">When block <b class="hl">N</b> is fetched from main memory, <b class="hl">which cache line</b> does it go into?</li>
+    <li class="frag">Later, to check if block N is <b class="g">already</b> cached, which line(s) must we compare — and how few can we get away with?</li>
+    <li class="frag">Three answers, trading <b class="y">flexibility</b> against <b class="o">how much comparison hardware</b> a lookup needs.</li>
+  </ul>
+</section>
+
+<!-- 5.2 Three mapping techniques -->
+<section class="slide" data-slide>
+  <div class="kicker">5 · Cache Memory</div>
+  <h2 class="title">Three mapping techniques — same block, three rules</h2>
+  <div class="foothold"><span class="lbl">A contrast ·</span> Follow one main-memory block and watch where it is <b>allowed</b> to land under each scheme.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 360" role="img" aria-label="Direct, fully-associative and set-associative mapping">
+      <!-- Direct -->
+      <g class="frag">
+        <text x="150" y="35" text-anchor="middle" fill="#58A6FF" font-size="21" font-weight="800">Direct</text>
+        <g font-size="14" fill="#8B949E">
+          <rect x="90" y="55" width="120" height="34" rx="5" fill="#1C2333" stroke="#30363D"/><text x="150" y="77" text-anchor="middle">line 0</text>
+          <rect x="90" y="95" width="120" height="34" rx="5" fill="rgba(88,166,255,.25)" stroke="#58A6FF" stroke-width="2"/><text x="150" y="117" text-anchor="middle" fill="#58A6FF">line 1 ◄ only home</text>
+          <rect x="90" y="135" width="120" height="34" rx="5" fill="#1C2333" stroke="#30363D"/><text x="150" y="157" text-anchor="middle">line 2</text>
+          <rect x="90" y="175" width="120" height="34" rx="5" fill="#1C2333" stroke="#30363D"/><text x="150" y="197" text-anchor="middle">line 3</text>
+        </g>
+        <text x="150" y="255" text-anchor="middle" fill="#E6EDF3" font-size="16">exactly ONE slot</text>
+        <text x="150" y="278" text-anchor="middle" fill="#8B949E" font-size="14">(line = block mod #lines)</text>
+        <text x="150" y="305" text-anchor="middle" fill="#F85149" font-size="14">cheap check, forced collisions</text>
+      </g>
+      <!-- Fully associative -->
+      <g class="frag">
+        <text x="500" y="35" text-anchor="middle" fill="#BC8CFF" font-size="21" font-weight="800">Fully associative</text>
+        <g font-size="14">
+          <rect x="440" y="55" width="120" height="34" rx="5" fill="rgba(188,140,255,.2)" stroke="#BC8CFF"/><text x="500" y="77" text-anchor="middle" fill="#BC8CFF">any line</text>
+          <rect x="440" y="95" width="120" height="34" rx="5" fill="rgba(188,140,255,.2)" stroke="#BC8CFF"/><text x="500" y="117" text-anchor="middle" fill="#BC8CFF">any line</text>
+          <rect x="440" y="135" width="120" height="34" rx="5" fill="rgba(188,140,255,.2)" stroke="#BC8CFF"/><text x="500" y="157" text-anchor="middle" fill="#BC8CFF">any line</text>
+          <rect x="440" y="175" width="120" height="34" rx="5" fill="rgba(188,140,255,.2)" stroke="#BC8CFF"/><text x="500" y="197" text-anchor="middle" fill="#BC8CFF">any line</text>
+        </g>
+        <text x="500" y="255" text-anchor="middle" fill="#E6EDF3" font-size="16">goes ANYWHERE</text>
+        <text x="500" y="278" text-anchor="middle" fill="#8B949E" font-size="14">no forced collisions…</text>
+        <text x="500" y="305" text-anchor="middle" fill="#F0883E" font-size="14">…but search every tag at once</text>
+      </g>
+      <!-- Set associative -->
+      <g class="frag">
+        <text x="850" y="35" text-anchor="middle" fill="#3FB950" font-size="21" font-weight="800">Set-associative (4-way)</text>
+        <g font-size="14" fill="#8B949E">
+          <rect x="790" y="55" width="120" height="34" rx="5" fill="rgba(63,185,80,.22)" stroke="#3FB950" stroke-width="2"/><text x="850" y="77" text-anchor="middle" fill="#3FB950">set 0 · way a</text>
+          <rect x="790" y="95" width="120" height="34" rx="5" fill="rgba(63,185,80,.22)" stroke="#3FB950" stroke-width="2"/><text x="850" y="117" text-anchor="middle" fill="#3FB950">set 0 · way b</text>
+          <rect x="790" y="135" width="120" height="34" rx="5" fill="#1C2333" stroke="#30363D"/><text x="850" y="157" text-anchor="middle">set 1 · way a</text>
+          <rect x="790" y="175" width="120" height="34" rx="5" fill="#1C2333" stroke="#30363D"/><text x="850" y="197" text-anchor="middle">set 1 · way b</text>
+        </g>
+        <text x="850" y="255" text-anchor="middle" fill="#E6EDF3" font-size="16">fixed SET, free within it</text>
+        <text x="850" y="278" text-anchor="middle" fill="#8B949E" font-size="14">a few choices, a few compares</text>
+        <text x="850" y="305" text-anchor="middle" fill="#3FB950" font-size="14">the real-world compromise</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- 5.3 Address split (worked) -->
+<section class="slide" data-slide>
+  <div class="kicker">5 · Cache Memory</div>
+  <h2 class="title">Where it lands — splitting the address</h2>
+  <div class="foothold"><span class="lbl">Build it ·</span> Worked example used all through this topic: a <b>512-line</b> cache, <b>16 words</b> per line, main memory reached by a <b>24-bit</b> address. Only the middle field changes across schemes.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 360" font-family="Consolas,monospace" role="img" aria-label="Address field splits">
+      <!-- direct -->
+      <g class="frag">
+        <text x="30" y="60" fill="#58A6FF" font-size="19" font-weight="800" font-family="Segoe UI">Direct-mapped</text>
+        <rect x="30" y="75" width="470" height="46" fill="rgba(88,166,255,.18)" stroke="#58A6FF" stroke-width="2"/><text x="265" y="104" text-anchor="middle" fill="#58A6FF" font-size="18">TAG — 11 bits</text>
+        <rect x="500" y="75" width="380" height="46" fill="rgba(210,153,34,.2)" stroke="#D29922" stroke-width="2"/><text x="690" y="104" text-anchor="middle" fill="#D29922" font-size="18">LINE — 9 bits</text>
+        <rect x="880" y="75" width="90" height="46" fill="rgba(57,208,216,.2)" stroke="#39D0D8" stroke-width="2"/><text x="925" y="104" text-anchor="middle" fill="#39D0D8" font-size="15">WORD 4</text>
+      </g>
+      <!-- fully associative -->
+      <g class="frag">
+        <text x="30" y="180" fill="#BC8CFF" font-size="19" font-weight="800" font-family="Segoe UI">Fully associative</text>
+        <rect x="30" y="195" width="850" height="46" fill="rgba(188,140,255,.18)" stroke="#BC8CFF" stroke-width="2"/><text x="455" y="224" text-anchor="middle" fill="#BC8CFF" font-size="18">TAG — 20 bits  (no line field — block can be anywhere)</text>
+        <rect x="880" y="195" width="90" height="46" fill="rgba(57,208,216,.2)" stroke="#39D0D8" stroke-width="2"/><text x="925" y="224" text-anchor="middle" fill="#39D0D8" font-size="15">WORD 4</text>
+      </g>
+      <!-- set associative -->
+      <g class="frag">
+        <text x="30" y="300" fill="#3FB950" font-size="19" font-weight="800" font-family="Segoe UI">Set-associative</text>
+        <rect x="30" y="315" width="560" height="46" fill="rgba(63,185,80,.18)" stroke="#3FB950" stroke-width="2"/><text x="310" y="344" text-anchor="middle" fill="#3FB950" font-size="18">TAG — bigger</text>
+        <rect x="590" y="315" width="290" height="46" fill="rgba(210,153,34,.2)" stroke="#D29922" stroke-width="2"/><text x="735" y="344" text-anchor="middle" fill="#D29922" font-size="17">SET — smaller</text>
+        <rect x="880" y="315" width="90" height="46" fill="rgba(57,208,216,.2)" stroke="#39D0D8" stroke-width="2"/><text x="925" y="344" text-anchor="middle" fill="#39D0D8" font-size="15">WORD 4</text>
+      </g>
+      <text class="frag" x="30" y="150" fill="#8B949E" font-size="16" font-family="Segoe UI">word = log₂16 = 4 bits · line = log₂512 = 9 bits · tag = 24 − 9 − 4 = 11 bits. Direct: big line field, no choice. Associative: no line field, full choice. Set: split the difference.</text>
+    </svg>
+  </div>
+</section>
+
+<!-- 5.4 ASK THE CLASS -->
+<section class="slide" data-slide>
+  <div class="kicker">5 · Cache Memory</div>
+  <span class="badge mic">🎤 Ask the class</span>
+  <div class="ask" style="margin-top:1.5vh">A tiny <b class="hl">4-line direct-mapped</b> cache (line = block mod 4). Block 0 is sitting in line 0. Now block 4 is referenced. What happens — and why is it avoidable waste?</div>
+  <div class="answer frag" style="margin-top:2vh">4 mod 4 = 0, so block 4 is <b class="r">forced</b> into line 0 and <b class="r">evicts</b> block 0 — even if lines 1, 2, 3 sit empty. Blocks 4 apart always fight over the same line. This exact weakness is what fully-associative and set-associative mapping exist to reduce.</div>
+</section>
+
+<!-- 5.5 Replacement & write -->
+<section class="slide" data-slide>
+  <div class="kicker">5 · Cache Memory</div>
+  <h2 class="title">Two more decisions: replace, and write</h2>
+  <div class="foothold"><span class="lbl">Why now ·</span> Once a set can hold several blocks, two policies remain: when the set is full, <b>who leaves</b>? And when the CPU writes, <b>when</b> does main memory learn?</div>
+  <ul class="pts">
+    <li class="frag"><b class="y">FIFO</b> evicts the oldest arrival; <b class="g">LRU</b> evicts the least-recently-used. Same access stream → they can evict <b>different</b> lines.</li>
+    <li class="frag"><b class="t">Write-through:</b> every write updates cache <b>and</b> main memory at once — always consistent, more traffic.</li>
+    <li class="frag"><b class="o">Write-back:</b> write updates only the cache (marked <b>dirty</b>); main memory is updated later, when the line is evicted — far less traffic, small risk.</li>
+  </ul>
+</section>
+
+<!-- 5.6 KEY INSIGHT -->
+<section class="slide keyslide" data-slide>
+  <span class="badge key">🔑 Key insight</span>
+  <div class="ktext frag">Same block, three rules: <b class="hl">direct</b> = one slot (cheap, collides), <b class="p">fully associative</b> = anywhere (flexible, costly search), <b class="g">set-associative</b> = the middle ground nearly every real cache uses.</div>
+  <div class="ksub frag">Layered on top: a replacement policy (LRU/FIFO) and a write policy (write-through/write-back).</div>
+</section>
+<!-- ==================================================================== -->
+<!-- CHAPTER 6 · VIRTUAL MEMORY                                            -->
+<!-- ==================================================================== -->
+<section class="slide divider" data-slide>
+  <div class="chno">6</div>
+  <div class="chname">Virtual Memory</div>
+  <div class="hook">Physical RAM is fixed and small. Yet programs — many at once — act as if they each own a huge private memory. How?</div>
+  <div class="src">Notes Ch.6 · Foothold 4.6 · Hamacher §8.8 / Mano §12-6</div>
+</section>
+
+<!-- 6.1 The idea -->
+<section class="slide" data-slide>
+  <div class="kicker">6 · Virtual Memory</div>
+  <h2 class="title">Bigger than RAM — the illusion</h2>
+  <div class="foothold"><span class="lbl">What we want ·</span> Let a program's address space be larger than physical memory, and let many programs coexist — without any of them knowing where they really sit.</div>
+  <ul class="pts">
+    <li class="frag">Every program is given the illusion of a <b class="hl">large, private</b> address space (its <b>virtual</b>/logical addresses).</li>
+    <li class="frag">Only the <b class="g">actively-used pieces</b> are kept in physical RAM; the rest waits on <b class="o">auxiliary storage</b> (Ch.3) until needed.</li>
+    <li class="frag">Hardware + OS translate each virtual address to a real physical one on <b class="t">every reference</b> — invisibly.</li>
+  </ul>
+</section>
+
+<!-- 6.2 Pages and the page table -->
+<section class="slide" data-slide>
+  <div class="kicker">6 · Virtual Memory</div>
+  <h2 class="title">Pages, blocks, and the page table</h2>
+  <div class="foothold"><span class="lbl">Build it ·</span> Both spaces are chopped into equal-size pieces — the address space into <b>pages</b>, physical memory into <b>blocks/frames</b> — so any page fits any block.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 340" role="img" aria-label="Virtual address translation via page table">
+      <!-- virtual address -->
+      <g class="frag" font-family="Consolas,monospace">
+        <text x="30" y="40" fill="#8B949E" font-size="18" font-family="Segoe UI">Virtual address</text>
+        <rect x="30" y="55" width="240" height="50" fill="rgba(88,166,255,.2)" stroke="#58A6FF" stroke-width="2"/><text x="150" y="87" text-anchor="middle" fill="#58A6FF" font-size="19">PAGE number</text>
+        <rect x="270" y="55" width="180" height="50" fill="rgba(57,208,216,.2)" stroke="#39D0D8" stroke-width="2"/><text x="360" y="87" text-anchor="middle" fill="#39D0D8" font-size="19">OFFSET</text>
+      </g>
+      <!-- page table -->
+      <g class="frag">
+        <rect x="380" y="150" width="240" height="170" rx="8" fill="#161B22" stroke="#BC8CFF" stroke-width="2"/>
+        <text x="500" y="178" text-anchor="middle" fill="#BC8CFF" font-size="19" font-weight="800">Page table</text>
+        <g font-size="15" fill="#8B949E" font-family="Consolas,monospace">
+          <text x="400" y="210">page 0 → block 5</text>
+          <text x="400" y="238" fill="#3FB950">page 1 → block 2  (present)</text>
+          <text x="400" y="266">page 2 → block 9</text>
+          <text x="400" y="294" fill="#F85149">page 3 → — (on disk)</text>
+        </g>
+        <line x1="150" y1="105" x2="430" y2="150" stroke="#58A6FF" stroke-width="2" marker-end="url(#ptA)"/>
+      </g>
+      <!-- physical address -->
+      <g class="frag" font-family="Consolas,monospace">
+        <text x="720" y="40" fill="#8B949E" font-size="18" font-family="Segoe UI">Physical address</text>
+        <rect x="720" y="55" width="180" height="50" fill="rgba(63,185,80,.2)" stroke="#3FB950" stroke-width="2"/><text x="810" y="87" text-anchor="middle" fill="#3FB950" font-size="19">BLOCK / frame</text>
+        <rect x="720" y="150" width="180" height="50" fill="rgba(57,208,216,.2)" stroke="#39D0D8" stroke-width="2"/><text x="810" y="182" text-anchor="middle" fill="#39D0D8" font-size="18">OFFSET (same)</text>
+        <line x1="620" y1="200" x2="710" y2="120" stroke="#3FB950" stroke-width="2" marker-end="url(#ptA)"/>
+        <line x1="450" y1="80" x2="712" y2="172" stroke="#39D0D8" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ptA)"/>
+      </g>
+      <text class="frag" x="500" y="335" text-anchor="middle" fill="#BC8CFF" font-size="18" font-weight="700">The page table swaps only the PAGE number for a BLOCK number. The offset within the page never changes.</text>
+      <defs><marker id="ptA" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9" fill="#8B949E"/></marker></defs>
+    </svg>
+  </div>
+</section>
+
+<!-- 6.3 Three paths -->
+<section class="slide" data-slide>
+  <div class="kicker">6 · Virtual Memory</div>
+  <h2 class="title">Translation — every reference takes one of three paths</h2>
+  <div class="foothold"><span class="lbl">A contrast ·</span> A small associative cache of recent translations — the <b>TLB</b> — sits in front of the page table. What happens next depends on what it, and the page table, know.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 300" role="img" aria-label="TLB hit, TLB miss, page fault">
+      <g class="frag">
+        <rect x="30" y="60" width="290" height="180" rx="12" fill="rgba(63,185,80,.10)" stroke="#3FB950" stroke-width="2"/>
+        <text x="175" y="95" text-anchor="middle" fill="#3FB950" font-size="22" font-weight="800">① TLB hit</text>
+        <text x="175" y="135" text-anchor="middle" fill="#E6EDF3" font-size="17">translation already in</text>
+        <text x="175" y="160" text-anchor="middle" fill="#E6EDF3" font-size="17">the TLB (associative)</text>
+        <text x="175" y="200" text-anchor="middle" fill="#3FB950" font-size="17" font-weight="700">fast path — one lookup,</text>
+        <text x="175" y="222" text-anchor="middle" fill="#3FB950" font-size="17" font-weight="700">no page-table walk</text>
+      </g>
+      <g class="frag">
+        <rect x="355" y="60" width="290" height="180" rx="12" fill="rgba(210,153,34,.10)" stroke="#D29922" stroke-width="2"/>
+        <text x="500" y="95" text-anchor="middle" fill="#D29922" font-size="22" font-weight="800">② TLB miss, page present</text>
+        <text x="500" y="135" text-anchor="middle" fill="#E6EDF3" font-size="17">not in TLB, but the page</text>
+        <text x="500" y="160" text-anchor="middle" fill="#E6EDF3" font-size="17">IS in RAM (present bit 1)</text>
+        <text x="500" y="200" text-anchor="middle" fill="#D29922" font-size="17" font-weight="700">walk the page table, then</text>
+        <text x="500" y="222" text-anchor="middle" fill="#D29922" font-size="17" font-weight="700">cache it in the TLB</text>
+      </g>
+      <g class="frag">
+        <rect x="680" y="60" width="290" height="180" rx="12" fill="rgba(248,81,73,.10)" stroke="#F85149" stroke-width="2"/>
+        <text x="825" y="95" text-anchor="middle" fill="#F85149" font-size="22" font-weight="800">③ Page fault</text>
+        <text x="825" y="135" text-anchor="middle" fill="#E6EDF3" font-size="17">present bit = 0 — the page</text>
+        <text x="825" y="160" text-anchor="middle" fill="#E6EDF3" font-size="17">isn't in RAM at all</text>
+        <text x="825" y="200" text-anchor="middle" fill="#F85149" font-size="17" font-weight="700">fetch it from disk (Ch.3)</text>
+        <text x="825" y="222" text-anchor="middle" fill="#F85149" font-size="17" font-weight="700">— the expensive path</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- 6.4 ASK THE CLASS -->
+<section class="slide" data-slide>
+  <div class="kicker">6 · Virtual Memory</div>
+  <span class="badge mic">🎤 Ask the class</span>
+  <div class="ask" style="margin-top:1.5vh">A reference misses the TLB, so we walk the page table — and its <b class="r">present bit is 0</b>. What must happen now, and why is it so much slower than a cache miss?</div>
+  <div class="answer frag" style="margin-top:2vh">It's a <b class="r">page fault</b>: the page isn't in RAM, so the OS fetches it from <b class="o">disk</b> (auxiliary memory) into a free block, updates the page table, and restarts the reference. A cache miss costs a main-memory fetch (~100 ns); a page fault costs a <b>disk</b> fetch (~milliseconds) — tens of thousands of times slower. LRU (Ch.5) picks which resident page to evict if RAM is full.</div>
+</section>
+
+<!-- 6.5 Associative page table (Mano) -->
+<section class="slide" data-slide>
+  <div class="kicker">6 · Virtual Memory</div>
+  <h2 class="title">Mano's associative-memory page table</h2>
+  <div class="foothold"><span class="lbl">Recall ·</span> A page table needs one entry per <b>page</b> — huge and mostly empty, since only a few pages are resident. Mano's fix reuses Chapter 4 directly.</div>
+  <ul class="pts">
+    <li class="frag">Store the page table itself as an <b class="hl">associative memory</b>, sized to the number of <b class="g">blocks</b> (few), not pages (many).</li>
+    <li class="frag">Each word holds a <b>(page number, block number)</b> pair. Present the page number as the <b class="hl">argument</b>…</li>
+    <li class="frag">…a <b class="g">match</b> returns the block number directly; <b class="r">no match</b> means a page fault. This <em>is</em> the idea behind the TLB you'll meet in Chapter 7.</li>
+  </ul>
+</section>
+
+<!-- 6.6 KEY INSIGHT -->
+<section class="slide keyslide" data-slide>
+  <span class="badge key">🔑 Key insight</span>
+  <div class="ktext frag">Virtual memory gives every program a <b class="hl">large private space</b>, keeping only the active pages in RAM and the rest on disk.</div>
+  <div class="ksub frag">A page fault is a <b class="o">disk</b> fetch — far costlier than a cache miss — and the same <b class="g">LRU</b> logic from cache decides which page is evicted.</div>
+</section>
+<!-- ==================================================================== -->
+<!-- CHAPTER 7 · MEMORY MANAGEMENT HARDWARE  (capstone)                    -->
+<!-- ==================================================================== -->
+<section class="slide divider" data-slide>
+  <div class="chno">7</div>
+  <div class="chname">Memory Management Hardware</div>
+  <div class="hook">Nothing new to invent here — this chapter combines six chapters' ideas into one working translation from logical to physical address.</div>
+  <div class="src">Notes Ch.7 · Foothold 4.C · Mano §12-7 (Hamacher: brief MMU/TLB mention)</div>
+</section>
+
+<!-- 7.1 The mission -->
+<section class="slide" data-slide>
+  <div class="kicker">7 · Memory Management Hardware</div>
+  <h2 class="title">The MMU's mission — logical → physical</h2>
+  <div class="foothold"><span class="lbl">Where this fits ·</span> Programs speak in <b>logical</b> addresses; RAM answers only to <b>physical</b> ones. The Memory Management Unit translates every access, in hardware, on the fly.</div>
+  <ul class="pts">
+    <li class="frag">Modern systems combine two ideas: <b class="hl">segmentation</b> (logical, variable-size regions — code, stack, data) and <b class="hl">paging</b> (fixed-size pieces that fit RAM blocks).</li>
+    <li class="frag">A <b>segmented-page</b> logical address has three parts: <b class="p">segment</b> · <b class="y">page</b> · <b class="t">word (offset)</b>.</li>
+    <li class="frag">The MMU must turn that into a real block + offset — and do it fast enough to sit on every single memory reference.</li>
+  </ul>
+</section>
+
+<!-- 7.2 The two-level walk -->
+<section class="slide" data-slide>
+  <div class="kicker">7 · Memory Management Hardware</div>
+  <h2 class="title">Segmented-page mapping — the two-level walk</h2>
+  <div class="foothold"><span class="lbl">Build it ·</span> Version 1, no shortcuts: two table lookups turn the logical address into a physical one.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 320" role="img" aria-label="Segment table then page table walk">
+      <!-- logical address -->
+      <g class="frag" font-family="Consolas,monospace">
+        <text x="30" y="35" fill="#8B949E" font-size="17" font-family="Segoe UI">Logical address</text>
+        <rect x="30" y="50" width="120" height="46" fill="rgba(188,140,255,.2)" stroke="#BC8CFF" stroke-width="2"/><text x="90" y="79" text-anchor="middle" fill="#BC8CFF" font-size="18">SEG</text>
+        <rect x="150" y="50" width="120" height="46" fill="rgba(210,153,34,.2)" stroke="#D29922" stroke-width="2"/><text x="210" y="79" text-anchor="middle" fill="#D29922" font-size="18">PAGE</text>
+        <rect x="270" y="50" width="120" height="46" fill="rgba(57,208,216,.2)" stroke="#39D0D8" stroke-width="2"/><text x="330" y="79" text-anchor="middle" fill="#39D0D8" font-size="18">WORD</text>
+      </g>
+      <!-- segment table -->
+      <g class="frag">
+        <rect x="120" y="150" width="230" height="120" rx="8" fill="#161B22" stroke="#BC8CFF" stroke-width="2"/>
+        <text x="235" y="178" text-anchor="middle" fill="#BC8CFF" font-size="18" font-weight="800">① Segment table</text>
+        <text x="235" y="212" text-anchor="middle" fill="#E6EDF3" font-size="16">look up SEG →</text>
+        <text x="235" y="240" text-anchor="middle" fill="#E6EDF3" font-size="16">page-table base address</text>
+        <line x1="90" y1="96" x2="150" y2="150" stroke="#BC8CFF" stroke-width="2" marker-end="url(#sA)"/>
+      </g>
+      <!-- page table -->
+      <g class="frag">
+        <rect x="420" y="150" width="230" height="120" rx="8" fill="#161B22" stroke="#D29922" stroke-width="2"/>
+        <text x="535" y="178" text-anchor="middle" fill="#D29922" font-size="18" font-weight="800">② Page table</text>
+        <text x="535" y="212" text-anchor="middle" fill="#E6EDF3" font-size="16">look up PAGE →</text>
+        <text x="535" y="240" text-anchor="middle" fill="#E6EDF3" font-size="16">block number</text>
+        <line x1="350" y1="210" x2="420" y2="210" stroke="#D29922" stroke-width="2" marker-end="url(#sA)"/>
+      </g>
+      <!-- physical -->
+      <g class="frag">
+        <rect x="720" y="150" width="250" height="120" rx="8" fill="rgba(63,185,80,.12)" stroke="#3FB950" stroke-width="2.5"/>
+        <text x="845" y="178" text-anchor="middle" fill="#3FB950" font-size="18" font-weight="800">③ Physical address</text>
+        <text x="845" y="212" text-anchor="middle" fill="#E6EDF3" font-size="16">BLOCK + WORD offset</text>
+        <text x="845" y="240" text-anchor="middle" fill="#E6EDF3" font-size="16">→ real memory location</text>
+        <line x1="650" y1="210" x2="720" y2="210" stroke="#3FB950" stroke-width="2" marker-end="url(#sA)"/>
+      </g>
+      <text class="frag" x="500" y="305" text-anchor="middle" fill="#F85149" font-size="18" font-weight="700">Works — but costs TWO extra memory accesses on every reference, even for the same page again and again.</text>
+      <defs><marker id="sA" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9" fill="#8B949E"/></marker></defs>
+    </svg>
+  </div>
+</section>
+
+<!-- 7.3 TLB fast path + hex worked example (SIGNATURE) -->
+<section class="slide" data-slide>
+  <div class="kicker">7 · Memory Management Hardware</div>
+  <h2 class="title">The TLB fast path — a worked example in hex</h2>
+  <div class="foothold"><span class="lbl">The payoff ·</span> Put a small <b>associative memory</b> (the TLB — Chapter 4!) in front of the two tables, caching recent (segment, page) → block results. Locality (Ch.1) makes it pay.</div>
+  <div class="stage">
+    <svg viewBox="0 0 1000 320" font-family="Consolas,monospace" role="img" aria-label="TLB hex translation example">
+      <g class="frag">
+        <text x="30" y="45" fill="#8B949E" font-size="17" font-family="Segoe UI">Logical address (hex)</text>
+        <rect x="30" y="60" width="110" height="48" fill="rgba(188,140,255,.2)" stroke="#BC8CFF" stroke-width="2"/><text x="85" y="91" text-anchor="middle" fill="#BC8CFF" font-size="20">6</text>
+        <rect x="140" y="60" width="110" height="48" fill="rgba(210,153,34,.2)" stroke="#D29922" stroke-width="2"/><text x="195" y="91" text-anchor="middle" fill="#D29922" font-size="20">02</text>
+        <rect x="250" y="60" width="110" height="48" fill="rgba(57,208,216,.2)" stroke="#39D0D8" stroke-width="2"/><text x="305" y="91" text-anchor="middle" fill="#39D0D8" font-size="20">7E</text>
+        <text x="85" y="128" text-anchor="middle" fill="#8B949E" font-size="14">segment</text><text x="195" y="128" text-anchor="middle" fill="#8B949E" font-size="14">page</text><text x="305" y="128" text-anchor="middle" fill="#8B949E" font-size="14">word</text>
+      </g>
+      <!-- TLB -->
+      <g class="frag">
+        <rect x="450" y="45" width="330" height="120" rx="10" fill="#161B22" stroke="#58A6FF" stroke-width="2.5"/>
+        <text x="615" y="72" text-anchor="middle" fill="#58A6FF" font-size="18" font-weight="800" font-family="Segoe UI">TLB (associative memory)</text>
+        <text x="470" y="105" fill="#3FB950" font-size="16">(seg 6, page 2) → block 019</text>
+        <text x="470" y="132" fill="#8B949E" font-size="16">(seg 6, page 4) → block 0A7</text>
+        <line x1="360" y1="84" x2="450" y2="95" stroke="#58A6FF" stroke-width="2" marker-end="url(#tA)"/>
+        <text x="615" y="156" text-anchor="middle" fill="#3FB950" font-size="15" font-family="Segoe UI">search (6, 2) in parallel → HIT</text>
+      </g>
+      <!-- result -->
+      <g class="frag">
+        <text x="30" y="205" fill="#8B949E" font-size="17" font-family="Segoe UI">Physical address</text>
+        <rect x="30" y="220" width="150" height="50" fill="rgba(63,185,80,.2)" stroke="#3FB950" stroke-width="2.5"/><text x="105" y="253" text-anchor="middle" fill="#3FB950" font-size="20">019</text>
+        <rect x="180" y="220" width="110" height="50" fill="rgba(57,208,216,.2)" stroke="#39D0D8" stroke-width="2"/><text x="235" y="253" text-anchor="middle" fill="#39D0D8" font-size="20">7E</text>
+        <text x="160" y="300" fill="#E6EDF3" font-size="15" font-family="Segoe UI">block 019 + offset 7E — the word field is carried straight through, unchanged.</text>
+        <line x1="615" y1="165" x2="120" y2="218" stroke="#3FB950" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#tA)"/>
+      </g>
+      <text class="frag" x="620" y="235" fill="#BC8CFF" font-size="17" font-weight="700" font-family="Segoe UI">TLB hit ≈ 4 steps.</text>
+      <text class="frag" x="620" y="262" fill="#F0883E" font-size="17" font-weight="700" font-family="Segoe UI">TLB miss ≈ 6 steps — the two table lookups the TLB exists to avoid.</text>
+      <defs><marker id="tA" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9" fill="#8B949E"/></marker></defs>
+    </svg>
+  </div>
+</section>
+
+<!-- 7.4 ASK THE CLASS -->
+<section class="slide" data-slide>
+  <div class="kicker">7 · Memory Management Hardware</div>
+  <span class="badge mic">🎤 Ask the class</span>
+  <div class="ask" style="margin-top:1.5vh">Now translate <code>Seg 6 / Page 0 / Word 10</code> — and it's <b class="o">not</b> in the TLB. Walk it. What are the steps, and what happens at the end?</div>
+  <div class="answer frag" style="margin-top:2vh"><b class="o">TLB miss</b> → ① index the <b class="p">segment table</b> with seg 6 to get the page-table base → ② index that <b class="y">page table</b> with page 0 to get the block → ③ combine block + word 10 → physical address → ④ <b class="g">cache</b> the (6, 0) → block result in the TLB, so next time it's a hit. Six steps instead of four — two of them the table lookups the TLB is built to skip.</div>
+</section>
+
+<!-- 7.5 Memory protection -->
+<section class="slide" data-slide>
+  <div class="kicker">7 · Memory Management Hardware</div>
+  <h2 class="title">Memory protection — the segment descriptor</h2>
+  <div class="foothold"><span class="lbl">Why now ·</span> Translating an address is only half the job. The same tables let the MMU <b>validate</b> every access — one program must not read or wreck another's memory.</div>
+  <div class="stage frag">
+    <svg viewBox="0 0 1000 150" role="img" aria-label="Segment descriptor fields">
+      <rect x="80" y="35" width="260" height="70" fill="rgba(88,166,255,.16)" stroke="#58A6FF" stroke-width="2"/><text x="210" y="70" text-anchor="middle" fill="#58A6FF" font-size="19" font-weight="700">Base address</text><text x="210" y="93" text-anchor="middle" fill="#8B949E" font-size="14">where the segment starts</text>
+      <rect x="340" y="35" width="260" height="70" fill="rgba(210,153,34,.16)" stroke="#D29922" stroke-width="2"/><text x="470" y="70" text-anchor="middle" fill="#D29922" font-size="19" font-weight="700">Length / limit</text><text x="470" y="93" text-anchor="middle" fill="#8B949E" font-size="14">bounds check — no overrun</text>
+      <rect x="600" y="35" width="320" height="70" fill="rgba(248,81,73,.16)" stroke="#F85149" stroke-width="2"/><text x="760" y="70" text-anchor="middle" fill="#F85149" font-size="19" font-weight="700">Protection bits</text><text x="760" y="93" text-anchor="middle" fill="#8B949E" font-size="14">read / write / execute permission</text>
+    </svg>
+  </div>
+  <div class="body frag" style="text-align:center">Every access is both <b class="g">translated</b> and <b class="r">checked</b> — out of bounds or wrong permission → the hardware raises a fault.</div>
+</section>
+
+<!-- 7.6 KEY INSIGHT -->
+<section class="slide keyslide" data-slide>
+  <span class="badge key">🔑 Key insight</span>
+  <div class="ktext frag">The <b class="hl">TLB is itself an associative memory</b> (Chapter 4) — searching by (segment, page) content to skip the slow two-table walk.</div>
+  <div class="ksub frag">Memory management = translate <em>and</em> protect: base + length + permission on every reference, with the TLB making the common case fast.</div>
+</section>
+
+<!-- ==================================================================== -->
+<!-- CLOSING · THE WHOLE MEMORY SYSTEM                                     -->
+<!-- ==================================================================== -->
+<section class="slide" data-slide>
+  <div class="kicker">Unit 4 · wrap-up</div>
+  <h2 class="title">One system, built layer by layer</h2>
+  <div class="foothold"><span class="lbl">The payoff ·</span> Every topic in this unit was one layer of a single machine. Here is how they lock together on one memory reference.</div>
+  <ul class="pts">
+    <li class="frag"><b class="hl">Hierarchy + locality</b> told us <em>why</em> a fast path matters (Ch.1).</li>
+    <li class="frag"><b class="t">RAM/ROM chips</b> are the physical main memory being addressed (Ch.2); <b class="o">auxiliary memory</b> is what a page fault falls back to (Ch.3).</li>
+    <li class="frag"><b class="p">Associative memory</b> gave us the TLB's hardware (Ch.4); <b class="g">cache</b> gave us the mapping + replacement policies (Ch.5).</li>
+    <li class="frag"><b class="y">Virtual memory</b> gave us pages and the page table (Ch.6); the <b class="hl">MMU</b> walks segment → page → block and validates it (Ch.7).</li>
+    <li class="frag" style="color:var(--accent); font-weight:700; margin-top:1vh">From one register to a full address translation — you've built the entire memory system.</li>
+  </ul>
+</section>
+<!--SLIDES-->
+
+</div>
+
+<div id="bar"></div>
+<div id="counter"></div>
+<div id="hint">→ / Space next · ← back · F11 full-screen</div>
+
+<script>
+/* ---- presenter-paced reveal engine ----
+   Each .slide holds ordered .frag elements. "next" reveals the next hidden
+   fragment on the active slide; once all are shown, it advances to the next
+   slide. "prev" hides the last-shown fragment, or steps back a slide (fully
+   shown). Keyboard + click drive it; a progress bar and n/N counter track place. */
+const slides = Array.from(document.querySelectorAll('.slide'));
+let cur = 0;      // active slide index
+let step = 0;     // number of fragments revealed on the active slide
+
+function frags(i){ return Array.from(slides[i].querySelectorAll('.frag')); }
+
+function render(){
+  slides.forEach((s,i)=> s.classList.toggle('active', i===cur));
+  const f = frags(cur);
+  f.forEach((el,idx)=> el.classList.toggle('show', idx < step));
+  document.getElementById('counter').textContent = (cur+1) + ' / ' + slides.length;
+  document.getElementById('bar').style.width = ((cur+1)/slides.length*100) + '%';
+}
+
+function next(){
+  const f = frags(cur);
+  if(step < f.length){ step++; render(); }
+  else if(cur < slides.length-1){ cur++; step = 0; render(); }
+}
+function prev(){
+  if(step > 0){ step--; render(); }
+  else if(cur > 0){ cur--; step = frags(cur).length; render(); }
+}
+function goto(i){ cur = Math.max(0, Math.min(slides.length-1, i)); step = frags(cur).length; render(); }
+
+window.addEventListener('keydown', e=>{
+  if(['ArrowRight',' ','PageDown','Enter'].includes(e.key)){ e.preventDefault(); next(); }
+  else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){ e.preventDefault(); prev(); }
+  else if(e.key==='Home'){ e.preventDefault(); goto(0); }
+  else if(e.key==='End'){ e.preventDefault(); goto(slides.length-1); }
+});
+document.getElementById('deck').addEventListener('click', e=>{
+  // click right 70% = next, left 30% = back (so misclicks near the edge go back)
+  if(e.clientX < window.innerWidth*0.3) prev(); else next();
+});
+render();
+</script>
+</body>
+</html>

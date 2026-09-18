@@ -1,0 +1,131 @@
+Unit 2: Processing Units – Detailed Teacher’s Notes
+Learning Objective: To master the internal mechanics of the CPU, specifically understanding how bits are transferred between registers, manipulated by the ALU, and controlled by either hardwired or microprogrammed logic
+.
+I. Register Transfers and Register Transfer Language (RTL)
+References: Mano Ch. 4, pp. 93–102; Hamacher Ch. 2, p. 33
+Before complex instructions execute, the processor performs microoperations: elementary operations on data stored in registers
+.
+Register Transfer Notation (RTN/RTL):
+The Concept: A symbolic language used to describe the internal movement of bits
+.
+Notation: R2←[R1] denotes copying the contents of register R1 into R2
+.
+Control Functions: A transfer is typically synchronized with a clock and governed by a control signal P. This is written as P:R2←R1, meaning "If P=1, then transfer R1 to R2 at the next clock edge"
+.
+Bus Transfers (Hardware Implementation):
+To avoid a "web" of wires between n registers, a Common Bus System is used
+.
+Construction via Multiplexers: For n registers of k bits, the bus requires k multiplexers (size n×1). Selection lines (S 
+1
+​
+ ,S 
+0
+​
+ ) determine which register is placed on the bus
+.
+Construction via Tri-state Buffers: A more efficient method uses three-state gates. These have three states: 0, 1, and High-Impedance (Hi-Z), which acts as an open circuit. This allows multiple devices to be physically connected to the bus while being electrically disconnected when not in use
+.
+II. Performing Arithmetic, Logic, and Shift Microoperations
+References: Mano Ch. 4, pp. 102–116; Hamacher Ch. 5, pp. 160–161
+Arithmetic Microoperations:
+Basic Set: Addition, Subtraction, Increment (R1←R1+1), and Decrement (R1←R1−1)
+.
+The Arithmetic Circuit: A single combinational circuit can perform all these using a binary adder and multiplexers to select input Y (could be B,  
+B
+ˉ
+ , 0, or 11…1) and an input carry C 
+in
+​
+ 
+.
+Logic Microoperations:
+Operations like AND, OR, XOR, and NOT are performed bit-wise in parallel
+.
+Applications to Highlight:
+Selective-Set (OR): Sets specific bits to 1
+.
+Selective-Clear (AND with complement): Clears specific bits to 0
+.
+Masking (AND): Clears a portion of a word while preserving the rest
+.
+Shift Microoperations:
+Logical Shift: Moves bits and inserts 0 into the vacated position (shl,shr)
+.
+Arithmetic Shift: Multiplies/divides a signed number by 2. Arithmetic Shift-Right (ashr) is critical as it preserves the sign bit to maintain the number's polarity
+.
+Rotate (Circular): Bits shifted out of one end are inserted into the other (cil,cir)
+.
+III. Memory Transfers: Fetching and Storing
+References: Mano Ch. 4, p. 101; Hamacher Ch. 5, pp. 166–167
+The processor-memory interface relies on two specialized registers: the Memory Address Register (MAR/AR) and the Memory Data Register (MDR/DR)
+.
+Read (Fetch): DR←M[AR]
+The processor puts the address in AR and issues a Read signal. The memory transfers a copy of the word at that address into DR
+.
+Write (Store): M[AR]←R1
+The processor puts the target address in AR and the data in a register (like R1 or DR) and issues a Write signal, overwriting the memory location
+.
+IV. Execution of Complete Instructions (Five-Step RISC Sequence)
+Reference: Hamacher Ch. 5, pp. 155–168
+For a uniform RISC-style processor, every instruction is broken into five distinct clock cycles
+:
+Step 1 (Fetch): IR←[[PC]]; PC←[PC]+4. The instruction is fetched and the PC is incremented to the next word
+.
+Step 2 (Decode/Read): The Control Unit decodes the OP-code while simultaneously reading source registers from the Register File into inter-stage registers RA and RB
+.
+Step 3 (Compute): The ALU performs the operation (addition, logic, or effective address calculation). The result is stored in register RZ
+.
+Step 4 (Memory Access):
+For Load: Read memory at address RZ into register RY.
+For Store: Write data from RB into memory at address RZ.
+For Arithmetic: Simply transfer RZ to RY
+.
+Step 5 (Write Back): The result in RY is written into the destination register in the register file
+.
+V. Multiple Bus Organization (CISC Style)
+Reference: Hamacher Ch. 5, pp. 178–182
+While RISC uses a fixed pipeline, CISC processors often use a flexible Three-Bus Organization
+:
+Structure: Buses A and B provide two operands to the ALU inputs simultaneously, and Bus C returns the result to the registers in the same cycle
+.
+Incremental Steps: CISC instructions vary in length. For example, a complex instruction like And X(R7), R9 (ANDing a memory location with a register and storing it back) requires seven steps, including multiple memory accesses for the offset X and the operand
+.
+VI. Microprogrammed Control
+References: Hamacher Ch. 5, pp. 182–184; Mano Ch. 7, p. 213
+Instead of a fixed logic circuit (Hardwired Control), a microprogrammed unit uses software-like logic inside the hardware
+.
+Control Word/Microinstruction: Each bit in a control word represents one control signal (e.g., "Read Memory" or "ALU Add")
+.
+Control Store: A special internal memory that holds microroutines—sequences of microinstructions for every machine instruction
+.
+Microprogram Counter (μPC): Tracks the address of the next microinstruction to be fetched from the Control Store
+.
+Execution: During the instruction's decode phase, the starting address of its microroutine is loaded into the μPC. The processor then steps through the microroutine until an "End" bit is reached, triggering the fetch of the next machine instruction
+.
+Teaching Summary: Unit 2 bridges the gap between Unit 1's functional blocks and the actual physical flow of data. Emphasize that every high-level line of code eventually becomes a series of register transfers orchestrated by the Control Unit through either hardwired logic (speed) or microprograms (flexibility).
+.
+
+
+The concepts for **Unit 2: Processing Units** in your syllabus were built using a synthesis of both prescribed textbooks, as they offer complementary perspectives on the internal mechanics of a CPU.
+
+### **1. Prescribed Prescribed Textbooks Used**
+*   **Hamacher, Vranesic, and Zaky:** *Computer Organization and Embedded Systems* (primarily Chapter 5).
+*   **M. Morris Mano:** *Computer System Architecture* (primarily Chapters 4 and 7).
+
+---
+
+### **2. Breakdown of Concepts by Source**
+
+The following table details which book provided the core material for each specific section of your Unit 2 syllabus:
+
+| Syllabus Topic | Primary Source(s) | Detailed Content Provided |
+| :--- | :--- | :--- |
+| **Register Transfers** | **Mano, Ch. 4** <br> **Hamacher, Ch. 2** | Introduction to Register Transfer Language (RTL) and Notation (RTN); implementation of common bus systems using multiplexers and tri-state buffers. |
+| **Arithmetic or Logic Operations** | **Mano, Ch. 4** | Detailed hardware implementation of arithmetic (addition, subtraction, increment) and bit-wise logic (AND, OR, XOR) microoperations. |
+| **Fetching & Storing Words** | **Mano, Ch. 4** <br> **Hamacher, Ch. 5** | Symbolic notation for memory Read and Write operations (e.g., \\(DR \leftarrow M[AR]\\)); hardware interface via MAR and MDR. |
+| **Execution of Complete Instructions** | **Hamacher, Ch. 5** | The uniform five-step sequence (Fetch, Decode, Compute, Memory Access, Write Back) used in RISC-style processors. |
+| **Multiple Bus Organization** | **Hamacher, Ch. 5** <br> **Mano, Ch. 4** | Implementation of three-bus structures to facilitate simultaneous operand movement to the ALU in CISC-style designs. |
+| **Microprogrammed Control** | **Hamacher, Ch. 5** <br> **Mano, Ch. 7** | Concepts of control words, control store, microinstructions, and the Microprogram Counter (\\(\mu PC\\)). |
+
+### **Teacher’s Strategy Note**
+In building these notes, **Morris Mano** was used for the **gate-level logic** (how an arithmetic circuit is physically wired), while **Hamacher** was used for the **organizational flow** (how an instruction moves through timing stages in a modern processor). This approach ensures students understand both the "how" (hardware) and the "when" (control/timing).

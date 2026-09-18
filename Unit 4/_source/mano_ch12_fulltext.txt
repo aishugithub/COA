@@ -1,0 +1,1987 @@
+
+
+===== PAGE 1 (book p.442) [SKIPPED-OCR, not ch12] =====
+
+
+===== PAGE 2 (book p.443) [SKIPPED-OCR, not ch12] =====
+
+
+===== PAGE 3 (book p.444) =====
+IN THIS CHAPTER
+
+12-1 Memory Hierarchy
+
+12-2 Main Memory
+
+12-3. Auxiliary Memory
+
+12-4 — Associative Memory
+
+12-5 Cache Memory
+
+1246 Virtual Memory
+
+12-7. Memory Management Hardware
+
+12-1__Memory Hierarchy
+
+The memory unit is an essential component in any digital computer since it is
+needed for storing programs and data. A very small computer with a limited
+application may be able to fulfill its intended task without the need of addi-
+tional storage capacity. Most general-purpose computers would run more
+
+system programs, large data files, and other backup information. Only pro-
+grams and data currently needed by the processor reside in main memory. All
+
+445
+
+
+===== PAGE 4 (book p.445) =====
+446 — CHAPTER TWELVE Memory Organization
+
+cache memory
+
+other information is stored in auxiliary memory and transferred to main mem-
+ory when needed.
+The total memory capacity of a computer can be visualized as being a
+
+auxiliary memory to a relatively faster main memory, to an even smaller and
+faster cache memory accessible to the high-speed processing logic. Figure 12-1
+illustrates the components in a typical memory hierarchy. At the bottom of the
+hierarchy are the relatively slow magnetic tapes used to store removable files.
+Next are the magnetic disks used as backup storage. The main memory occu-
+pies a central position by being able to communicate directly with the CPU and
+with auxiliary memory devices through an /O processor. When programs not
+residing in main memory are needed by the CPU, they are brought in from
+auxiliary memory. Programs not currently needed in main memory are trans-
+ferred into auxiliary memory to provide space for currently used programs and
+data.
+
+A special very-high-speed memory called a cache is sometimes used to
+increase the speed of processing by making current programs and data avail-
+able to the CPU at a rapid rate. The cache memory is employed in computer
+systems to compensate for the speed differential between main memory access
+time and processor logic. CPU logic is usually faster than main memory access
+time, with the result that processing speed is limited primarily by the speed
+of main memory. A technique used to compensate for the mismatch in oper-
+ating speeds is to employ an extremely fast, small cache between the CPU and
+main memory whose access time is close to processor logic clock cycle time.
+The cache is used for storing segments of programs currently being executed
+in the CPU and temporary data frequently needed in the present calculations.
+
+Figure 12-1 Memory hierarchy in a computer system.
+Auxiliary memory
+
+
+
+===== PAGE 5 (book p.446) =====
+multiprogramming
+
+SECTION 12-1 Memory Hierarchy 447
+
+By making programs and data available at a rapid rate, it is possible to increase
+the performance rate of the computer.
+
+While the I/O processor manages data transfers between auxiliary mem-
+ory and main memory, the cache organization is concerned with the transfer
+of information between main memory and CPU. Thus each is involved with
+a different level in the memory hierarchy system. The reason for having two
+or three levels of memory hierarchy is economics. As the storage capacity of
+the memory increases, the cost per bit for storing binary information decreases
+and the access time of the memory becomes longer. The auxiliary memory has
+a large storage capacity, is relatively inexpensive, but has low access speed
+compared to main memory. The cache memory is very small, relatively expen-
+sive, and has very high access speed. Thus as the memory access speed
+increases, so does its relative cost. The overall goal of using a memory hierarchy
+is to obtain the highest-possible average access speed while minimizing the
+total cost of the entire memory system.
+
+Auviliary and cache memories are used for different purposes. The cache
+holds those parts of the program and data that are most heavily used, while
+the auxiliary memory holds those parts that are not presently used by the CPU.
+Moreover, the CPU has direct access to both cache and main memory but not
+to auxiliary memory. The transfer from auxiliary to main memory is usually
+done by means of direct memory access of large blocks of data. The typical
+access time ratio between cache and main memory is about 1 to 7. For example,
+atypical cache memory may have an access time of 100 ns, while main memory
+access time may be 700 ns. Auxiliary memory average access time is usually
+1000 times that of main memory. Block size in auxiliary memory typically
+ranges from 256 to 2048 words, while cache block size is typically from 1 to 16
+words.
+
+Many operating systems are designed to enable the CPU to process a
+number of independent programs concurrently. This concept, called multipro-
+gramming, refers to the existence of two or more programs in different parts
+of the memory hierarchy at the same time. In this way it is possible to keep
+all parts of the computer busy by working with several programs in sequence.
+For example, suppose that a program is being executed in the CPU and an /O
+transfer is required. The CPU initiates the /O processor to start executing the
+transfer. This leaves the CPU free to execute another program. In a multipro-
+gramming system, when one program is waiting for input or output transfer,
+there is another program ready to utilize the CPU.
+
+With multiprogramming the need arises for running partial programs, for
+varying the amount of main memory in use by a given program, and for
+moving programs around the memory hierarchy. Computer programs are
+sometimes too long to be accommodated in the total space available in main
+memory. Moreover, a computer system uses many programs and all the
+programs cannot reside in main memory at all times. A program with its data
+normally resides in auxiliary memory. When the program or a segment of the
+
+
+===== PAGE 6 (book p.447) =====
+448 — CHAPTER TWELVE Memory Organization
+
+random-access
+memory (RAM)
+
+read-only memory
+(0M)
+
+bootstrap loader
+
+computer startup
+
+program is to be executed, it is transferred to main memory to be executed by
+the CPU. Thus one may think of auxiliary memory as containing the totality
+of information stored in a computer system. It is the task of the operating
+system to maintain in main memory a portion of this information that is
+currently active. The part of the computer system that supervises the flow of
+information between auxiliary memory and main memory is called the memory
+management system. The hardware for a memory management system is pre-
+sented in Sec. 12-7.
+
+12-2 Main Memory
+
+The main memory is the central storage unit in a computer system. It is a
+relatively large and fast memory used to store programs and data during the
+computer operation. The principal technology used for the main memory is
+based on semiconductor integrated circuits. Integrated circuit RAM chips are
+available in two possible operating modes, static and dynamic. The static RAM
+consists essentially of internal flip-flops that store the binary information. The
+stored information remains valid as long as power is applied to the unit. The
+dynamic RAM stores the binary information in the form of electric charges that
+are applied to capacitors. The capacitors are provided inside the chip by MOS
+transistors. The stored charge on the capacitors tend to discharge with time and
+the capacitors must be periodically recharged by refreshing the dynamic mem-
+ory. Refreshing is done by cycling through the words every few milliseconds
+to restore the decaying charge. The dynamic RAM offers reduced power
+consumption and larger storage capacity in a single memory chip. The static
+RAM is easier to use and has shorter read and write cycles.
+
+Most of the main memory in a general-purpose computer is made up of
+RAM integrated circuit chips, but a portion of the memory may be constructed
+with ROM chips. Originally, RAM was used to refer to a random-access
+memory, but now it is used to designate a read/write memory to distinguish
+it from aread-only memory, although ROM is also random access. RAM is used
+for storing the bulk of the programs and data that are subject to change. ROM
+is used for storing programs that are permanently resident in the computer and
+for tables of constants that do not change in value once the production of the
+computer is completed.
+
+Among other things, the ROM portion of main memory is needed for
+storing an initial program called a bootstrap loader. The bootstrap loader is a
+program whose function is to start the computer software operating when
+power is turned on. Since RAM is volatile, its contents are destroyed when
+power is turned off. The contents of ROM remain unchanged after power is
+turned off and on again. The startup of a computer consists of turning the
+power on and starting the execution of an initial program. Thus when power
+is turned on, the hardware of the computer sets the program counter to the
+
+
+
+===== PAGE 7 (book p.448) =====
+bidirectional bus
+
+SECTION 12-2 Main Memory 449
+
+first address of the bootstrap loader. The bootstrap program loads a portion
+of the operating system from disk to main memory and control is then trans-
+ferred to the operating system, which prepares the computer for general use.
+
+RAM and ROM chips are available in a variety of sizes. If the memory
+needed for the computer is larger than the capacity of one chip, it is necessary
+to combine a number of chips to form the required memory size. To demon-
+strate the chip interconnection, we will show an example of a 1024 x 8memory
+constructed with 128 x 8 RAM chips and 512 x 8 ROM chips.
+
+RAM and ROM Chips
+A RAM chip is better suited for communication with the CPU if it has one or
+more control inputs that select the chip only when needed. Another common
+feature is a bidirectional data bus that allows the transfer of data either from
+memory to CPU during a read operation, or from CPU to memory during a
+write operation. A bidirectional bus can be constructed with three-state
+buffers. A three-state buffer output can be placed in one of three possible
+states: a signal equivalent to logic 1, a signal equivalent to logic 0, or a high-
+impedance state. The logic 1 and 0 are normal digital signals. The high-
+impedance state behaves like an open circuit, which means that the output
+does not carry a signal and has no logic significance.
+
+The block diagram of a RAM chip is shown in Fig. 12-2. The capacity of
+the memory is 128 words of eight bits (one byte) per word. This requires a 7-bit
+
+Figure 12-2. Typical RAM chip.
+
+Chip select 1 csi
+Chip select 2 cs?
+128X8 .
+Read RD RAM [> 8-bit data bus
+Write WR
+T-bit address AD7
+(a) Block diagram
+Si CS2 RD WR |Memory function State of data bus
+0 0 x x Inhibit High-impedance
+1 ox x Inhibit High-impedance
+1 0 0 0 Inhibit High-impedance
+10 01 Write Input data to RAM
+1oo4 x Read Output data from RAM
+toa x Inhibit High-impedance
+
+(b) Function table
+
+
+===== PAGE 8 (book p.449) =====
+450
+
+CHAPTER TWELVE Memory Organization
+
+address and an 8-bit bidirectional data bus. The read and write inputs spec:
+the memory operation and the two chips select (CS) control inputs are i,
+enabling the chip only when itis selected by the microprocessor. The availab:-
+ity of more than one control input to select the chip facilitates the decoding <:
+the address lines when multiple chips are used in the microcomputer. The reac
+and write inputs are sometimes combined into one line labeled R/W. When the
+chip is selected, the two binary states in this line specify the two operation:
+of read or write.
+
+The function table listed in Fig. 12-2(b) specifies the operation of the RAM
+chip. The unit is in operation only when CS1 = 1 and CS2 = 0. The bar on tor
+of the second select variable indicates that this input is enabled when it is equa:
+to. If the chip select inputs are not enabled, or if they are enabled but the read
+or write inputs are not enabled, the memory is inhibited and its data bus is in
+a high-impedance state. When CS1 = 1 and C52 = 0, the memory can be
+placed in a write or read mode. When the WR input is enabled, the memory
+stores a byte from the data bus into a location specified by the address input
+lines. When the RD input is enabled, the content of the selected byte is placed
+into the data bus. The RDand WR signals control the memory operation as well
+as the bus buffers associated with the bidirectional data bus.
+
+A ROM chip is organized externally in a similar manner. However, since
+a ROM can only read, the data bus can only be in an output mode. The block
+diagram of a ROM chip is shown in Fig. 12-3. For the same-size chip, it is
+possible to have more bits of ROM than of RAM, because the internal binary
+cells in ROM occupy less space than in RAM. For this reason, the diagram
+specifies a 512-byte ROM, while the RAM has only 128 bytes.
+
+The nine address lines in the ROM chip specify any one of the 512 bytes
+stored in it. The two chip select inputs must be CS1 = 1 and CS2 = 0 for the
+unit to operate. Otherwise, the data bus is in a high-impedance state. There
+is no need for a read or write control because the unit can only read. Thus when
+the chip is enabled by the two select inputs, the byte selected by the address
+lines appears on the data bus.
+
+Memory Address Map
+The designer of a computer system must calculate the amount of memory
+required for the particular application and assign it to either RAM or ROM. The
+interconnection between memory and processor is then established from
+knowledge of the size of memory needed and the type of RAM and ROM chips
+available. The addressing of memory can be established by means of a table
+that specifies the memory address assigned to each chip. The table, called a
+memory address map, is a pictorial representation of assigned address space for
+each chip in the system.
+
+To demonstrate with a particular example, assume that a computer sys-
+tem needs 512 bytes of RAM and 512 bytes of ROM. The RAM and ROM chips
+
+
+===== PAGE 9 (book p.450) =====
+SECTION 122 Main Memory 451
+
+Chip select 1 ——| Cs
+Chip select 2 ——4 CS2
+
+nl
+
+9-bit address ——} ADO
+
+Figure 12-3 Typical ROM chip.
+
+to be used are specified in Figs. 12-2 and 12-3. The memory address map for
+this configuration is shown in Table 12-1. The component column specifies
+whether a RAM or a ROM chip is used. The hexadecimal address column
+assigns a range of hexadecimal equivalent addresses for each chip. The address
+bus lines are listed in the third column. Although there are 16 lines in the
+address bus, the table shows only 10 lines because the other 6 are not used in
+this example and are assumed to be zero. The small x’s under the address bus
+lines designate those lines that must be connected to the address inputs in each
+chip. The RAM chips have 128 bytes and need seven address lines. The ROM
+chip has 512 bytes and needs 9 address lines. The x’s are always assigned to
+the low-order bus lines: lines 1 through 7 for the RAM and lines 1 through 9
+for the ROM. It is now necessary to distinguish between four RAM chips by
+assigning to each a different address. For this particular example we choose bus
+lines 8 and 9 to represent four distinct binary combinations. Note that any other
+pair of unused bus lines can be chosen for this purpose. The table clearly shows
+that the nine low-order bus lines constitute a memory space for RAM equal to
+2° = 512 bytes. The distinction between a RAM and ROM address is done with
+another bus line. Here we choose line 10 for this purpose. When line 10 is 0,
+the CPU selects a RAM, and when this line is equal to 1, it selects the ROM.
+
+The equivalent hexadecimal address for each chip is obtained from the
+information under the address bus assignment. The address bus lines are
+
+TABLE 12-1 Memory Address Map for Microprocomputer
+
+Address bus
+Hexadecimal
+
+Component address 09 8765 4321
+RAM 1 0000-007F 00 Oxxx xx xx
+RAM 2 0080-00FF 00 I1xxx xxxx
+RAM 3 0100-01I7F O01 Oxxx xxxx
+RAM 4 OI80-OIFF O1 1xxx x xxx
+ROM 02000-03FF 1x x xxx xx xx
+
+
+
+===== PAGE 10 (book p.451) =====
+452
+
+CHAPTER TWELVE Memory Organization
+
+subdivided into groups of four bits each so that each group can be represented
+with a hexadecimal digit. The first hexadecimal digit represents lines 13 to 16
+and is always 0. The next hexadecimal digit represents lines 9 to 12, but lines
+11 and 12 are always 0. The range of hexadecimal addresses for each compo-
+nent is determined from the x’s associated with it. These x’s represent a binary
+number that can range from an all-0’s to an all-1’s value.
+
+Memory Connection to CPU
+
+RAM and ROM chips are connected to a CPU through the data and address
+buses. The low-order lines in the address bus select the byte within the chips
+and other lines in the address bus select a particular chip through its chip select
+inputs. The connection of memory chips to the CPU is shown in Fig. 12-4. This
+configuration gives a memory capacity of 512 bytes of RAM and 512 bytes of
+ROM. It implements the memory map of Table 12-1. Each RAM receives the
+seven low-order bits of the address bus to select one of 128 possible bytes. The
+particular RAM chip selected is determined from lines 8 and 9 in the address
+bus. This is done through a 2 x 4 decoder whose outputs go to the CS1 inputs
+in each RAM chip. Thus, when address lines 8 and 9 are equal to 00, the first
+RAM chip is selected. When 01, the second RAM chip is selected, and so on.
+The RD and WR outputs from the microprocessor are applied to the inputs of
+each RAM chip.
+
+The selection between RAM and ROM is achieved through bus line 10.
+The RAMs are selected when the bit in this line is 0, and the ROM when the
+bit is 1. The other chip select input in the ROM is connected to the RD control
+line for the ROM chip to be enabled only during a read operation. Address bus
+lines 1 to 9 are applied to the input address of ROM without going through the
+decoder. This assigns addresses 0 to 511 to RAM and 512 to 1023 to ROM. The
+data bus of the ROM has only an output capability, whereas the data bus
+connected to the RAMs can transfer information in both directions.
+
+The example just shown gives an indication of the interconnection com-
+plexity that can exist between memory chips and the CPU. The more chips that
+are connected, the more external decoders are required for selection among the
+chips. The designer must establish a memory map that assigns addresses to
+the various chips from which the required connections are determined.
+
+12-3 Auxiliary Memory
+
+The most common auxiliary memory devices used in computer systems are
+magnetic disks and tapes. Other components used, but not as frequently, are
+magnetic drums, magnetic bubble memory, and optical disks. To understand
+fully the physical mechanism of auxiliary memory devices one must have a
+knowledge of magnetics, electronics, and electromechanical systems. Al-
+
+
+===== PAGE 11 (book p.452) =====
+Address bus
+-11 109 8 7-1 _RDWR Data bus
+Decoder
+3210
+gs
+t»| cS2
+128 x8
+
+RD Rami Da
+WR
+++—++++ +] av7
+{| CSI
+t——->} C2
+
+a> 8X8 a
+te wr
+t+ +1 ap?
+cs!
+tf > cs2
+
+ft+eye> pe Daa
+| os
+tt ADT
+cst
+os)
+
+n> 8X8 aa
+L>| wr
+++ 4} | a7
+L151
+yf >o—+| cs2
+
+aT? xs pa
+
+8 ROM
+Ls
+a: ae |
+
+Figure 12-4 Memory connection to the CPU.
+
+453
+
+
+
+===== PAGE 12 (book p.453) =====
+454
+
+CHAPTER TWELVE Memory Organization
+
+though the physical properties of these storage devices can be quite complex,
+their logical properties can be characterized and compared by a few parame-
+ters. The important characteristics of any device are its access mode, access
+time, transfer rate, capacity, and cost.
+
+The average time required to reach a storage location in memory and
+obtain its contents is called the access time. In electromechanical devices with
+moving parts such as disks and tapes, the access time consists of a seek time
+required to position the read-write head to a location and a transfer time
+required to transfer data to or from the device. Because the seek time is usually
+much longer than the transfer time, auxiliary storage is organized in records
+or blocks. A record is a specified number of characters or words. Reading or
+writing is always done on entire records. The transfer rate is the number of
+characters or words that the device can transfer per second, after it has been
+positioned at the beginning of the record.
+
+Magnetic drums and disks are quite similar in operation. Both consist of
+high-speed rotating surfaces coated with a magnetic recording medium. The
+rotating surface of the drum isa cylinder and that of the disk, a round flat plate.
+The recording surface rotates at uniform speed and is not started or stopped
+during access operations. Bits are recorded as magnetic spots on the surface
+as it passes a stationary mechanism called a write head. Stored bits are detected
+by a change in magnetic field produced by a recorded spot on the surface as
+it passes through a read head. The amount of surface available for recording in
+a disk is greater than in a drum of equal physical size. Therefore, more
+information can be stored on a disk than on a drum of comparable size. For
+this reason, disks have replaced drums in more recent computers.
+
+Magnetic Disks
+
+A magnetic disk is a circular plate constructed of metal or plastic coated with
+magnetized material. Often both sides of the disk are used and several disks
+may be stacked on one spindle with read/write heads available on each surface.
+All disks rotate together at high speed and are not stopped or started for access
+purposes. Bits are stored in the magnetized surface in spots along concentric
+circles called tracks. The tracks are commonly divided into sections called
+sectors. In most systems, the minimum quantity of information which can be
+transferred is a sector. The subdivision of one disk surface into tracks and
+sectors is shown in Fig. 12-5.
+
+Some units use a single read/write head for each disk surface. In this type
+of unit, the track address bits are used by a mechanical assembly to move the
+head into the specified track position before reading or writing. In other disk
+systems, separate read/write heads are provided for each track in each surface.
+The address bits can then select a particular track electronically through a
+decoder circuit. This type of unit is more expensive and is found only in very
+large computer systems.
+
+Permanent timing tracks are used in disks to synchronize the bits and
+
+
+===== PAGE 13 (book p.454) =====
+SECTION 12-3 Auxiliary Memory 455,
+
+Tracks
+
+b}~Se9,
+Ny
+
+Read/write
+head
+
+Figure 12-5 Magnetic disk.
+
+recognize the sectors. A disk system is addressed by address bits that specify
+the disk number, the disk surface, the sector number and the track within the
+sector. After the read/write heads are positioned in the specified track, the
+system has to wait until the rotating disk reaches the specified sector under the
+read/write head. Information transfer is very fast once the beginning of a sector
+has been reached. Disks may have multiple heads and simultaneous transfer
+of bits from several tracks at the same time.
+
+A track in a given sector near the circumference is longer than a track near
+the center of the disk. If bits are recorded with equal density, some tracks will
+contain more recorded bits than others. To make all the records in a sector of
+equal length, some disks use a variable recording density with higher density
+on tracks near the center than on tracks near the circumference. This equalizes
+the number of bits on all tracks of a given sector.
+
+Disks that are permanently attached to the unit assembly and cannot be
+removed by the occasional user are called hard disks. A disk drive with remov-
+able disks is called a floppy disk. The disks used with a floppy disk drive are
+small removable disks made of plastic coated with magnetic recording material.
+There are two sizes commonly used, with diameters of 5.25 and 3.5 inches. The
+3.5-inch disks are smaller and can store more data than can the 5.25-inch disks.
+Floppy disks are extensively used in personal computers as a medium for
+distributing software to computer users.
+
+Magnetic Tape
+
+A magnetic tape transport consists of the electrical, mechanical, and electronic
+components to provide the parts and control mechanism for a magnetic-tape
+unit. The tape itself is a strip of plastic coated with a magnetic recording
+
+
+===== PAGE 14 (book p.455) =====
+456 — CHAPTER TWELVE Memory Organization
+
+content addressable
+memory
+
+medium. Bits are recorded as magnetic spots on the tape along several tracks.
+Usually, seven or nine bits are recorded simultaneously to form a character
+together with a parity bit. Read/write heads are mounted one in each track so
+that data can be recorded and read as a sequence of characters.
+
+Magnetic tape units can be stopped, started to move forward or in re-
+verse, or can be rewound. However, they cannot be started or stopped fast
+enough between individual characters. For this reason, information is recorded
+in blocks referred to as records. Gaps of unrecorded tape are inserted between
+records where the tape can be stopped. The tape starts moving while in a gap
+and attains its constant speed by the time it reaches the next record. Each
+record on tape has an identification bit pattern at the beginning and end. By
+reading the bit pattern at the beginning, the tape control identifies the record
+number. By reading the bit pattern at the end of the record, the control
+recognizes the beginning of a gap. A tape unit is addressed by specifying the
+record number and the number of characters in the record. Records may be of
+fixed or variable length.
+
+12-4 Associative Memory
+
+Many data-processing applications require the search of items in a table stored
+in memory. An assembler program searches the symbol address table in order
+to extract the symbol’s binary equivalent. An account number may be searched
+in a file to determine the holder's name and account status. The established
+way to search a table is to store all items where they can be addressed in
+sequence. The search procedure is a strategy for choosing a sequence of
+addresses, reading the content of memory at each address, and comparing the
+information read with the item being searched until a match occurs. The
+number of accesses to memory depends on the location of the item and the
+efficiency of the search algorithm. Many search algorithms have been devel-
+oped to minimize the number of accesses while searching for an item in a
+random or sequential access memory.
+
+The time required to find an item stored in memory can be reduced
+considerably if stored data can be identified for access by the content of the data
+itself rather than by an address. A memory unit accessed by content is called
+an associative memory or content addressable memory (CAM). This type of memory
+is accessed simultaneously and in parallel on the basis of data content rather
+than by specific address or location. When a word is written in an associative
+memory, no address is given. The memory is capable of finding an empty
+unused location to store the word. When a word is to be read from an associa-
+tive memory, the content of the word, or part of the word, is specified. The
+memory locates all words which match the specified content and marks them
+for reading.
+
+Because of its organization, the associative memory is uniquely suited to
+do parallel searches by data association. Moreover, searches can be done on
+
+
+===== PAGE 15 (book p.456) =====
+SECTION 12-4 Associative Memory 457
+
+an entire word or on a specific field within a word. An associative memory is
+more expensive than a random access memory because each cell must have
+storage capability as well as logic circuits for matching its content with an
+external argument. For this reason, associative memories are used in applica-
+tions where the search time is very critical and must be very short.
+
+Hardware Organization
+
+The block diagram of an associative memory is shown in Fig. 12-6. It consists
+of a memory array and logic for m words with n bits per word. The argument
+register A and key register K each have n bits, one for each bit of a word. The
+match register M has m bits, one for each memory word. Each word in memory
+is compared in parallel with the content of the argument register. The words
+that match the bits of the argument register set a corresponding bit in the match
+register. After the matching process, those bits in the match register that have
+been set indicate the fact that their corresponding words have been matched.
+Reading is accomplished by a sequential access to memory for those words
+whose corresponding bits in the match register have been set.
+
+The key register provides a mask for choosing a particular field or key in
+the argument word. The entire argument is compared with each memory word
+if the key register contains all 1’s. Otherwise, only those bits in the argument
+that have 1’s in their corresponding position of the key register are compared.
+Thus the key provides a mask or identifying piece of information which
+
+Figure 12-6 Block diagram of associative memory.
+
+Argument register (A)
+
+a
+
+Key register (K)
+Match
+register
+
+Associative memory
+array and logic
+
+Read: m words
+White n bits per word
+
+Output
+
+Input—>|
+
+
+
+===== PAGE 16 (book p.457) =====
+458
+
+CHAPTER TWELVE Memory Organization
+
+specifies how the reference to memory is made. To illustrate with a numerical
+example, suppose that the argument register A and the key register K have the
+bit configuration shown below. Only the three leftmost bits of A are compared
+with memory words because K has 1’s in these positions.
+
+A 101 111100
+
+K 111 000000
+
+Word 1 100 111100 no match
+Word 2 101 000001 match
+
+Word 2 matches the unmasked argument field because the three leftmost bits
+of the argument and the word are equal.
+
+The relation between the memory array and external registers in an
+associative memory is shown in Fig. 12-7. The cells in the array are marked by
+the letter C with two subcripts. The first subscript gives the word number and
+the second specifies the bit position in the word. Thus cell C; is the cell for bit
+j in word i. A bit A; in the argument register is compared with all the bits in
+column j of the array provided that Kj = 1. This is done for all columns
+j =1,2,...,n. Ifa match occurs between all the unmasked bits of the argu-
+ment and the bits in word i, the corresponding bit M, in the match register is
+set to 1. If one or more unmasked bits of the argument and the word do not
+match, M, is cleared to 0.
+
+Figure 12-7. Associative memory of m word, n cells per word.
+
+i
+|
+
+Word 1
+
+Word i} | Ci
+
+Word m
+
+Bit |
+
+
+===== PAGE 17 (book p.458) =====
+SECTION 12-4 Associative Memory 459
+
+The internal organization of a typical cell Cj is shown in Fig. 12-8. It
+consists of a flip-flop storage element F; and the circuits for reading, writing,
+and matching the cell. The input bit is transferred into the storage cell during
+awrite operation. The bit stored is read out during a read operation. The match
+logic compares the content of the storage cell with the corresponding un-
+masked bit of the argument and provides an output for the decision logic that
+sets the bit in M;.
+
+Match Logic
+
+The match logic for each word can be derived from the comparison algorithm
+for two binary numbers. First, we neglect the key bits and compare the argu-
+ment in A with the bits stored in the cells of the words. Word i is equal to the
+argument in A if A; = Fj for j = 1,2,...,n. Two bits are equal if they are both
+1 or both 0. The equality of two bits can be expressed logically by the Boolean
+function
+
+4 = AR + AVF;
+where x; = 1 if the pair of bits in position j are equal; otherwise, x, = 0.
+For a word ito be equal to the argument in A we must have all x, variables
+equal to 1. This is the condition for setting the corresponding match bit M; to
+1. The Boolean function for this condition is
+
+Mj = %1%2%3° ++ Xn
+
+and constitutes the AND operation of all pairs of matched bits in a word.
+
+Figure 12-8 One cell of associative memory.
+
+4
+Input yo
+Write
+R s
+Match
+F, To M,
+Read | logic om
+
+Output
+
+
+===== PAGE 18 (book p.459) =====
+460 © CHAPTER TWELVE Memory Organization
+
+We now include the key bit K; in the comparison logic. The requirement
+is that if K, = 0, the corresponding bits of Aj and Fj need no comparison. Only
+when Kj = 1 must they be compared. This requirement is achieved by ORing
+each term with Kj, thus:
+
+seNtf te Zo
+1, we have K/ = 0 and x; + 0 = x;. When K; = 0, then Kj = 1 and
+x) +1=1. A term (x, + Kj) will be in the 1 state if its pair of bits is not
+compared. This is necessary because each term is ANDed with all other terms
+so that an output of 1 will have no effect. The comparison of the bits has an
+effect only when Kj = 1.
+
+The match logic for word iin an associative memory can now be expressed
+by the following Boolean function:
+
+Mj = (x1 + Ki)(%2 + Ki)(xs + K3)- + (m+ Kn)
+
+Each term in the expression will be equal to 1 if its corresponding K, = 0. If
+K; = 1, the term will be either 0 or 1 depending on the value of xj. A match will
+occur and M, will be equal to 1 if all terms are equal to 1.
+
+If we substitute the original definition of x;, the Boolean function above
+can be expressed as follows:
+
+M, = II (4)F + Aj Fj + Kj)
+jaa
+
+where Il is a product symbol designating the AND operation of all n terms. We
+need m such functions, one for each word i = 1,2,3,...,m.
+
+The circuit for matching one word is shown in Fig. 12-9. Each cell requires
+two AND gates and one OR gate. The inverters for A; and K; are needed once
+for each column and are used for all bits in the column. The output of all OR
+gates in the cells of the same word go to the input of a common AND gate to
+generate the match signal for M;. M; will be logic 1 if a match occurs and 0 if
+no match occurs. Note that if the key register contains all 0’s, output Mj will
+be a 1 irrespective of the value of A or the word. This occurrence must be
+avoided during normal operation.
+
+Read Operation
+
+If more than one word in memory matches the unmasked argument field, all
+the matched words will have 1’s in the corresponding bit position of the match
+register. It is then necessary to scan the bits of the match register one at a time.
+The matched words are read in sequence by applying a read signal to each word
+line whose corresponding M; bit is a 1.
+
+
+===== PAGE 19 (book p.460) =====
+SECTION 12-4 Associative Memory 461
+
+Figure 12-9 Match logic for one word of associative memory.
+
+In most applications, the associative memory stores a table with no two
+identical items under a given key. In this case, only one word may match the
+unmasked argument field. By connecting output M; directly to the read line in
+the same word position (instead of the M register), the content of the matched
+word will be presented automatically at the output lines and no special read
+command signal is needed. Furthermore, if we exclude words having a zero
+content, an all-zero output will indicate that no match occurred and that the
+searched item is not available in memory.
+
+Write Operation
+
+Anassociative memory must have a write capability for storing the information
+to be searched. Writing in an associative memory can take different forms,
+depending on the application. If the entire memory is loaded with new infor-
+mation at once prior to a search operation then the writing can be done by
+addressing each location in sequence. This will make the device’a random-
+access memory for writing and a content addressable memory for reading. The
+advantage here is that the address for input can be decoded as in a random-
+access memory. Thus instead of having m address lines, one for each word in
+memory, the number of address lines can be reduced by the decoder to d lines,
+where m = 24. :
+
+
+===== PAGE 20 (book p.461) =====
+462 — CHAPTER TWELVE Memory Organization
+
+locality of reference
+
+If unwanted words have to be deleted and new words inserted one at a
+time, there is a need for a special register to distinguish between active and
+inactive words. This register, sometimes called a tag register, would have as
+many bits as there are words in the memory. For every active word stored in
+memory, the corresponding bit in the tag register is set to 1. A word is deleted
+from memory by clearing its tag bit to 0. Words are stored in memory by
+scanning the tag register until the first 0 bit is encountered. This gives the first
+available inactive word and a position for writing a new word. After the new
+word is stored in memory it is made active by setting its tag bit to 1. An
+unwanted word when deleted from memory can be cleared to all 0's if this
+value is used to specify an empty location. Moreover, the words that have a
+tag bit of 0 must be masked (together with the Kj bits) with the argument word
+so that only active words are compared.
+
+12-5 Cache Memory
+
+Analysis of a large number of typical programs has shown that the references
+to memory at any given interval of time tend to be confined within a few
+localized areas in memory. This phenomenon is known as the property of
+locality of reference. The reason for this property may be understood considering
+that a typical computer program flows in a straight-line fashion with program
+loops and subroutine calls encountered frequently. When a program loop is
+executed, the CPU repeatedly refers to the set of instructions in memory that
+constitute the loop. Every time a given subroutine is called, its set of instruc-
+tions are fetched from memory. Thus loops and subroutines tend to localize
+the references to memory for fetching instructions. To a lesser degree, memory
+references to data also tend to be localized. Table-lookup procedures repeat-
+edly refer to that portion in memory where the table is stored. Iterative proce-
+dures refer to common memory locations and array of numbers are confined
+within a local portion of memory. The result of all these observations is the
+locality of reference property, which states that over a short interval of time,
+the addresses generated by a typical program refer to a few localized areas of
+memory repeatedly, while the remainder of memory is accessed relatively
+infrequently.
+
+If the active portions of the program and data are placed in a fast small
+memory, the average memory access time can be reduced, thus reducing the
+total execution time of the program. Such a fast small memory is referred to
+asa cache memory. Itis placed between the CPU and main memory as illustrated
+in Fig. 12-1. The cache memory access time is less than the access time of main
+memory by a factor of 5 to 10. The cache is the fastest component in the memory
+hierarchy and approaches the speed of CPU components.
+
+The fundamental idea of cache organization is that by keeping the most
+frequently accessed instructions and data in the fast cache memory, the aver-
+
+
+
+===== PAGE 21 (book p.462) =====
+hit ratio
+
+mapping
+
+SECTION 12-5 Cache Memory 463
+
+age memory access time will approach the access time of the cache. Although
+the cache is only a small fraction of the size of main memory, a large fraction
+of memory requests will be found in the fast cache memory because of the
+locality of reference property of programs.
+
+The basic operation of the cache is as follows. When the CPU needs to
+access memory, the cache is examined. If the word is found in the cache, it is
+read from the fast memory. If the word addressed by the CPU is not found in
+the cache, the main memory is accessed to read the word. A block of words
+containing the one just accessed is then transferred from main memory to
+cache memory. The block size may vary from one word (the one just accessed)
+to about 16 words adjacent to the one just accessed. In this manner, some data
+are transferred to cache so that future references to memory find the required
+words in the fast cache memory.
+
+The performance of cache memory is frequently measured in terms of a
+quantity called hit ratio. When the CPU refers to memory and finds the word
+in cache, it is said to produce a hit. If the word is not found in cache, it is in
+main memory and it counts as a miss. The ratio of the number of hits divided
+by the total CPU references to memory (hits plus misses) is the hit ratio. The
+hit ratio is best measured experimentally by running representative programs
+in the computer and measuring the number of hits and misses during a given
+interval of time. Hit ratios of 0.9 and higher have been reported. This high ratio
+verifies the validity of the locality of reference property.
+
+The average memory access time of a computer system can be improved
+considerably by use of a cache. If the hit ratio is high enough so that most of
+the time the CPU accesses the cache instead of main memory, the average
+access time is closer to the access time of the fast cache memory. For example,
+a computer with cache access time of 100 ns, a main memory access time of
+1000 ns, and a hit ratio of 0.9 produces an average access time of 200 ns. This
+is a considerable improvement over a similar computer without a cache mem-
+ory, whose access time is 1000 ns.
+
+The basic characteristic of cache memory is its fast access time. Therefore,
+very little or no time must be wasted when searching for words in the cache.
+The transformation of data from main memory to cache memory is referred to
+as a mapping process. Three types of mapping procedures are of practical
+interest when considering the organization of cache memory:
+
+1. Associative mapping
+2. Direct mapping
+3. Set-associative mapping
+
+To help in the discussion of these three mapping procedures we will use a
+specific example of a memory organization as shown in Fig. 12-10. The main
+memory can store 32K words of 12 bits each. The cache is capable of storing
+512 of these words at any given time. For every word stored in cache, there is
+
+
+===== PAGE 22 (book p.463) =====
+464 = CHAPTER TWELVE Memory Organization
+
+Main memory
+
+32K X 12 Cache memory
+
+512X 12
+
+Figure 12-10 Example of cache memory.
+
+a duplicate copy in main memory. The CPU communicates with both memo-
+ries. It first sends a 15-bit address to cache. If there is a hit, the CPU accepts
+the 12-bit data from cache. If there is a miss, the CPU reads the word from main
+memory and the word is then transferred to cache.
+
+Associative Mapping
+
+The fastest and most flexible cache organization uses an associative memory.
+This organization is illustrated in Fig. 12-11. The associative memory stores
+both the address and content (data) of the memory word. This permits any
+location in cache to store any word from main memory. The diagram shows
+three words presently stored in the cache. The address value of 15 bits is shown
+as a five-digit octal number and its corresponding 12-bit word is shown as a
+four-digit octal number. A CPU address of 15 bits is placed in the argument
+register and the associative memory is searched for a matching address. If the
+
+Figure 12-11 Associative mapping cache (all numbers in octal).
+
+CPU address (15 bits)
+
+Argument register
+
+|+—— Address ——>1«—. Data ——>|
+
+01000 3450
+
+02777 6710
+22345 1234
+
+
+
+===== PAGE 23 (book p.464) =====
+tag field
+
+SECTION 12-5 Cache Memory 465
+
+address is found, the corresponding 12-bit data is read and sent to the CPU.
+If no match occurs, the main memory is accessed for the word. The ad-
+dress—data pair is then transferred to the associative cache memory. If the cache
+is full, an address-data pair must be displaced to make room for a pair that is
+needed and not presently in the cache. The decision as to what pair is replaced
+is determined from the replacement algorithm that the designer chooses for the
+cache. A simple procedure is to replace cells of the cache in round-robin order
+whenever a new word is requested from main memory. This constitutes a
+first-in first-out (FIFO) replacement policy.
+
+Direct Mapping
+
+Associative memories are expensive compared to random-access memories
+because of the added logic associated with each cell. The possibility of using
+a random-access memory for the cache is investigated in Fig. 12-12. The CPU
+address of 15 bits is divided into two fields. The nine least significant bits
+constitute the index field and the remaining six bits form the tag field. The figure
+shows that main memory needs an address that includes both the tag and the
+index bits. The number of bits in the index field is equal to the number of
+address bits required to access the cache memory.
+
+In the general case, there are 2‘ words in cache memory and 2" words in
+main memory. The n-bit memory address is divided into two fields: k bits for
+the index field and n — k bits for the tag field. The direct mapping cache
+organization uses the n-bit address to access the main memory and the k-bit
+index to access the cache. The internal organization of the words in the cache
+memory is as shown in Fig. 12-13(b). Each word in cache consists of the data
+word and its associated tag. When a new word is first brought into the cache,
+the tag bits are stored alongside the data bits. When the CPU generates a
+memory request, the index field is used for the address to access the cache. The
+
+Figure 12-12 Addressing relationships between main and cache memories.
+
+6 bits 9 bits
+
+Tag Index
+
+1 f |
+
+00 000 30K X12 000 512X 12
+; Octal Cache memory
+Octal Main memory address Address = 9 bits
+address #12 bi
+re: Address = 15 bits ™ Data=12 bits.
+Data = 12 bits
+772777
+
+
+
+===== PAGE 24 (book p.465) =====
+466
+
+CHAPTER TWELVE Memory Organization
+
+Memory Index
+address Memory data address Tag Data
+00000 1220 000} 00
+00777 2340
+01000 3450
+01777 4560 T17| 02
+02000 5670
+(b) Cache memory
+02777 6710
+y y
+
+(a) Main memory
+
+Figure 12-13 Direct mapping cache organization.
+
+tag field of the CPU address is compared with the tag in the word read from
+the cache. If the two tags match, there is a hit and the desired data word is in
+cache. If there is no match, there is a miss and the required word is read from.
+main memory. It is then stored in the cache together with the new tag,
+replacing the previous value. The disadvantage of direct mapping is that the
+hit ratio can drop considerably if two or more words whose addresses have the
+same index but different tags are accessed repeatedly. However, this possibility
+is minimized by the fact that such words are relatively far apart in the address
+range (multiples of 512 locations in this example.)
+
+To see how the direct-mapping organization operates, consider the nu-
+merical example shown in Fig. 12-13. The word at address zero is presently
+stored in the cache (index = 000, tag = 00, data = 1220). Suppose that the CPU
+now wants to access the word at address 02000. The index address is 000, so
+it is used to access the cache. The two tags are then compared. The cache tag
+is 00 but the address tag is 02, which does not produce a match. Therefore, the
+main memory is accessed and the data word 5670 is transferred to the CPU.
+The cache word at index address 000 is then replaced with a tag of 02 and data
+of 5670.
+
+The direct-mapping example just described uses a block size of one word.
+The same organization but using a block size of 8 words is shown in Fig. 12-14.
+
+
+===== PAGE 25 (book p.466) =====
+SECTION 12-5 Cache Memory 467
+
+Index Tag Data 6 6 3
+000 | 01 3450 Tag [ lost | wor
+Block 0
+007 | ot 6578
+— }——_—— Index.
+o10
+Block |
+017
+\ 1 '
+i 1
+| H 1
+1 1 1
+i} 1 I
+I i 1
+ee
+770 | 02
+Block 63
+777} 02 6710
+
+Figure 12-14 Direct mapping cache with block size of 8 words.
+
+The index field is now divided into two parts: the block field and the word field.
+In a 512-word cache there are 64 blocks of 8 words each, since 64 x 8 = 512.
+The block number is specified with a 6-bit field and the word within the block
+is specified with a 3-bit field. The tag field stored within the cache is common
+to all eight words of the same block. Every time a miss occurs, an entire block
+of eight words must be transferred from main memory to cache memory.
+Although this takes extra time, the hit ratio will most likely improve with a
+larger block size because of the sequential nature of computer programs.
+
+Set-Associative Mapping
+
+It was mentioned previously that the disadvantage of direct mapping is that
+two words with the same index in their address but with different tag values
+cannot reside in cache memory at the same time. A third type of cache organ-
+ization, called set-associative mapping, is an improvement over the direct-
+mapping organization in that each word of cache can store two or more words
+of memory under the same index address. Each data word is stored together
+with its tag and the number of tag-data items in one word of cache is said to
+form a set. An example of a set-associative cache organization for a set size of
+two is shown in Fig. 12-15. Each index address refers to two data words and
+their associated tags. Each tag requires six bits and each data word has 12 bits,
+so the word length is 2(6 + 12) = 36 bits. An index address of nine bits can
+accommodate 512 words. Thus the size of cache memory is 512 x 36. It can
+accommodate 1024 words of main memory since each word of cache contains
+two data words. In general, a set-associative cache of set size k will accommo-
+date k words of main memory in each word of cache.
+
+
+===== PAGE 26 (book p.467) =====
+468 — CHAPTER TWELVE Memory Organization
+
+replacement
+algorithms
+
+Index Tag Data Tag Data
+000} Oo! 3450 02 5670
+7m7| 02 6710 00 2340
+
+Figure 12-15 Two-way set-associative mapping cache.
+
+The octal numbers listed in Fig. 12-15 are with reference to the main
+memory contents illustrated in Fig. 12-13(a). The words stored at addresses
+01000 and 02000 of main memory are stored in cache memory at index address
+000. Similarly, the words at addresses 02777 and 00777 are stored in cache at
+index address 777. When the CPU generates a memory request, the index value
+of the address is used to access the cache. The tag field of the CPU address is
+then compared with both tags in the cache to determine if a match occurs. The
+comparison logic is done by an associative search of the tags in the set similar
+to an associative memory search: thus the name “set-associative.” The hit ratio
+will improve as the set size increases because more words with the same index
+but different tags can reside in cache. However, an increase in the set size
+increases the number of bits in words of cache and requires more complex
+comparison logic.
+
+When a miss occurs in a set-associative cache and the set is full, it is
+necessary to replace one of the tag-data items with a new value. The most
+common replacement algorithms used are: random replacement, first-in, first-
+out (FIFO), and least recently used (LRU). With the random replacement policy
+the control chooses one tag-data item for replacement at random. The FIFO
+procedure selects for replacement the item that has been in the set the longest.
+The LRU algorithm selects for replacement the item that has been least recently
+used by the CPU. Both FIFO and LRU can be implemented by adding a few
+extra bits in each word of cache.
+
+Writing into Cache
+
+An important aspect of cache organization is concerned with memory write
+requests. When the CPU finds a word in cache during a read operation, the
+main memory is not involved in the transfer. However, if the operation is a
+write, there are two ways that the system can proceed.
+
+
+===== PAGE 27 (book p.468) =====
+write-through
+
+write-back
+
+valid bit
+
+SECTION 12-6 Virtual Memory 469
+
+The simplest and most commonly used procedure is to update main
+memory with every memory write operation, with cache memory being up-
+dated in parallel if it contains the word at the specified address. This is called
+the write-through method. This method has the advantage that main memory
+always contains the same data as the cache. This characteristic is important in
+systems with direct memory access transfers. It ensures that the data residing
+in main memory are valid at all times so that an /O device communicating
+through DMA would receive the most recent updated data.
+
+The second procedure is called the write-back method. In this method only
+the cache location is updated during a write operation. The location is then
+marked by a flag so that later when the word is removed from the cache it is
+copied into main memory. The reason for the write-back method is that during
+the time a word resides in the cache, it may be updated several times; however,
+as long as the word remains in the cache, it does not matter whether the copy
+in main memory is out of date, since requests from the word are filled from
+the cache. It is only when the word is displaced from the cache that an accurate
+copy need be rewritten into main memory. Analytical results indicate that the
+number of memory writes in a typical program ranges between 10 and 30
+percent of the total references to memory.
+
+Cache Initialization
+One more aspect of cache organization that must be taken into consideration
+is the problem of initialization. The cache is initialized when power is applied
+to the computer or when the main memory is loaded with a complete set of
+programs from auxiliary memory. After initialization the cache is considered
+to be empty, but in effect it contains some nonvalid data. It is customary to
+include with each word in cache a valid bit to indicate whether or not the word
+contains valid data.
+
+The cache is initialized by clearing all the valid bits to 0. The valid bit of
+a particular cache word is set to 1 the first time this word is loaded from main
+memory and stays set unless the cache has to be initialized again. The intro-
+duction of the valid bit means that a word in cache is not replaced by another
+word unless the valid bit is set to 1 and a mismatch of tags occurs. If the valid
+bit happens to be 0, the new word automatically replaces the invalid data. Thus
+the initialization condition has the effect of forcing misses from the cache until
+it fills with valid data.
+
+12-6 Virtual Memory
+
+Ina memory hierarchy system, programs and data are first stored in auxiliary
+memory. Portions of a program or data are brought into main memory as they
+are needed by the CPU. Virtual memory is a concept used in some large
+computer systems that permit the user to construct programs as though a large
+
+
+
+===== PAGE 28 (book p.469) =====
+470 CHAPTER TWELVE Memory Organization
+
+address space
+memory space
+
+memory space were available, equal to the totality of auxiliary memory. Each
+address that is referenced by the CPU goes through an address mapping from
+the so-called virtual address to a physical address in main memory. Virtual
+memory is used to give programmers the illusion that they have a very large
+memory at their disposal, even though the computer actually has a relatively
+small main memory. A virtual memory system provides a mechanism for
+translating program-generated addresses into correct main memory locations.
+This is done dynamically, while programs are being executed in the CPU. The
+translation or mapping is handled automatically by the hardware by means of
+a mapping table.
+
+Address Space and Memory Space
+
+An address used by a programmer will be called a virtual address, and the set
+of such addresses the address space. An address in main memory is called a
+location or physical address. The set of such locations is called the memory space.
+Thus the address space is the set of addresses generated by programs as they
+reference instructions and data; the memory space consists of the actual main
+memory locations directly addressable for processing. In most computers the
+address and memory spaces are identical. The address space is allowed to be
+larger than the memory space in computers with virtual memory.
+
+As an illustration, consider a computer with a main-memory capacity of
+32K words (K = 1024). Fifteen bits are needed to specify a physical address in
+memory since 32K = 2'°. Suppose that the computer has available auxiliary
+memory for storing 2” = 1024K words. Thus auxiliary memory has a capacity
+for storing information equivalent to the capacity of 32 main memories. Denot-
+ing the address space by N and the memory space by M, we then have for this
+example N = 1024K and M = 32K.
+
+Ina multiprogram computer system, programs and data are transferred
+to and from auxiliary memory and main memory based on demands imposed
+by the CPU. Suppose that program 1 is currently being executed in the CPU.
+Program 1 and a portion of its associated data are moved from auxiliary
+memory into main memory as shown in Fig. 12-16. Portions of programs and
+data need not be in contiguous locations in memory since information is being
+moved in and out, and empty spaces may be available in scattered locations
+in memory.
+
+Ina virtual memory system, programmers are told that they have the total
+address space at their disposal. Moreover, the address field of the instruction
+code has a sufficient number of bits to specify all virtual addresses. In our
+example, the address field of an instruction code will consist of 20 bits but
+physical memory addresses must be specified with only 15 bits. Thus CPU will
+reference instructions and data with a 20-bit address, but the information at
+this address must be taken from physical memory because access to auxiliary
+storage for individual words will be prohibitively long. (Remember that for
+
+
+===== PAGE 29 (book p.470) =====
+SECTION 126 Virtual Memory 471
+
+Auxiliary memory
+
+Main memory
+a ee
+Data 1,1
+Data 1,2
+
+Data 1, 1
+Program 2
+Data 2,1
+Memory space
+M = 32k = 215
+Address space
+
+N= 1024K = 220
+
+Figure 12-16 Relation between address and memory space in a virtual
+memory system.
+
+efficient transfers, auxiliary storage moves an entire record to the main mem-
+ory.) A table is then needed, as shown in Fig. 12-17, to map a virtual address
+of 20 bits to a physical address of 15 bits. The mapping is a dynamic operation,
+which means that every address is translated immediately as a word is refer-
+enced by CPU.
+
+The mapping table may be stored in a separate memory as shown in
+Fig. 12-17 or in main memory. In the first case, an additional memory unit is
+required as well as one extra memory access time. In the second case, the table
+
+Figure 12-17 Memory table for mapping a virtual address.
+
+Virtual address
+
+Virtual Main memory
+address Memory address
+register mapping register
+(20 bits) table (5 bits)
+
+Main memory
+Memory table buffer register
+buffer register
+
+
+
+===== PAGE 30 (book p.471) =====
+472 CHAPTER TWELVE Memory Organization
+
+pages and blocks
+
+page frame
+
+takes space from main memory and two accesses to memory are required with
+the program running at half speed. A third alternative is to use an associative
+memory as explained below.
+
+Address Mapping Using Pages
+
+The table implementation of the address mapping is simplified if the informa-
+tion in the address space and the memory space are each divided into groups
+of fixed size. The physical memory is broken down into groups of equal size
+called blocks, which may range from 64 to 4096 words each. The term page refers
+to groups of address space of the same size. For example, if a page or block
+consists of 1K words, then, using the previous example, address space is
+divided into 1024 pages and main memory is divided into 32 blocks. Although
+both a page and a block are split into groups of 1K words, a page refers to the
+organization of address space, while a block refers to the organization of
+memory space. The programs are also considered to be split into pages.
+Portions of programs are moved from auxiliary memory to main memory in
+records equal to the size of a page. The term “page frame” is sometimes used
+to denote a block.
+
+Consider a computer with an address space of 8K and a memory space
+of 4K, If we split each into groups of 1K words we obtain eight pages and four
+blocks as shown in Fig. 12-18. At any given time, up to four pages of address
+space may reside in main memory in any one of the four blocks.
+
+The mapping from address space to memory space is facilitated if each
+virtual address is considered to be represented by two numbers: a page number
+address and a line within the page. In a computer with 2’ words per page, p
+bits are used to specify a line address and the remaining high-order bits of the
+virtual address specify the page number. In the example of Fig. 12-18, a virtual
+address has 13 bits. Since each page consists of 2° = 1024 words, the high-
+order three bits of a virtual address will specify one of the eight pages and the
+low-order 10 bits give the line address within the page. Note that the line
+address in address space and memory space is the same; the only mapping
+required is from a page number to a block number.
+
+The organization of the memory mapping table in a paged system is
+shown in Fig. 12-19. The memory-page table consists of eight words, one for
+each page. The address in the page table denotes the page number and the
+content of the word gives the block number where that page is stored in main
+memory. The table shows that pages 1, 2, 5, and 6 are now available in main
+memory in blocks 3, 0, 1, and 2, respectively. A presence bit in each location
+indicates whether the page has been transferred from auxiliary memory into
+main memory. A 0 in the presence bit indicates that this page is not available
+in main memory. The CPU references a word in memory with a virtual address
+of 13 bits. The three high-order bits of the virtual address specify a page
+number and also an address for the memory-page table. The content of the
+
+
+===== PAGE 31 (book p.472) =====
+SECTION 12-6 Virtual Memory 473
+
+Page O
+
+Page |
+
+Page 2
+
+Page 3
+
+Page 4 Block 0
+
+Page 5 Block 1
+| Paseé | Block 2
+
+Page 7 Block 3
+Address space Memory space
+N=8K=23 M=4K= 2"?
+
+Figure 12-18 Address space and memory space split into groups of IK words.
+
+word in the memory page table at the page number address is read out into
+the memory table buffer register. If the presence bit is a 1, the block number
+thus read is transferred to the two high-order bits of the main memory address
+register. The line number from the virtual address is transferred into the 10
+low-order bits of the memory address register. A read signal to main memory
+
+Figure 12-19 Memory table in a paged system.
+
+Page no. Line number
+
+[roifo1o101001)!
+
+Virtual address
+
+000 Main memory
+
+oot
+<0
+
+on [or [ororaicor }
+10 Man memey
+101 address register
+
+110
+
+Memory page table
+
+
+===== PAGE 32 (book p.473) =====
+474
+
+CHAPTER TWELVE Memory Organization
+
+transfers the content of the word to the main memory buffer register ready to
+be used by the CPU. If the presence bit in the word read from the page table
+is 0, it signifies that the content of the word referenced by the virtual address
+does not reside in main memory. A call to the operating system is then
+generated to fetch the required page from auxiliary memory and place it into
+main memory before resuming computation.
+
+Associative Memory Page Table
+A random-access memory page table is inefficient with respect to storage
+utilization. In the example of Fig. 12-19 we observe that eight words of memory
+are needed, one for each page, but at least four words will always be marked
+empty because main memory cannot accommodate more than four blocks. In
+general, a system with n pages and m blocks would require a memory-page
+table of n locations of which up to m blocks will be marked with block numbers
+and all others will be empty. As a second numerical example, consider an
+address space of 1024K words and memory space of 32K words. If each page
+or block contains 1K words, the number of pages is 1024 and the number of
+blocks 32. The capacity of the memory-page table must be 1024 words and only
+32 locations may have a presence bit equal to 1. At any given time, at least 992
+locations will be empty and not in use.
+
+A more efficient way to organize the page table would be to construct it
+with a number of words equal to the number of blocks in main memory. In this
+
+"way the size of the memory is reduced and each location is fully utilized. This
+
+method can be implemented by means of an associative memory with each
+word in memory containing a page number together with its corresponding
+
+Figure 12-20 An associative memory page table.
+
+Virtual address
+
+|
+
+Page no.
+
+|
+
+Key register
+
+Associative memory
+
+Eel
+
+Page no. Block no,
+
+
+===== PAGE 33 (book p.474) =====
+page fault
+
+SECTION 12-6 Virtual Memory 475
+
+block number. The page field in each word is compared with the page number
+in the virtual address. If a match occurs, the word is read from memory and
+its corresponding block number is extracted.
+
+Consider again the case of eight pages and four blocks as in the example
+of Fig. 12-19. We replace the random access memory-page table with an
+associative memory of four words as shown in Fig. 12-20. Each entry in the
+associative memory array consists of two fields. The first three bits specify a
+field for storing the page number. The last two bits constitute a field for storing
+the block number. The virtual address is placed in the argument register. The
+page number bits in the argument register are compared with all page numbers
+in the page field of the associative memory. If the page number is found, the
+5-bit word is read out from memory. The corresponding block number, being
+in the same word, is transferred to the main memory address register. If no
+match occurs, a call to the operating system is generated to bring the required
+page from auxiliary memory.
+
+Page Replacement
+
+A virtual memory system is a combination of hardware and software tech-
+niques. The memory management software system handles all the software
+operations for the efficient utilization of memory space. It must decide (1)
+which page in main memory ought to be removed to make room for a new
+page, (2) when a new page is to be transferred from auxiliary memory to main
+memory, and (3) where the page is to be placed in main memory. The hardware
+mapping mechanism and the memory management software together consti-
+tute the architecture of a virtual memory.
+
+When a program starts execution, one or more pages are transferred into
+main memory and the page table is set to indicate their position. The program
+is executed from main memory until it attempts to reference a page that is still
+in auxiliary memory. This condition is called page fault. When page fault occurs,
+the execution of the present program is suspended until the required page is
+brought into main memory. Since loading a page from auxiliary memory to
+main memory is basically an I/O operation, the operating system assigns this
+task to the /O processor. In the meantime, control is transferred to the next
+program in memory that is waiting to be processed in the CPU. Later, when
+the memory block has been assigned and the transfer completed, the original
+program can resume its operation.
+
+When a page fault occurs in a virtual memory system, it signifies that the
+page referenced by the CPU is not in main memory. A new page is then
+transferred from auxiliary memory to main memory. If main memory is full,
+it would be necessary to remove a page from a memory block to make room.
+for the new page. The policy for choosing pages to remove is determined from.
+the replacement algorithm that is used. The goal of a replacement policy is to
+try to remove the page least likely to be referenced in the immediate future.
+
+Two of the most common replacement algorithms used are the first-in,
+
+
+===== PAGE 34 (book p.475) =====
+476
+
+FIFO
+
+(CHAPTER TWELVE Memory Organization
+
+first-out (FIFO) and the least recently used (LRU). The FIFO algorithm selects for
+replacement the page that has been in memory the longest time. Each time a
+page is loaded into memory, its identification number is pushed into a FIFO
+stack. FIFO will be full whenever memory has no more empty blocks. When
+anew page must be loaded, the page least recently brought in is removed. The
+page to be removed is easily determined because its identification number is
+at the top of the FIFO stack. The FIFO replacement policy has the advantage
+of being easy to implement. It has the disadvantage that under certain circum-
+stances pages are removed and loaded from memory too frequently.
+
+The LRU policy is more difficult to implement but has been more attrac-
+tive on the assumption that the least recently used page is a better candidate
+for removal than the least recently loaded page as in FIFO. The LRU algorithm
+can be implemented by associating a counter with every page that is in main
+memory. When a page is referenced, its associated counter is set to zero. At
+fixed intervals of time, the counters associated with all pages presently in
+memory are incremented by 1. The least recently used page is the page with
+the highest count. The counters are often called aging registers, as their count
+indicates their age, that is, how long ago their associated pages have been
+referenced.
+
+12-7__Memory Management Hardware
+
+Ina multiprogramming environment where many programs reside in memory
+it becomes necessary to move programs and data around the memory, to vary
+the amount of memory in use by a given program, and to prevent a program
+from changing other programs. The demands on computer memory brought
+about by multiprogramming have created the need fora memory management
+system. A memory management system is a collection of hardware and soft-
+ware procedures for managing the various programs residing in memory. The
+memory management software is part of an overall operating system available
+in many computers. Here we are concerned with the hardware unit associated
+with the memory management system.
+The basic components of a memory management unit are:
+
+1. A facility for dynamic storage relocation that maps logical memory
+references into physical memory addresses
+
+2. A provision for sharing common programs stored in memory by differ-
+ent users
+
+3. Protection of information against unauthorized access between users
+and preventing users from changing operating system functions
+
+The dynamic storage relocation hardware is a mapping process similar to
+the paging system described in Sec. 12-6. The fixed page size used in the virtual
+
+
+===== PAGE 35 (book p.476) =====
+segment
+
+logical address
+
+SECTION 12-7 Memory Management Hardware 477
+
+memory system causes certain difficulties with respect to program size and the
+logical structure of programs. It is more convenient to divide programs and
+data into logical parts called segments. A segment is a set of logically related
+instructions or data elements associated with a given name. Segments may be
+generated by the programmer or by the operating system. Examples of seg-
+ments are a subroutine, an array of data, a table of symbols, or a user's
+program.
+
+The sharing of common programs is an integral part of a multiprogram-
+ming system. For example, several users wishing to compile their Fortran
+programs should be able to share a single copy of the compiler rather than each
+user having a separate copy in memory. Other system programs residing in
+memory are also shared by all users in a multiprogramming system without
+having to produce multiple copies.
+
+The third issue in multiprogramming is protecting one program from
+unwanted interaction with another. An example of unwanted interaction is
+one user’s unauthorized copying of another user’s program. Another aspect
+of protection is concerned with preventing the occasional user from performing
+operating system functions and thereby interrupting the orderly sequence of
+operations in a computer installation. The secrecy of certain programs must be
+kept from unauthorized personnel to prevent abuses in the confidential activ-
+ities of an organization.
+
+The address generated by a segmented program is called a logical address.
+This is similar to a virtual address except that logical address space is associated
+with variable-length segments rather than fixed-length pages. The logical
+address may be larger than the physical memory address as in virtual memory,
+but it may also be equal, and sometimes even smaller than the length of the
+physical memory address. In addition to relocation information, each segment
+has protection information associated with it. Shared programs are placed in
+a unique segment in each user's logical address space so that a single physical
+copy can be shared. The function of the memory management unit is to map
+logical addresses into physical addresses similar to the virtual memory map-
+ping concept.
+
+Segmented-Page Mapping
+
+It was already mentioned that the property of logical space is that it uses
+variable-length segments. The length of each segment is allowed to grow and
+contract according to the needs of the program being executed. One way of
+specifying the length of a segment is by associating with it a number of
+equal-size pages. To see how this is done, consider the logical address shown
+in Fig. 12-21. The logical address is partitioned into three fields. The segment
+field specifies a segment number. The page field specifies the page within the
+segment and the word field gives the specific word within the page. A page
+field of k bits can specify up to 2' pages. A segment number may be associated
+
+
+===== PAGE 36 (book p.477) =====
+478 — CHAPTER TWELVE Memory Organization
+
+(b) Associative memory translation look-aside buffer (TLB)
+Figure 12-21 Mapping in segmented-page memory management unit.
+
+weit jt crepes Cx wit a6 macy 98 2 pages: Tie I dene of a segment
+would vary according to the number of pages that are
+
+The cupping ofthe logical addvess into a phyescal aires ts done by
+means of two tables, as shown in Fig. 12-21(a). The segment number of the
+logical address specifies the address for the segment table. The entry in the
+
+
+===== PAGE 37 (book p.478) =====
+SECTION 12-7 Memory Management Hardware 479
+
+segment table is a pointer address for a page table base. The page table base
+is added to the page number given in the logical address. The sum produces
+a pointer address to an entry in the page table. The value found in the page
+table provides the block number in physical memory. The concatenation of the
+block field with the word field produces the final physical mapped address.
+
+The two mapping tables may be stored in two separate small memories
+or in main memory. In either case, a memory reference from the CPU will
+require three accesses to memory: one from the segment table, one from the
+page table, and the third from main memory. This would slow the system
+significantly when compared to a conventional system that requires only one
+reference to memory. To avoid this speed penalty, a fast associative memory
+is used to hold the most recently referenced table entries. (This type of memory
+is sometimes called a translation lookaside buffer, abbreviated TLB.) The first time
+a given block is referenced, its value together with the corresponding segment
+and page numbers are entered into the associative memory as shown in
+Fig. 12-21(b). Thus the mapping process is first attempted by associative search
+with the given segment and page numbers. If it succeeds, the mapping delay
+is only that of the associative memory. If no match occurs, the slower table
+mapping of Fig. 12-21(a) is used and the result transformed into the associative
+memory for future reference.
+
+Numerical Example
+
+A numerical example may clarify the operation of the memory management
+unit. Consider the 20-bit logical address specified in Fig. 12-22(a). The 4-bit
+segment number specifies one of 16 possible segments. The 8-bit page number
+can specify up to 256 pages, and the 8-bit word field implies a page size of 256
+words. This configuration allows each segment to have any number of pages
+up to 256. The smallest possible segment will have one page or 256 words. The
+largest possible segment will have 256 pages, for a total of 256 x 256 = 64K
+words.
+
+The physical memory shown in Fig. 12-22(b) consists of 2” words of 32
+bits each. The 20-bit address is divided into two fields: a 12-bit block number
+and an 8-bit word number. Thus, physical memory is divided into 4096 blocks
+of 256 words each. A page in a logical address has a corresponding block in
+physical memory. Note that both the logical and physical address have 20 bits.
+In the absence of a memory management unit, the 20-bit address from the CPU
+can be used to access physical memory directly.
+
+Consider a program loaded into memory that requires five pages. The
+operating system may assign to this program segment 6 and pages 0 through
+4, as shown in Fig. 12-23(a). The total logical address range for the program is
+from hexadecimal 60000 to 604FF. When the program is loaded into physical
+memory, it is distributed among five blocks in physical memory where the
+operating system finds empty spaces. The correspondence between each
+memory block and logical page number is then entered in a table as shown in
+
+
+===== PAGE 38 (book p.479) =====
+480
+
+CHAPTER TWELVE Memory Organization
+
+4 8 8
+
+Segment Page Word
+
+(a) Logical address format: 16 segments of 256 pages each,
+each page has 256 words
+
+12 8
+Block Word
+
+270 x 32
+Physical memory
+
+(b) Physical address format: 4096 blocks of 256 words each,
+each word has 32 bits
+
+Figure 12-22 An example of logical and physical addresses.
+
+Fig. 12-23(b). The information from this table is entered in the segment and
+page tables as shown in Fig. 12-24(a).
+
+Now consider the specific logical address given in Fig. 12-24. The 20-bit
+address is listed as a five-digit hexadecimal number. It refers to word number
+7E of page 2 in segment 6. The base of segment 6 in the page table is at address
+35. Segment 6 has associated with it five pages, as shown in the page table at
+addresses 35 through 39. Page 2 of segment 6 is at address 35 + 2 = 37. The
+physical memory block is found in the page table to be 019. Word 7E in block
+19 gives the 20-bit physical address 0197E. Note that page 0 of segment 6 maps
+into block 12 and page 1 maps into block 0. The associative memory in Fig.
+
+Figure 12-23 Example of logical and physical memory address assignment.
+
+Hexadecimal
+address Page number
+60000 Page 0 Segment Page | Block
+60100 Page 1 6 00 012
+6 o1 000
+60200 Page 2 6 02 019
+60300 Page 3 6 03 053
+60400 6 04 A61
+GOsFF Page 4 ——
+(a) Logical address assignment (b) Segment-page versus
+
+memory block assignment
+
+
+===== PAGE 39 (book p.480) =====
+Segment table
+
+SECTION 12-7 Memory Management Hardware
+
+Logical address (in haxadecimal)
+
+35
+
+A3
+
+6 02 1E
+Page table
+00 00000
+O00FF
+35 012
+36 000
+37 019 01200
+38 053 O12FF
+39| 61
+01900
+O197E
+A3 012 O19FF
+
+(a) Segment and page table mapping
+
+Segment Page | Block |
+6 a as |
+6 o4 A6I
+
+(b) Associative memory (TLB)
+
+481
+
+Physical memory
+
+Block 0
+
+Block 12
+
+Figure 12-24 Logical to physical memory mapping example (all numbers are
+in hexadecimal).
+
+
+===== PAGE 40 (book p.481) =====
+482
+
+CHAPTER TWELVE Memory Organization
+
+12-24(b) shows that pages 2 and 4 of segment 6 have been referenced previously
+and therefore their corresponding block numbers are stored in the associative
+memory.
+
+From this example it should be evident that the memory management
+system can assign any number of pages to each segment. Each logical page can
+be mapped into any block in physical memory. Pages can move to different
+blocks in memory depending on memory space requirements. The only updat-
+ing required is the change of the block number in the page table. Segments can
+grow or shrink independently without affecting each other. Different seg-
+ments can use the same block of memory if it is required to share a program
+by many users. For example, block number 12 in physical memory can be
+assigned a second logical address F0000 through FOOFF. This specifies segment
+number 15 and page 0, which maps to block 12 as shown in Fig. 12-24(a).
+
+Memory Protection
+
+Memory protection can be assigned to the physical address or the logical
+address. The protection of memory through the physical address can be done
+by assigning to each block in memory a number of protection bits that indicate
+the type of access allowed to its corresponding block. Every time a page is
+moved from one block to another it would be necessary to update the block
+protection bits. A much better place to apply protection is in the logical address
+space rather than the physical address space. This can be done by including
+protection information within the segment table or segment register of the
+memory management hardware.
+
+The content of each entry in the segment table or a segment register is
+called a descriptor. A typical descriptor would contain, in addition to a base
+address field, one or two additional fields for protection purposes. A typical
+format for a segment descriptor is shown in Fig. 12-25. The base address field
+gives the base of the page table address in a segmented-page organization or
+the block base address in a segment register organization. This is the address
+used in mapping from a logical to the physical address. The length field gives
+the segment size by specifying the maximum number of pages assigned to the
+segment. The length field is compared against the page number in the logical
+address. A size violation occurs if the page number falls outside the segment
+length boundary. Thus a given program and its data cannot access memory not
+assigned to it by the operating system.
+
+The protection field in a segment descriptor specifies the access rights
+available to the particular segment. In a segmented-page organization, each
+
+Figure 12-25 Format of a typical segment descriptor.
+
+Base address Length | Protection
+
+
+
+===== PAGE 41 (book p.482) =====
+Problems 483
+
+entry in the page table may have its own protection field to describe the access
+rights of each page. The protection information is set into the descriptor by the
+master control program of the operating system. Some of the access rights of
+interest that are used for protecting the programs residing in memory are:
+
+1. Full read and write privileges
+
+2. Read only (write protection)
+
+3. Execute only (program protection)
+
+4. System only (operating system protection)
+
+Full read and write privileges are given to a program when it is executing
+its own instructions. Write protection is useful for sharing system programs
+suchas utility programs and other library routines. These system programs are
+stored in an area of memory where they can be shared by many users. They
+can be read by all programs, but no writing is allowed. This protects them from
+being changed by other programs.
+
+The execute-only condition protects programs from being copied. It re-
+stricts the segment to be referenced only during the instruction fetch phase but
+not during the execute phase. Thus it allows the users to execute the segment
+program instructions but prevents them from reading the instructions as data
+for the purpose of copying their content.
+
+Portions of the operating system will reside in memory at any given time.
+These system programs must be protected by making them inaccessible to
+unauthorized users. The operating system protection condition is placed in the
+descriptors of all operating system programs to prevent the occasional user
+from accessing operating system segments.
+
+12-1. a, How many 128 x 8 RAM chips are needed to provide a memory capacity
+‘of 2048 bytes?
+b. How many lines of the address bus must be used to access 2048 bytes of
+memory? How many of these lines will be common to all chips?
+c. How many lines must be decoded for chip select? Specify the size of the
+decoders.
+
+12-2. A computer uses RAM chips of 1024 x 1 capacity.
+a. How many chips are needed, and how should their address lines be
+connected to provide a memory capacity of 1024 bytes?
+b. How many chips are needed to provide a memory capacity of 16K bytes?
+Explain in words how the chips are to be connected to the address bus.
+
+12-3. AROMchipof 1024 x 8bits has four select inputs and operates froma 5-volt
+
+
+===== PAGE 42 (book p.483) =====
+484
+
+CHAPTER TWELVE Memory Organization
+
+2-4,
+
+12-5.
+
+12-6.
+
+12-7.
+
+12-8.
+
+12-9,
+
+power supply. How many pins are needed for the IC package? Draw a block
+diagram and label all input and output terminals in the ROM.
+
+Extend the memory system of Fig. 12-4 to 4096 bytes of RAM and 4096 bytes
+of ROM. List the memory-address map and indicate what size decoders are
+needed.
+
+Acomputer employs RAM chips of 256 x 8and ROM chips of 1024 x 8. The
+computer system needs 2K bytes of RAM, 4K bytes of ROM, and four
+interface units, each with four registers. A memory-mapped I/O configura-
+tion is used. The two highest-order bits of the address bus are assigned 00
+for RAM, 01 for ROM, and 10 for interface registers.
+
+a. How many RAM and ROM chips are needed?
+
+b. Draw a memory-address map for the system.
+
+c. Give the address range in hexadecimal for RAM, ROM, and interface.
+An 8-bit computer has a 16-bit address bus. The first 15 lines of the address
+are used to select a bank of 32K bytes of memory. The high-order bit of the
+address is used to select a register which receives the contents of the data
+bus. Explain how this configuration can be used to extend the memory
+capacity of the system to eight banks of 32K bytes each, for a total of 256K
+bytes of memory.
+
+A magnetic disk system has the following parameters:
+
+T, = average time to position the magnetic head over a track
+R = rotation speed of disk in revolutions per second
+
+N, = number of bits per track
+
+N, = number of bits per sector
+
+Calculate the average time T, that it will take to read one sector.
+
+What is the transfer rate of an eight-track magnetic tape whose speed is 120
+inches per second and whose density is 1600 bits per inch?
+
+Obtain the complement function for the match logic of one word in an
+associative memory. In other words, show that M; is the sum of exclusive-
+OR functions. Draw the logic diagram for M; and terminate it with an
+inverter to obtain M,.
+
+Obtain the Boolean function for the match logic of one word in an associative
+memory taking into consideration a tag bit that indicates whether the word
+is active or inactive.
+
+What additional logic is required to give a no-match result for a word in an
+associative memory when all key bits are zeros?
+
+a. Draw the logic diagram of all the cells of one word in an associative
+memory. Include the read and write logic of Fig, 12-8 and the match logic
+of Fig, 12-9.
+
+b. Draw the logic diagram of all cells along one vertical column (column j)
+in an associative memory. Include a common output line for all bits in
+the same column.

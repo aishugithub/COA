@@ -1078,42 +1078,33 @@
 
         <div class="frag" style="font-size:38px; color:var(--accent); font-weight:800">→</div>
 
-        <!-- The buffer: the 0x4A24 entry is ALREADY stored (it was added the last
-             time this branch ran). The lookup does NOT insert it — it FINDS it, and
-             the reveal simply CIRCLES the already-present row. -->
+        <!-- The buffer itself: a small, fast, address-keyed table -->
         <div class="frag" style="text-align:center">
           <div style="font-size:16px; color:var(--purple); font-weight:800; margin-bottom:6px">Branch Target Buffer &nbsp;·&nbsp; <span style="color:var(--muted); font-weight:600">≈1024 most-recent branches</span></div>
-          <div style="position:relative; display:inline-block">
-            <table id="btbtable" style="border-collapse:collapse; font-family:Consolas,monospace; font-size:18px">
-              <tr style="background:var(--card)">
-                <th style="border:1px solid var(--border); padding:6px 16px; color:var(--accent)">Branch address</th>
-                <th style="border:1px solid var(--border); padding:6px 16px; color:var(--accent)">State bits</th>
-                <th style="border:1px solid var(--border); padding:6px 16px; color:var(--accent)">Target address</th>
-              </tr>
-              <tr>
-                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">0x4A00</td>
-                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">01</td>
-                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">0x4A04</td>
-              </tr>
-              <!-- The matched entry — a normal stored row, shown from the start -->
-              <tr>
-                <td style="border:1px solid var(--border); padding:6px 16px">0x4A24</td>
-                <td style="border:1px solid var(--border); padding:6px 16px">11 (taken)</td>
-                <td style="border:1px solid var(--border); padding:6px 16px">0x5100</td>
-              </tr>
-              <tr>
-                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">0x4B10</td>
-                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">00</td>
-                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">0x4B90</td>
-              </tr>
-            </table>
-            <!-- Revealed as its own step: a hand-drawn-style ring that CIRCLES the
-                 already-present matched row (this is the lookup hit — nothing is inserted). -->
-            <svg class="frag" style="position:absolute; left:0; top:0; overflow:visible; pointer-events:none" width="10" height="10">
-              <ellipse cx="215" cy="117" rx="224" ry="31" fill="none" stroke="var(--yellow)" stroke-width="3.5" stroke-dasharray="7 5"/>
-            </svg>
-          </div>
-          <div class="cap" style="margin-top:6px">The PC matches this <b>already-stored</b> entry → <b style="color:var(--yellow)">hit</b></div>
+          <table style="border-collapse:collapse; font-family:Consolas,monospace; font-size:18px; margin:0 auto">
+            <tr style="background:var(--card)">
+              <th style="border:1px solid var(--border); padding:6px 13px; color:var(--accent)">Branch address</th>
+              <th style="border:1px solid var(--border); padding:6px 13px; color:var(--accent)">State bits</th>
+              <th style="border:1px solid var(--border); padding:6px 13px; color:var(--accent)">Target address</th>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--border); padding:6px 13px">0x4A00</td>
+              <td style="border:1px solid var(--border); padding:6px 13px; color:var(--muted)">01</td>
+              <td style="border:1px solid var(--border); padding:6px 13px; color:var(--muted)">0x4A04</td>
+            </tr>
+            <!-- The matched row (revealed as its own step) -->
+            <tr class="frag" style="background:rgba(88,166,255,.16)">
+              <td style="border:2px solid var(--accent); padding:6px 13px; color:var(--teal); font-weight:800">0x4A24 ◄</td>
+              <td style="border:2px solid var(--accent); padding:6px 13px; color:var(--green); font-weight:800">11 (taken)</td>
+              <td style="border:2px solid var(--accent); padding:6px 13px; color:var(--green); font-weight:800">0x5100</td>
+            </tr>
+            <tr>
+              <td style="border:1px solid var(--border); padding:6px 13px">0x4B10</td>
+              <td style="border:1px solid var(--border); padding:6px 13px; color:var(--muted)">00</td>
+              <td style="border:1px solid var(--border); padding:6px 13px; color:var(--muted)">0x4B90</td>
+            </tr>
+          </table>
+          <div class="cap" style="margin-top:6px">PC matches row 2 → this <b>is</b> a branch we have seen</div>
         </div>
 
         <div class="frag" style="font-size:38px; color:var(--accent); font-weight:800">→</div>
@@ -1556,138 +1547,8 @@
   <section class="slide key-slide" data-chip="7 · Superscalar Operation">
     <div class="key-badge">🔑</div>
     <div class="key-text">Pipelining approaches one instruction per cycle;<br><span class="hlg">superscalar</span> pushes past it — <span class="hl">several per cycle</span>.</div>
-    <div class="key-sub">Multiple issue, out-of-order execution and a reorder buffer let independent instructions run in parallel, while results still commit in <b>program order</b>.</div>
-  </section>
-
-  <!-- ==================== CHAPTER 8 · THE ROLE OF CACHE MEMORY ==================== -->
-  <section class="slide divider" data-chip="8 · The Role of Cache Memory">
-    <div class="kicker">CHAPTER 8</div>
-    <div class="chno">8</div>
-    <div class="chtitle">The Role of Cache Memory</div>
-    <div class="hook">The pipeline is built to consume a memory word <em>every single cycle</em>. Main memory is far too slow to keep up —
-      so a small, fast <em>cache</em> is what makes the whole pipeline possible.</div>
-    <div class="sec">Hamacher §6.2, §6.8.1 · Syllabus CO3: role of cache memory</div>
-  </section>
-
-  <section class="slide" data-chip="8 · The Role of Cache Memory">
-    <div class="mic-badge">🎤 Ask the class</div>
-    <div class="ask-q">The pipeline needs an instruction word <em>every</em> cycle — and data words too. If main memory takes ~100 cycles to answer, how can the pipeline ever run at one instruction per cycle?</div>
-    <div class="frag ask-a">It can't — unless a much faster memory sits in front of it.
-      <span class="q2">That fast buffer is the <b>cache</b>: on a hit it answers in about one cycle, so the pipeline keeps flowing; main memory is touched only on the rarer miss.</span></div>
-  </section>
-
-  <section class="slide" data-chip="8 · The Role of Cache Memory">
-    <h2>Why the pipeline needs a cache</h2>
-    <div class="foothold"><span class="lbl">The speed gap ·</span> Every cycle, <b>Fetch</b> reads an instruction; about <b>one instruction in three</b> is a Load/Store
-      that touches data too. Main memory answers in <b>tens of cycles</b> — so without a fast memory in front, the pipe would stall almost constantly.</div>
-    <div class="body">
-      <!-- Bars grow when revealed (ported .barfill animation). Widths are illustrative, log-ish, to show the ~100x gap. -->
-      <div class="barchart">
-        <div class="frag barrow">
-          <div class="lab" style="color:var(--green)">L1 cache <span style="font-weight:400; color:var(--muted)">(hit)</span></div>
-          <div class="bartrack"><div class="barfill" style="--w:2%; background:var(--green)"></div></div>
-          <div class="val" style="color:var(--green)">~1 cycle</div>
-        </div>
-        <div class="frag barrow">
-          <div class="lab" style="color:var(--yellow)">L2 / L3 cache</div>
-          <div class="bartrack"><div class="barfill" style="--w:12%; background:var(--yellow)"></div></div>
-          <div class="val" style="color:var(--yellow)">~10 cycles</div>
-        </div>
-        <div class="frag barrow">
-          <div class="lab" style="color:var(--red)">Main memory (DRAM)</div>
-          <div class="bartrack"><div class="barfill" style="--w:100%; background:var(--red)"></div></div>
-          <div class="val" style="color:var(--red)">~100 cycles</div>
-        </div>
-      </div>
-      <div class="diag-caption frag">A cache bridges a ~100× speed gap — without it, "one instruction per cycle" is simply impossible.</div>
-    </div>
-  </section>
-
-  <section class="slide" data-chip="8 · The Role of Cache Memory">
-    <h2>The memory hierarchy</h2>
-    <div class="foothold"><span class="lbl">Fast-but-small over big-but-slow ·</span> No single memory is both huge and fast, so we <b>stack</b> them: each level
-      keeps the most-used data of the level below. The CPU sees nearly the <b>speed</b> of the top and the <b>size</b> of the bottom.</div>
-    <div class="body" style="align-items:center">
-      <!-- CSS "pyramid": rows widen going down = bigger & slower. Each is a reveal step. -->
-      <div style="width:900px; margin:2px auto 0; position:relative">
-        <div style="position:absolute; left:-6px; top:6px; font-size:17px; color:var(--green); font-weight:800; transform:rotate(-90deg); transform-origin:left top">faster ↑</div>
-        <div style="position:absolute; right:-10px; bottom:2px; font-size:17px; color:var(--red); font-weight:800; transform:rotate(-90deg); transform-origin:right bottom">bigger, slower ↓</div>
-        <div class="frag" style="width:34%; margin:7px auto; background:rgba(63,185,80,.14); border:2px solid var(--green); border-radius:10px; padding:9px 14px; text-align:center; font-weight:700">Registers <span style="color:var(--muted); font-weight:600; font-size:18px">— &lt;1 cycle · ~1 KB</span></div>
-        <div class="frag" style="width:52%; margin:7px auto; background:rgba(57,208,216,.13); border:2px solid var(--teal); border-radius:10px; padding:9px 14px; text-align:center; font-weight:700">L1 / L2 / L3 Cache (SRAM) <span style="color:var(--muted); font-weight:600; font-size:18px">— 1–30 cycles · KB–MB</span></div>
-        <div class="frag" style="width:72%; margin:7px auto; background:rgba(210,153,34,.13); border:2px solid var(--yellow); border-radius:10px; padding:9px 14px; text-align:center; font-weight:700">Main memory (DRAM) <span style="color:var(--muted); font-weight:600; font-size:18px">— ~100 cycles · GB</span></div>
-        <div class="frag" style="width:92%; margin:7px auto; background:rgba(248,81,73,.12); border:2px solid var(--red); border-radius:10px; padding:9px 14px; text-align:center; font-weight:700">Secondary storage (SSD / disk) <span style="color:var(--muted); font-weight:600; font-size:18px">— 10⁵–10⁶ cycles · TB+</span></div>
-      </div>
-      <div class="diag-caption frag">The cache is the level that sits between the CPU and main memory — holding the blocks the pipeline is using now.</div>
-    </div>
-  </section>
-
-  <section class="slide" data-chip="8 · The Role of Cache Memory">
-    <h2>Locality — why a small cache works</h2>
-    <div class="foothold"><span class="lbl">Programs are predictable ·</span> A tiny cache can capture <b>most</b> accesses because programs reuse the same few
-      locations, and the ones right next to them — the <b>principle of locality</b>.</div>
-    <div class="body">
-      <div class="cols">
-        <div class="col good">
-          <h3>Temporal locality</h3>
-          <ul>
-            <li class="frag">Reuse the <b>same</b> location again soon — a loop counter, a running <span class="reg">sum</span>, the top of the stack.</li>
-            <li class="frag">Keep a just-used block → the next reuse is a <b class="emg">hit</b>.</li>
-          </ul>
-        </div>
-        <div class="col good">
-          <h3>Spatial locality</h3>
-          <ul>
-            <li class="frag">Use locations <b>near</b> the last one — array elements, the next instruction in sequence.</li>
-            <li class="frag">Fetch a whole <b>block</b> (several words) at once → the neighbours are already there.</li>
-          </ul>
-        </div>
-      </div>
-      <div class="frag codebox" style="margin:14px auto 0; display:block; max-width:760px; text-align:center">
-        <div class="instr-line" style="font-size:22px">for (i = 0; i &lt; N; i++)  sum += A[i];</div>
-        <div class="cap"><span class="reg">sum</span>, <span class="reg">i</span> reused each pass → temporal · <span class="reg">A[i], A[i+1]…</span> are neighbours → spatial</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="slide" data-chip="8 · The Role of Cache Memory">
-    <h2>Hit, miss, and average access time</h2>
-    <div class="foothold"><span class="lbl">Put a number on it ·</span> On a <b class="emg">hit</b> the cache answers in ~1 cycle and the pipe flows; on a
-      <b class="emr">miss</b> we pay a full trip to main memory. The <b>hit rate</b> decides the average.</div>
-    <div class="body" style="align-items:center">
-      <div class="frag eqn">t<span class="sub">avg</span> = t<span class="sub">hit</span> + (1 − <span class="var">h</span>) × p<span class="sub">miss</span></div>
-      <ul class="points" style="margin-top:8px">
-        <li class="frag"><b class="emt">h</b> = hit rate &nbsp;·&nbsp; <b class="emt">p<sub>miss</sub></b> = miss penalty (cycles to reach main memory).</li>
-        <li class="frag"><b>Example:</b> t<sub>hit</sub> = 1, h = 0.95, p<sub>miss</sub> = 100 &nbsp;→&nbsp; t<sub>avg</sub> = 1 + 0.05 × 100 = <b class="emy">6 cycles</b>.</li>
-        <li class="frag">Even a <b>95%</b> hit rate costs 6× the hit time — which is why raising the <b>hit rate</b> matters more than almost anything else.</li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="slide" data-chip="8 · The Role of Cache Memory">
-    <h2>Cache in the pipeline</h2>
-    <div class="foothold"><span class="lbl">Back to the pipe ·</span> The cache is what actually lets the pipeline <b>sustain</b> one instruction per cycle —
-      and its misses are the <b>biggest</b> stall term of all.</div>
-    <div class="body">
-      <ul class="points">
-        <li class="frag">On a <b class="emg">hit</b>, Fetch and Memory each finish in <b>one cycle</b> → the pipe keeps its one-per-cycle rhythm.</li>
-        <li class="frag"><b>Separate I-cache &amp; D-cache</b> (a Harvard split) let Fetch and a Load/Store use memory in the <b>same</b> cycle — removing the structural hazard.</li>
-        <li class="frag">On a <b class="emr">miss</b>, the whole in-order pipe <b>stalls</b> until main memory answers — non-deterministic, and it <b>cannot be scheduled away</b>.</li>
-      </ul>
-      <div class="frag eqn" style="margin-top:6px; font-size:34px">δ<span class="sub">miss</span> = (m<span class="sub">i</span> + <span class="var">d</span> × m<span class="sub">d</span>) × p<span class="sub">m</span> = (0.05 + 0.30 × 0.10) × 10 = <b style="color:var(--red)">0.8</b></div>
-      <div class="diag-caption frag">Hamacher's numbers again: the cache-miss term (0.8) dwarfs the branch and load-use terms — usually the <b>dominant</b> penalty.</div>
-    </div>
-  </section>
-
-  <section class="slide key-slide" data-chip="8 · The Role of Cache Memory">
-    <div class="key-badge">🔑</div>
-    <div class="key-text">A <span class="hlg">cache</span> makes a slow main memory look fast —<br><span class="hl">locality</span> is why it works, and it is what lets the pipeline truly reach <span class="hl">one instruction per cycle</span>.</div>
-  </section>
-
-  <section class="slide key-slide" data-chip="Unit 3 · Complete">
-    <div class="key-badge">🎓</div>
-    <div class="key-text"><span class="hl">Unit 3 — Pipelining</span> complete.</div>
-    <div class="key-sub"><b style="color:var(--orange)">The whole story:</b> the pipelining idea · organization · performance · data, control &amp; structural hazards ·
-      instruction-set influence · datapath &amp; control · superscalar operation · and the <b>role of cache memory</b> that makes it all run.</div>
+    <div class="key-sub"><b style="color:var(--orange)">PIPELINING — COMPLETE.</b> Ideal case · organization · performance · data, control &amp; structural hazards ·
+      instruction-set influence · superscalar. The one remaining Unit 3 topic — the <b>role of cache memory</b> — is taken up next with proper cache material.</div>
   </section>
 
   <!-- END -->

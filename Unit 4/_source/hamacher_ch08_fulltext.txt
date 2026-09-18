@@ -1,0 +1,3280 @@
+
+
+===== PAGE 1 (book p.267) =====
+267
+c h a p t e r
+8
+The Memory System
+Chapter Objectives
+In this chapter you will learn about:
+•
+Basic memory circuits
+•
+Organization of the main memory
+•
+Memory technology
+•
+Direct memory access as an I/O mechanism
+•
+Cache memory, which reduces the effective
+memory access time
+•
+Virtual memory, which increases the
+apparent size of the main memory
+•
+Magnetic and optical disks used for
+secondary storage
+
+
+===== PAGE 2 (book p.268) =====
+268
+C H A P T E R
+8
+•
+The Memory System
+Programs and the data they operate on are held in the memory of the computer. In this chapter, we discuss
+how this vital part of the computer operates. By now, the reader appreciates that the execution speed of
+programs is highly dependent on the speed with which instructions and data can be transferred between the
+processor and the memory. It is also important to have sufﬁcient memory to facilitate execution of large
+programs having large amounts of data.
+Ideally, the memory would be fast, large, and inexpensive. Unfortunately, it is impossible to meet all
+three of these requirements simultaneously. Increased speed and size are achieved at increased cost. Much
+work has gone into developing structures that improve the effective speed and size of the memory, yet keep
+the cost reasonable.
+The memory of a computer comprises a hierarchy, including a cache, the main memory, and secondary
+storage, as Chapter 1 explains. In this chapter, we describe the most common components and organizations
+used to implement these units. Direct memory access is introduced as a mechanism to transfer data between
+an I/O device, such as a disk, and the main memory, with minimal involvement from the processor. We
+examine memory speed and discuss how access times to memory data can be reduced by means of caches.
+Next, we present the virtual memory concept, which makes use of the large storage capacity of secondary
+storage devices to increase the effective size of the memory. We start with a presentation of some basic
+concepts, to extend the discussion in Chapters 1 and 2.
+8.1
+Basic Concepts
+The maximum size of the memory that can be used in any computer is determined by the
+addressing scheme. For example, a computer that generates 16-bit addresses is capable of
+addressing up to 216 = 64K (kilo) memory locations. Machines whose instructions generate
+32-bit addresses can utilize a memory that contains up to 232 = 4G (giga) locations, whereas
+machines with 64-bit addresses can access up to 264 = 16E (exa) ≈16 × 1018 locations.
+The number of locations represents the size of the address space of the computer.
+The memory is usually designed to store and retrieve data in word-length quantities.
+Consider, for example, a byte-addressable computer whose instructions generate 32-bit
+addresses. When a 32-bit address is sent from the processor to the memory unit, the high-
+order 30 bits determine which word will be accessed. If a byte quantity is speciﬁed, the
+low-order 2 bits of the address specify which byte location is involved.
+The connection between the processor and its memory consists of address, data, and
+control lines, as shown in Figure 8.1. The processor uses the address lines to specify the
+memory location involved in a data transfer operation, and uses the data lines to transfer
+the data. At the same time, the control lines carry the command indicating a Read or
+a Write operation and whether a byte or a word is to be transferred. The control lines
+also provide the necessary timing information and are used by the memory to indicate
+when it has completed the requested operation. When the processor-memory interface
+receives the memory’s response, it asserts the MFC signal shown in Figure 5.19. This is
+the processor’s internal control signal that indicates that the requested memory operation
+has been completed. When asserted, the processor proceeds to the next step in its execution
+sequence.
+
+
+===== PAGE 3 (book p.269) =====
+8.1
+Basic Concepts
+269
+Up to 2k addressable
+k-bit address
+n-bit data
+Control lines
+Processor
+ Memory
+locations
+Word length = n bits
+Processor-memory interface
+(R/W, etc.)
+Figure 8.1
+Connection of the memory to the processor.
+A useful measure of the speed of memory units is the time that elapses between the
+initiation of an operation to transfer a word of data and the completion of that operation. This
+is referred to as the memory access time. Another important measure is the memory cycle
+time, which is the minimum time delay required between the initiation of two successive
+memory operations, for example, the time between two successive Read operations. The
+cycle time is usually slightly longer than the access time, depending on the implementation
+details of the memory unit.
+A memory unit is called a random-access memory (RAM) if the access time to any
+location is the same, independent of the location’s address. This distinguishes such memory
+units from serial, or partly serial, access storage devices such as magnetic and optical disks.
+Access time of the latter devices depends on the address or position of the data.
+The technology for implementing computer memories uses semiconductor integrated
+circuits. The sections that follow present some basic facts about the internal structure and
+operation of such memories. We then discuss some of the techniques used to increase the
+effective speed and size of the memory.
+Cache and Virtual Memory
+The processor of a computer can usually process instructions and data faster than they
+can be fetched from the main memory. Hence, the memory access time is the bottleneck in
+the system. One way to reduce the memory access time is to use a cache memory. This is
+a small, fast memory inserted between the larger, slower main memory and the processor.
+It holds the currently active portions of a program and their data.
+Virtual memory is another important concept related to memory organization. With
+this technique, only the active portions of a program are stored in the main memory, and the
+remainder is stored on the much larger secondary storage device. Sections of the program
+are transferred back and forth between the main memory and the secondary storage device
+
+
+===== PAGE 4 (book p.270) =====
+270
+C H A P T E R
+8
+•
+The Memory System
+in a manner that is transparent to the application program. As a result, the application
+program sees a memory that is much larger than the computer’s physical main memory.
+Block Transfers
+The discussion above shows that data move frequently between the main memory and
+the cache and between the main memory and the disk. These transfers do not occur one
+word at a time. Data are always transferred in contiguous blocks involving tens, hundreds,
+or thousands of words. Data transfers between the main memory and high-speed devices
+such as a graphic display or an Ethernet interface also involve large blocks of data. Hence,
+a critical parameter for the performance of the main memory is its ability to read or write
+blocks of data at high speed. This is an important consideration that we will encounter
+repeatedly as we discuss memory technology and the organization of the memory system.
+8.2
+Semiconductor RAM Memories
+Semiconductor random-access memories (RAMs) are available in a wide range of speeds.
+Their cycle times range from 100 ns to less than 10 ns. In this section, we discuss the main
+characteristics of these memories. We start by introducing the way that memory cells are
+organized inside a chip.
+8.2.1
+Internal Organization of Memory Chips
+Memory cells are usually organized in the form of an array, in which each cell is capable of
+storing one bit of information. Apossible organization is illustrated in Figure 8.2. Each row
+of cells constitutes a memory word, and all cells of a row are connected to a common line
+referred to as the word line, which is driven by the address decoder on the chip. The cells
+in each column are connected to a Sense/Write circuit by two bit lines, and the Sense/Write
+circuits are connected to the data input/output lines of the chip. During a Read operation,
+these circuits sense, or read, the information stored in the cells selected by a word line and
+place this information on the output data lines. During a Write operation, the Sense/Write
+circuits receive input data and store them in the cells of the selected word.
+Figure 8.2 is an example of a very small memory circuit consisting of 16 words of 8 bits
+each. This is referred to as a 16 × 8 organization. The data input and the data output of each
+Sense/Write circuit are connected to a single bidirectional data line that can be connected
+to the data lines of a computer. Two control lines, R/W and CS, are provided. The R/W
+(Read/Write) input speciﬁes the required operation, and the CS (Chip Select) input selects
+a given chip in a multichip memory system.
+The memory circuit in Figure 8.2 stores 128 bits and requires 14 external connections
+for address, data, and control lines. It also needs two lines for power supply and ground
+connections. Consider now a slightly larger memory circuit, one that has 1K (1024) memory
+cells. This circuit can be organized as a 128 × 8 memory, requiring a total of 19 external
+connections. Alternatively, the same number of cells can be organized into a 1K × 1 format.
+In this case, a 10-bit address is needed, but there is only one data line, resulting in 15 external
+
+
+===== PAGE 5 (book p.271) =====
+8.2
+Semiconductor RAM Memories
+271
+circuit
+Sense/Write
+Address
+decoder
+CS
+cells
+Memory
+circuit
+Sense/Write
+Sense/Write
+circuit
+Data input/output lines:
+A0
+A1
+A2
+A3
+W0
+W1
+W15
+b7
+b1
+b0
+W
+R/
+b′7
+b′1
+b′0
+b7
+b1
+b0
+Figure 8.2
+Organization of bit cells in a memory chip.
+connections. Figure 8.3 shows such an organization. The required 10-bit address is divided
+into two groups of 5 bits each to form the row and column addresses for the cell array. A
+row address selects a row of 32 cells, all of which are accessed in parallel. But, only one
+of these cells is connected to the external data line, based on the column address.
+Commercially available memory chips contain a much larger number of memory cells
+than the examples shown in Figures 8.2 and 8.3. We use small examples to make the ﬁgures
+easy to understand. Large chips have essentially the same organization as Figure 8.3, but
+use a larger memory cell array and have more external connections. For example, a 1G-bit
+chip may have a 256M × 4 organization, in which case a 28-bit address is needed and 4
+bits are transferred to or from the chip.
+8.2.2
+Static Memories
+Memories that consist of circuits capable of retaining their state as long as power is applied
+are known as static memories. Figure 8.4 illustrates how a static RAM (SRAM) cell may be
+implemented. Two inverters are cross-connected to form a latch. The latch is connected to
+two bit lines by transistors T1 and T2. These transistors act as switches that can be opened or
+
+
+===== PAGE 6 (book p.272) =====
+272
+C H A P T E R
+8
+•
+The Memory System
+CS
+Sense/Write
+circuitry
+array
+memory cell
+address
+5-bit row
+input/output
+Data
+5-bit
+decoder
+address
+5-bit column
+address
+10-bit
+output multiplexer
+ 32-to-1
+input demultiplexer
+32
+32
+×
+W
+R/
+W0
+W1
+W31
+and
+Figure 8.3
+Organization of a 1K × 1 memory chip.
+Y
+X
+Word line
+Bit lines
+b
+T2
+T1
+b′
+Figure 8.4
+A static RAM cell.
+
+
+===== PAGE 7 (book p.273) =====
+8.2
+Semiconductor RAM Memories
+273
+closed under control of the word line. When the word line is at ground level, the transistors
+are turned off and the latch retains its state. For example, if the logic value at point X is
+1 and at point Y is 0, this state is maintained as long as the signal on the word line is at
+ground level. Assume that this state represents the value 1.
+Read Operation
+In order to read the state of the SRAM cell, the word line is activated to close switches
+T1 and T2. If the cell is in state 1, the signal on bit line b is high and the signal on bit line b′
+is low. The opposite is true if the cell is in state 0. Thus, b and b′ are always complements
+of each other. The Sense/Write circuit at the end of the two bit lines monitors their state
+and sets the corresponding output accordingly.
+Write Operation
+During a Write operation, the Sense/Write circuit drives bit lines b and b′, instead of
+sensing their state. It places the appropriate value on bit line b and its complement on b′
+and activates the word line. This forces the cell into the corresponding state, which the cell
+retains when the word line is deactivated.
+CMOS Cell
+A CMOS realization of the cell in Figure 8.4 is given in Figure 8.5. Transistor pairs
+(T3, T5) and (T4, T6) form the inverters in the latch (see Appendix A). The state of the cell
+is read or written as just explained. For example, in state 1, the voltage at point X is
+maintained high by having transistors T3 and T6 on, while T4 and T5 are off. If T1 and T2
+are turned on, bit lines b and b′ will have high and low signals, respectively.
+Word line
+b
+Bit lines
+T1
+T2
+T6
+T5
+T4
+T3
+Y
+X
+Vsupply
+b′
+Figure 8.5
+An example of a CMOS memory cell.
+
+
+===== PAGE 8 (book p.274) =====
+274
+C H A P T E R
+8
+•
+The Memory System
+Continuous power is needed for the cell to retain its state. If power is interrupted, the
+cell’s contents are lost. When power is restored, the latch settles into a stable state, but not
+necessarily the same state the cell was in before the interruption. Hence, SRAMs are said
+to be volatile memories because their contents are lost when power is interrupted.
+A major advantage of CMOS SRAMs is their very low power consumption, because
+current ﬂows in the cell only when the cell is being accessed. Otherwise, T1, T2, and one
+transistor in each inverter are turned off, ensuring that there is no continuous electrical path
+between Vsupply and ground.
+Static RAMs can be accessed very quickly. Access times on the order of a few nanosec-
+onds are found in commercially available chips. SRAMs are used in applications where
+speed is of critical concern.
+8.2.3
+Dynamic RAMs
+Static RAMs are fast, but their cells require several transistors. Less expensive and higher
+density RAMs can be implemented with simpler cells. But, these simpler cells do not
+retain their state for a long period, unless they are accessed frequently for Read or Write
+operations. Memories that use such cells are called dynamic RAMs (DRAMs).
+Information is stored in a dynamic memory cell in the form of a charge on a capacitor,
+but this charge can be maintained for only tens of milliseconds. Since the cell is required
+to store information for a much longer time, its contents must be periodically refreshed by
+restoring the capacitor charge to its full value. This occurs when the contents of the cell are
+read or when new information is written into it.
+An example of a dynamic memory cell that consists of a capacitor, C, and a transistor,
+T, is shown in Figure 8.6. To store information in this cell, transistor T is turned on and an
+appropriate voltage is applied to the bit line. This causes a known amount of charge to be
+stored in the capacitor.
+After the transistor is turned off, the charge remains stored in the capacitor, but not
+for long. The capacitor begins to discharge. This is because the transistor continues to
+T
+C
+Word line
+Bit line
+Figure 8.6
+A single-transistor dynamic memory cell.
+
+
+===== PAGE 9 (book p.275) =====
+8.2
+Semiconductor RAM Memories
+275
+Column
+CS
+Sense/Write
+circuits
+Cell array
+latch
+address
+Row
+Column
+latch
+decoder
+Row
+decoder
+address
+R/W
+A24 11
+–
+A10 0
+–
+/
+D0
+D7
+RAS
+CAS
+16,384 rows
+2,048 bytes
+by
+Figure 8.7
+Internal organization of a 32M × 8 dynamic memory chip.
+conduct a tiny amount of current, measured in picoamperes, after it is turned off. Hence,
+the information stored in the cell can be retrieved correctly only if it is read before the charge
+in the capacitor drops below some threshold value. During a Read operation, the transistor
+in a selected cell is turned on. Asense ampliﬁer connected to the bit line detects whether the
+charge stored in the capacitor is above or below the threshold value. If the charge is above
+the threshold, the sense ampliﬁer drives the bit line to the full voltage representing the logic
+value 1. As a result, the capacitor is recharged to the full charge corresponding to the logic
+value 1. If the sense ampliﬁer detects that the charge in the capacitor is below the threshold
+value, it pulls the bit line to ground level to discharge the capacitor fully. Thus, reading the
+contents of a cell automatically refreshes its contents. Since the word line is common to all
+cells in a row, all cells in a selected row are read and refreshed at the same time.
+A 256-Megabit DRAM chip, conﬁgured as 32M × 8, is shown in Figure 8.7. The cells
+are organized in the form of a 16K × 16K array. The 16,384 cells in each row are divided
+into 2,048 groups of 8, forming 2,048 bytes of data. Therefore, 14 address bits are needed
+to select a row, and another 11 bits are needed to specify a group of 8 bits in the selected
+row. In total, a 25-bit address is needed to access a byte in this memory. The high-order 14
+bits and the low-order 11 bits of the address constitute the row and column addresses of a
+byte, respectively. To reduce the number of pins needed for external connections, the row
+and column addresses are multiplexed on 14 pins. During a Read or a Write operation, the
+row address is applied ﬁrst. It is loaded into the row address latch in response to a signal
+pulse on an input control line called the Row Address Strobe (RAS). This causes a Read
+operation to be initiated, in which all cells in the selected row are read and refreshed.
+
+
+===== PAGE 10 (book p.276) =====
+276
+C H A P T E R
+8
+•
+The Memory System
+Shortly after the row address is loaded, the column address is applied to the address pins
+and loaded into the column address latch under control of a second control line called the
+ColumnAddress Strobe (CAS). The information in this latch is decoded and the appropriate
+group of 8 Sense/Write circuits is selected. If the R/W control signal indicates a Read
+operation, the output values of the selected circuits are transferred to the data lines, D7−0.
+For aWrite operation, the information on the D7−0 lines is transferred to the selected circuits,
+then used to overwrite the contents of the selected cells in the corresponding 8 columns. We
+should note that in commercial DRAM chips, the RAS and CAS control signals are active
+when low. Hence, addresses are latched when these signals change from high to low. The
+signals are shown in diagrams as RAS and CAS to indicate this fact.
+The timing of the operation of the DRAM described above is controlled by the RAS
+and CAS signals. These signals are generated by a memory controller circuit external to the
+chip when the processor issues a Read or a Write command. During a Read operation, the
+output data are transferred to the processor after a delay equivalent to the memory’s access
+time. Such memories are referred to as asynchronous DRAMs. The memory controller is
+also responsible for refreshing the data stored in the memory chips, as we describe later.
+Fast Page Mode
+When the DRAM in Figure 8.7 is accessed, the contents of all 16,384 cells in the
+selected row are sensed, but only 8 bits are placed on the data lines, D7−0. This byte is
+selected by the column address, bitsA10−0. Asimple addition to the circuit makes it possible
+to access the other bytes in the same row without having to reselect the row. Each sense
+ampliﬁer also acts as a latch. When a row address is applied, the contents of all cells in the
+selected row are loaded into the corresponding latches. Then, it is only necessary to apply
+different column addresses to place the different bytes on the data lines.
+This arrangement leads to a very useful feature. All bytes in the selected row can be
+transferred in sequential order by applying a consecutive sequence of column addresses
+under the control of successive CAS signals. Thus, a block of data can be transferred at a
+much faster rate than can be achieved for transfers involving random addresses. The block
+transfer capability is referred to as the fast page mode feature. (A large block of data is
+often called a page.)
+It was pointed out earlier that the vast majority of main memory transactions involve
+block transfers. The faster rate attainable in the fast page mode makes dynamic RAMs
+particularly well suited to this environment.
+8.2.4
+Synchronous DRAMs
+In the early 1990s, developments in memory technology resulted in DRAMs whose op-
+eration is synchronized with a clock signal. Such memories are known as synchronous
+DRAMs (SDRAMs). Their structure is shown in Figure 8.8. The cell array is the same as
+in asynchronous DRAMs. The distinguishing feature of an SDRAM is the use of a clock
+signal, the availability of which makes it possible to incorporate control circuitry on the chip
+that provides many useful features. For example, SDRAMs have built-in refresh circuitry,
+with a refresh counter to provide the addresses of the rows to be selected for refreshing. As
+a result, the dynamic nature of these memory chips is almost invisible to the user.
+
+
+===== PAGE 11 (book p.277) =====
+8.2
+Semiconductor RAM Memories
+277
+R/ W
+RAS
+CAS
+CS
+Clock
+Cell array
+latch
+address
+Row
+decoder
+Row
+decoder
+Column
+Read/Write
+circuits & latches
+counter
+address
+Column
+Row/Column
+address
+Data input
+register
+Data output
+register
+Data
+Refresh
+counter
+Mode register
+and
+timing control
+Figure 8.8
+Synchronous DRAM.
+The address and data connections of an SDRAM may be buffered by means of registers,
+as shown in the ﬁgure. Internally, the Sense/Write ampliﬁers function as latches, as in
+asynchronous DRAMs. A Read operation causes the contents of all cells in the selected
+row to be loaded into these latches. The data in the latches of the selected column are
+transferred into the data register, thus becoming available on the data output pins. The
+buffer registers are useful when transferring large blocks of data at very high speed. By
+isolating external connections from the chip’s internal circuitry, it becomes possible to start
+a new access operation while data are being transferred to or from the registers.
+SDRAMs have several different modes of operation, which can be selected by writing
+control information into a mode register. For example, burst operations of different lengths
+can be speciﬁed. It is not necessary to provide externally-generated pulses on the CAS line
+to select successive columns. The necessary control signals are generated internally using
+a column counter and the clock signal. New data are placed on the data lines at the rising
+edge of each clock pulse.
+Figure 8.9 shows a timing diagram for a typical burst read of length 4. First, the row
+address is latched under control of the RAS signal. The memory typically takes 5 or 6 clock
+
+
+===== PAGE 12 (book p.278) =====
+278
+C H A P T E R
+8
+•
+The Memory System
+R/W
+RAS
+CAS
+Clock
+Row
+Col
+D0
+D1
+D2
+D3
+Address
+Data
+Figure 8.9
+A burst read of length 4 in an SDRAM.
+cycles (we use 2 in the ﬁgure for simplicity) to activate the selected row. Then, the column
+address is latched under control of the CAS signal. After a delay of one clock cycle, the
+ﬁrst set of data bits is placed on the data lines. The SDRAM automatically increments the
+column address to access the next three sets of bits in the selected row, which are placed on
+the data lines in the next 3 clock cycles.
+Synchronous DRAMs can deliver data at a very high rate, because all the control signals
+needed are generated inside the chip. The initial commercial SDRAMs in the 1990s were
+designed for clock speeds of up to 133 MHz. As technology evolved, much faster SDRAM
+chips were developed. Today’s SDRAMs operate with clock speeds that can exceed 1 GHz.
+Latency and Bandwidth
+Data transfers to and from the main memory often involve blocks of data. The speed of
+these transfers has a large impact on the performance of a computer system. The memory
+access time deﬁned earlier is not sufﬁcient for describing the memory’s performance when
+transferring blocks of data. During block transfers, memory latency is the amount of time
+it takes to transfer the ﬁrst word of a block. The time required to transfer a complete block
+depends also on the rate at which successive words can be transferred and on the size of the
+block. The time between successive words of a block is much shorter than the time needed
+to transfer the ﬁrst word. For instance, in the timing diagram in Figure 8.9, the access cycle
+begins with the assertion of the RAS signal. The ﬁrst word of data is transferred ﬁve clock
+cycles later. Thus, the latency is ﬁve clock cycles. If the clock rate is 500 MHz, then the
+latency is 10 ns. The remaining three words are transferred in consecutive clock cycles, at
+the rate of one word every 2 ns.
+The example above illustrates that we need a parameter other than memory latency to
+describe the memory’s performance during block transfers. A useful performance measure
+is the number of bits or bytes that can be transferred in one second. This measure is often
+
+
+===== PAGE 13 (book p.279) =====
+8.2
+Semiconductor RAM Memories
+279
+referred to as the memory bandwidth. It depends on the speed of access to the stored data
+and on the number of bits that can be accessed in parallel. The rate at which data can be
+transferred to or from the memory depends on the bandwidth of the system interconnections.
+For this reason, the interconnections used always ensure that the bandwidth available for
+data transfers between the processor and the memory is very high.
+Double-Data-Rate SDRAM
+In the continuous quest for improved performance, faster versions of SDRAMs have
+been developed. In addition to faster circuits, new organizational and operational features
+make it possible to achieve high data rates during block transfers. The key idea is to take
+advantage of the fact that a large number of bits are accessed at the same time inside the chip
+when a row address is applied. Various techniques are used to transfer these bits quickly to
+the pins of the chip. To make the best use of the available clock speed, data are transferred
+externally on both the rising and falling edges of the clock. For this reason, memories that
+use this technique are called double-data-rate SDRAMs (DDR SDRAMs).
+Several versions of DDR chips have been developed. The earliest version is known as
+DDR. Later versions, called DDR2, DDR3, and DDR4, have enhanced capabilities. They
+offer increased storage capacity, lower power, and faster clock speeds. For example, DDR2
+and DDR3 can operate at clock frequencies of 400 and 800 MHz, respectively. Therefore,
+they transfer data using the effective clock speeds of 800 and 1600 MHz, respectively.
+Rambus Memory
+The rate of transferring data between the memory and the processor is a function of
+both the bandwidth of the memory and the bandwidth of its connection to the processor.
+Rambus is a memory technology that achieves a high data transfer rate by providing a
+high-speed interface between the memory and the processor. One way for increasing the
+bandwidth of this connection is to use a wider data path. However, this requires more space
+and more pins, increasing system cost. The alternative is to use fewer wires with a higher
+clock speed. This is the approach taken by Rambus.
+The key feature of Rambus technology is the use of a differential-signaling technique
+to transfer data to and from the memory chips. The basic idea of differential signaling
+is described in Section 7.5.1. In Rambus technology, signals are transmitted using small
+voltage swings of 0.1Vabove and below a reference value. Several versions of this standard
+have been developed, with clock speeds of up to 800 MHz and data transfer rates of several
+gigabytes per second.
+Rambus technology competes directly with the DDR SDRAM technology. Each has
+certain advantages and disadvantages. Anontechnical consideration is that the speciﬁcation
+of DDR SDRAM is an open standard that can be used free of charge. Rambus, on the other
+hand, is a proprietary scheme that must be licensed by chip manufacturers.
+8.2.5
+Structure of Larger Memories
+We have discussed the basic organization of memory circuits as they may be implemented
+on a single chip. Next, we examine how memory chips may be connected to form a much
+larger memory.
+
+
+===== PAGE 14 (book p.280) =====
+280
+C H A P T E R
+8
+•
+The Memory System
+Static Memory Systems
+Consider a memory consisting of 2M words of 32 bits each. Figure 8.10 shows how
+this memory can be implemented using 512K × 8 static memory chips. Each column in the
+ﬁgure implements one byte position in a word, with four chips providing 2M bytes. Four
+columns implement the required 2M × 32 memory. Each chip has a control input called
+19-bit internal chip address
+Chip-select
+ memory chip
+decoder
+2-bit
+address
+21-bit
+19-bit
+address
+512K
+8
+×
+A0
+A1
+A19
+ memory chip
+A20
+D31-24
+D7-0
+D23-16
+D15-8
+512K
+8
+×
+8-bit data
+input/output
+Figure 8.10
+Organization of a 2M × 32 memory module using 512K × 8 static memory chips.
+
+
+===== PAGE 15 (book p.281) =====
+8.2
+Semiconductor RAM Memories
+281
+Chip-select. When this input is set to 1, it enables the chip to accept data from or to place data
+on its data lines. The data output for each chip is of the tri-state type described in Section
+7.2.3. Only the selected chip places data on the data output line, while all other outputs
+are electrically disconnected from the data lines. Twenty-one address bits are needed to
+select a 32-bit word in this memory. The high-order two bits of the address are decoded
+to determine which of the four rows should be selected. The remaining 19 address bits are
+used to access speciﬁc byte locations inside each chip in the selected row. The R/W inputs
+of all chips are tied together to provide a common Read/Write control line (not shown in
+the ﬁgure).
+Dynamic Memory Systems
+Modern computers use very large memories. Even a small personal computer is likely
+to have at least 1G bytes of memory. Typical desktop computers may have 4G bytes or more
+of memory. Alarge memory leads to better performance, because more of the programs and
+data used in processing can be held in the memory, thus reducing the frequency of access
+to secondary storage.
+Because of their high bit density and low cost, dynamic RAMs, mostly of the syn-
+chronous type, are widely used in the memory units of computers. They are slower than
+static RAMs, but they use less power and have considerably lower cost per bit. Available
+chips have capacities as high as 2G bits, and even larger chips are being developed. To
+reduce the number of memory chips needed in a given computer, a memory chip may be
+organized to read or write a number of bits in parallel, as in the case of Figure 8.7. Chips
+are manufactured in different organizations, to provide ﬂexibility in designing memory
+systems. For example, a 1-Gbit chip may be organized as 256M × 4, or 128M × 8.
+Packaging considerations have led to the development of assemblies known as memory
+modules. Each such module houses many memory chips, typically in the range 16 to 32,
+on a small board that plugs into a socket on the computer’s motherboard. Memory modules
+are commonly called SIMMs (Single In-line Memory Modules) or DIMMs (Dual In-line
+Memory Modules), depending on the conﬁguration of the pins. Modules of different sizes
+are designed to use the same socket. For example, 128M × 64, 256M × 64, and 512M
+× 64 bit DIMMs all use the same 240-pin socket. Thus, total memory capacity is easily
+expanded by replacing a smaller module with a larger one, using the same socket.
+Memory Controller
+The address applied to dynamic RAM chips is divided into two parts, as explained
+earlier. The high-order address bits, which select a row in the cell array, are provided ﬁrst
+and latched into the memory chip under control of the RAS signal. Then, the low-order
+address bits, which select a column, are provided on the same address pins and latched under
+control of the CAS signal. Since a typical processor issues all bits of an address at the same
+time, a multiplexer is required. This function is usually performed by a memory controller
+circuit. The controller accepts a complete address and the R/W signal from the processor,
+under control of a Request signal which indicates that a memory access operation is needed.
+It forwards the R/W signals and the row and column portions of the address to the memory
+and generates the RAS and CAS signals, with the appropriate timing. When a memory
+includes multiple modules, one of these modules is selected based on the high-order bits
+
+
+===== PAGE 16 (book p.282) =====
+282
+C H A P T E R
+8
+•
+The Memory System
+of the address. The memory controller decodes these high-order bits and generates the
+chip-select signal for the appropriate module. Data lines are connected directly between
+the processor and the memory.
+Dynamic RAMs must be refreshed periodically.
+The circuitry required to initiate
+refresh cycles is included as part of the internal control circuitry of synchronous DRAMs.
+However, a control circuit external to the chip is needed to initiate periodic Read cycles to
+refresh the cells of an asynchronous DRAM.The memory controller provides this capability.
+Refresh Overhead
+A dynamic RAM cannot respond to read or write requests while an internal refresh
+operation is taking place. Such requests are delayed until the refresh cycle is completed.
+However, the time lost to accommodate refresh operations is very small. For example,
+consider an SDRAM in which each row needs to be refreshed once every 64 ms. Suppose
+that the minimum time between two row accesses is 50 ns and that refresh operations are
+arranged such that all rows of the chip are refreshed in 8K (8192) refresh cycles. Thus,
+it takes 8192 × 0.050 = 0.41 ms to refresh all rows. The refresh overhead is 0.41/64 =
+0.0064, which is less than 1 percent of the total time available for accessing the memory.
+Choice of Technology
+The choice of a RAM chip for a given application depends on several factors. Foremost
+among these are the cost, speed, power dissipation, and size of the chip.
+Static RAMs are characterized by their very fast operation. However, their cost and bit
+density are adversely affected by the complexity of the circuit that realizes the basic cell.
+They are used mostly where a small but very fast memory is needed. Dynamic RAMs, on
+the other hand, have high bit densities and a low cost per bit. Synchronous DRAMs are the
+predominant choice for implementing the main memory.
+8.3
+Read-only Memories
+Both static and dynamic RAM chips are volatile, which means that they retain information
+only while power is turned on. There are many applications requiring memory devices that
+retain the stored information when power is turned off. For example, Chapter 4 describes
+the need to store a small program in such a memory, to be used to start the bootstrap
+process of loading the operating system from a hard disk into the main memory. The
+embedded applications described in Chapters 10 and 11 are another important example.
+Many embedded applications do not use a hard disk and require nonvolatile memories to
+store their software.
+Different types of nonvolatile memories have been developed. Generally, their contents
+can be read in the same way as for their volatile counterparts discussed above. But, a special
+writing process is needed to place the information into a nonvolatile memory. Since its
+normal operation involves only reading the stored data, a memory of this type is called a
+read-only memory (ROM).
+
+
+===== PAGE 17 (book p.283) =====
+8.3
+Read-only Memories
+283
+P
+Not connected to store a 1
+Connected to store a 0
+Bit line
+Word line
+T
+Figure 8.11
+A ROM cell.
+8.3.1
+ROM
+A memory is called a read-only memory, or ROM, when information can be written into
+it only once at the time of manufacture. Figure 8.11 shows a possible conﬁguration for a
+ROM cell. A logic value 0 is stored in the cell if the transistor is connected to ground at
+point P; otherwise, a 1 is stored. The bit line is connected through a resistor to the power
+supply. To read the state of the cell, the word line is activated to close the transistor switch.
+As a result, the voltage on the bit line drops to near zero if there is a connection between
+the transistor and ground. If there is no connection to ground, the bit line remains at the
+high voltage level, indicating a 1. A sense circuit at the end of the bit line generates the
+proper output value. The state of the connection to ground in each cell is determined when
+the chip is manufactured, using a mask with a pattern that represents the information to be
+stored.
+8.3.2
+PROM
+Some ROM designs allow the data to be loaded by the user, thus providing a programmable
+ROM (PROM). Programmability is achieved by inserting a fuse at point P in Figure 8.11.
+Before it is programmed, the memory contains all 0s. The user can insert 1s at the required
+locations by burning out the fuses at these locations using high-current pulses. Of course,
+this process is irreversible.
+PROMs provide ﬂexibility and convenience not available with ROMs. The cost of
+preparing the masks needed for storing a particular information pattern makes ROMs cost-
+effective only in large volumes. The alternative technology of PROMs provides a more
+convenient and considerably less expensive approach, because memory chips can be pro-
+grammed directly by the user.
+
+
+===== PAGE 18 (book p.284) =====
+284
+C H A P T E R
+8
+•
+The Memory System
+8.3.3
+EPROM
+Another type of ROM chip provides an even higher level of convenience. It allows the stored
+data to be erased and new data to be written into it. Such an erasable, reprogrammable ROM
+is usually called an EPROM. It provides considerable ﬂexibility during the development
+phase of digital systems. Since EPROMs are capable of retaining stored information for a
+long time, they can be used in place of ROMs or PROMs while software is being developed.
+In this way, memory changes and updates can be easily made.
+An EPROM cell has a structure similar to the ROM cell in Figure 8.11. However,
+the connection to ground at point P is made through a special transistor. The transistor is
+normally turned off, creating an open switch. It can be turned on by injecting charge into it
+that becomes trapped inside. Thus, an EPROM cell can be used to construct a memory in
+the same way as the previously discussed ROM cell. Erasure requires dissipating the charge
+trapped in the transistors that form the memory cells. This can be done by exposing the
+chip to ultraviolet light, which erases the entire contents of the chip. To make this possible,
+EPROM chips are mounted in packages that have transparent windows.
+8.3.4
+EEPROM
+An EPROM must be physically removed from the circuit for reprogramming. Also, the
+stored information cannot be erased selectively. The entire contents of the chip are erased
+when exposed to ultraviolet light. Another type of erasable PROM can be programmed,
+erased, and reprogrammed electrically. Such a chip is called an electrically erasable PROM,
+or EEPROM. It does not have to be removed for erasure. Moreover, it is possible to erase
+the cell contents selectively. One disadvantage of EEPROMs is that different voltages are
+needed for erasing, writing, and reading the stored data, which increases circuit complexity.
+However, this disadvantage is outweighed by the many advantages of EEPROMs. They
+have replaced EPROMs in practice.
+8.3.5
+Flash Memory
+An approach similar to EEPROM technology has given rise to ﬂash memory devices. A
+ﬂash cell is based on a single transistor controlled by trapped charge, much like an EEPROM
+cell. Also like an EEPROM, it is possible to read the contents of a single cell. The key
+difference is that, in a ﬂash device, it is only possible to write an entire block of cells. Prior
+to writing, the previous contents of the block are erased. Flash devices have greater density,
+which leads to higher capacity and a lower cost per bit. They require a single power supply
+voltage, and consume less power in their operation.
+The low power consumption of ﬂash memories makes them attractive for use in
+portable, battery-powered equipment. Typical applications include hand-held computers,
+cell phones, digital cameras, and MP3 music players. In hand-held computers and cell
+phones, a ﬂash memory holds the software needed to operate the equipment, thus obviating
+the need for a disk drive. A ﬂash memory is used in digital cameras to store picture data.
+In MP3 players, ﬂash memories store the data that represent sound. Cell phones, digital
+
+
+===== PAGE 19 (book p.285) =====
+8.4
+Direct Memory Access
+285
+cameras, and MP3 players are good examples of embedded systems, which are discussed
+in Chapters 10 and 11.
+Single ﬂash chips may not provide sufﬁcient storage capacity for the applications
+mentioned above. Larger memory modules consisting of a number of chips are used where
+needed. There are two popular choices for the implementation of such modules: ﬂash cards
+and ﬂash drives.
+Flash Cards
+One way of constructing a larger module is to mount ﬂash chips on a small card. Such
+ﬂash cards have a standard interface that makes them usable in a variety of products. Acard
+is simply plugged into a conveniently accessible slot. Flash cards with a USB interface are
+widely used and are commonly known as memory keys. They come in a variety of memory
+sizes. Larger cards may hold as much as 32 Gbytes. A minute of music can be stored in
+about 1 Mbyte of memory, using the MP3 encoding format. Hence, a 32-Gbyte ﬂash card
+can store approximately 500 hours of music.
+Flash Drives
+Larger ﬂash memory modules have been developed to replace hard disk drives, and
+hence are called ﬂash drives. They are designed to fully emulate hard disks, to the point
+that they can be ﬁtted into standard disk drive bays. However, the storage capacity of ﬂash
+drives is signiﬁcantly lower. Currently, the capacity of ﬂash drives is on the order of 64 to
+128 Gbytes. In contrast, hard disks have capacities exceeding a terabyte. Also, disk drives
+have a very low cost per bit.
+The fact that ﬂash drives are solid state electronic devices with no moving parts provides
+important advantages over disk drives. They have shorter access times, which result in a
+faster response. They are insensitive to vibration and they have lower power consumption,
+which makes them attractive for portable, battery-driven applications.
+8.4
+Direct Memory Access
+Blocks of data are often transferred between the main memory and I/O devices such as
+disks. This section discusses a technique for controlling such transfers without frequent,
+program-controlled intervention by the processor.
+The discussion in Chapter 3 concentrates on single-word or single-byte data transfers
+between the processor and I/O devices. Data are transferred from an I/O device to the
+memory by ﬁrst reading them from the I/O device using an instruction such as
+Load
+R2, DATAIN
+which loads the data into a processor register. Then, the data read are stored into a memory
+location. The reverse process takes place for transferring data from the memory to an I/O
+device. An instruction to transfer input or output data is executed only after the processor
+determines that the I/O device is ready, either by polling its status register or by waiting
+for an interrupt request. In either case, considerable overhead is incurred, because several
+program instructions must be executed involving many memory accesses for each data word
+
+
+===== PAGE 20 (book p.286) =====
+286
+C H A P T E R
+8
+•
+The Memory System
+transferred. When transferring a block of data, instructions are needed to increment the
+memory address and keep track of the word count. The use of interrupts involves operating
+system routines which incur additional overhead to save and restore processor registers, the
+program counter, and other state information.
+An alternative approach is used to transfer blocks of data directly between the main
+memory and I/O devices, such as disks. A special control unit is provided to manage the
+transfer, without continuous intervention by the processor. This approach is called direct
+memory access, or DMA. The unit that controls DMA transfers is referred to as a DMA
+controller. It may be part of the I/O device interface, or it may be a separate unit shared by a
+number of I/O devices. The DMAcontroller performs the functions that would normally be
+carried out by the processor when accessing the main memory. For each word transferred,
+it provides the memory address and generates all the control signals needed. It increments
+the memory address for successive words and keeps track of the number of transfers.
+Although a DMA controller transfers data without intervention by the processor, its
+operation must be under the control of a program executed by the processor, usually an
+operating system routine. To initiate the transfer of a block of words, the processor sends to
+the DMAcontroller the starting address, the number of words in the block, and the direction
+ofthetransfer. TheDMAcontrollerthenproceedstoperformtherequestedoperation. When
+the entire block has been transferred, it informs the processor by raising an interrupt.
+Figure 8.12 shows an example of the DMA controller registers that are accessed by the
+processor to initiate data transfer operations. Two registers are used for storing the starting
+address and the word count. The third register contains status and control ﬂags. The R/W
+bit determines the direction of the transfer. When this bit is set to 1 by a program instruction,
+the controller performs a Read operation, that is, it transfers data from the memory to the I/O
+device. Otherwise, it performs a Write operation. Additional information is also transferred
+as may be required by the I/O device. For example, in the case of a disk, the processor
+provides the disk controller with information to identify where the data is located on the
+disk (see Section 8.10.1 for disk details).
+Done
+IE
+IRQ
+Status and control
+Starting address
+Word count
+W
+R/
+31
+30
+1
+0
+Figure 8.12
+Typical registers in a DMA controller.
+
+
+===== PAGE 21 (book p.287) =====
+8.4
+Direct Memory Access
+287
+When the controller has completed transferring a block of data and is ready to receive
+another command, it sets the Done ﬂag to 1. Bit 30 is the Interrupt-enable ﬂag, IE.When this
+ﬂag is set to 1, it causes the controller to raise an interrupt after it has completed transferring
+a block of data. Finally, the controller sets the IRQ bit to 1 when it has requested an interrupt.
+Figure 8.13 shows how DMA controllers may be used in a computer system such as
+that in Figure 7.18. One DMA controller connects a high-speed Ethernet to the computer’s
+I/O bus (a PCI bus in the case of Figure 7.18). The disk controller, which controls two disks,
+also has DMA capability and provides two DMA channels. It can perform two independent
+DMA operations, as if each disk had its own DMA controller. The registers needed to store
+the memory address, the word count, and so on, are duplicated, so that one set can be used
+with each disk.
+To start a DMA transfer of a block of data from the main memory to one of the disks,
+an OS routine writes the address and word count information into the registers of the
+disk controller. The DMA controller proceeds independently to implement the speciﬁed
+operation. When the transfer is completed, this fact is recorded in the status and control
+register of the DMA channel by setting the Done bit. At the same time, if the IE bit is set,
+the controller sends an interrupt request to the processor and sets the IRQ bit. The status
+register may also be used to record other information, such as whether the transfer took
+place correctly or errors occurred.
+memory
+Processor
+PCI bus
+Main
+interface
+Ethernet
+Disk/DMA
+controller
+DMA
+controller
+Disk
+Disk
+Bridge
+Figure 8.13
+Use of DMA controllers in a computer system.
+
+
+===== PAGE 22 (book p.288) =====
+288
+C H A P T E R
+8
+•
+The Memory System
+8.5
+Memory Hierarchy
+We have already stated that an ideal memory would be fast, large, and inexpensive. From
+the discussion in Section 8.2, it is clear that a very fast memory can be implemented using
+static RAM chips. But, these chips are not suitable for implementing large memories,
+because their basic cells are larger and consume more power than dynamic RAM cells.
+Although dynamic memory units with gigabyte capacities can be implemented at a
+reasonable cost, the affordable size is still small compared to the demands of large programs
+with voluminous data. A solution is provided by using secondary storage, mainly magnetic
+disks, to provide the required memory space. Disks are available at a reasonable cost,
+and they are used extensively in computer systems. However, they are much slower than
+semiconductor memory units. In summary, a very large amount of cost-effective storage
+can be provided by magnetic disks, and a large and considerably faster, yet affordable,
+main memory can be built with dynamic RAM technology. This leaves the more expensive
+and much faster static RAM technology to be used in smaller units where speed is of the
+essence, such as in cache memories.
+All of these different types of memory units are employed effectively in a computer
+system. The entire computer memory can be viewed as the hierarchy depicted in Figure
+8.14. The fastest access is to data held in processor registers. Therefore, if we consider the
+Processor
+Primary
+cache
+Secondary
+cache
+Main
+Magnetic disk
+memory
+Increasing
+size
+Increasing
+speed
+secondary
+memory
+Increasing
+cost per bit
+Registers
+L1
+L2
+Figure 8.14
+Memory hierarchy.
+
+
+===== PAGE 23 (book p.289) =====
+8.6
+Cache Memories
+289
+registers to be part of the memory hierarchy, then the processor registers are at the top in
+terms of speed of access. Of course, the registers provide only a minuscule portion of the
+required memory.
+At the next level of the hierarchy is a relatively small amount of memory that can
+be implemented directly on the processor chip. This memory, called a processor cache,
+holds copies of the instructions and data stored in a much larger memory that is provided
+externally. The cache memory concept was introduced in Section 1.2.2 and is examined
+in detail in Section 8.6. There are often two or more levels of cache. A primary cache is
+always located on the processor chip. This cache is small and its access time is comparable
+to that of processor registers. The primary cache is referred to as the level 1 (L1) cache. A
+larger, and hence somewhat slower, secondary cache is placed between the primary cache
+and the rest of the memory. It is referred to as the level 2 (L2) cache. Often, the L2 cache
+is also housed on the processor chip.
+Some computers have a level 3 (L3) cache of even larger size, in addition to the L1
+and L2 caches. An L3 cache, also implemented in SRAM technology, may or may not be
+on the same chip with the processor and the L1 and L2 caches.
+The next level in the hierarchy is the main memory. This is a large memory implemented
+using dynamic memory components, typically assembled in memory modules such as
+DIMMs, as described in Section 8.2.5. The main memory is much larger but signiﬁcantly
+slower than cache memories. In a computer with a processor clock of 2 GHz or higher, the
+access time for the main memory can be as much as 100 times longer than the access time
+for the L1 cache.
+Disk devices provide a very large amount of inexpensive memory, and they are widely
+used as secondary storage in computer systems. They are very slow compared to the main
+memory. They represent the bottom level in the memory hierarchy.
+During program execution, the speed of memory access is of utmost importance. The
+key to managing the operation of the hierarchical memory system in Figure 8.14 is to bring
+the instructions and data that are about to be used as close to the processor as possible. This
+is the main purpose of using cache memories, which we discuss next.
+8.6
+Cache Memories
+The cache is a small and very fast memory, interposed between the processor and the main
+memory. Its purpose is to make the main memory appear to the processor to be much
+faster than it actually is. The effectiveness of this approach is based on a property of
+computer programs called locality of reference. Analysis of programs shows that most of
+their execution time is spent in routines in which many instructions are executed repeatedly.
+These instructions may constitute a simple loop, nested loops, or a few procedures that
+repeatedly call each other. The actual detailed pattern of instruction sequencing is not
+important—the point is that many instructions in localized areas of the program are executed
+repeatedly during some time period. This behavior manifests itself in two ways: temporal
+and spatial. The ﬁrst means that a recently executed instruction is likely to be executed
+again very soon. The spatial aspect means that instructions close to a recently executed
+instruction are also likely to be executed soon.
+
+
+===== PAGE 24 (book p.290) =====
+290
+C H A P T E R
+8
+•
+The Memory System
+Cache
+Main
+memory
+Processor
+Figure 8.15
+Use of a cache memory.
+Conceptually, operation of a cache memory is very simple.
+The memory control
+circuitry is designed to take advantage of the property of locality of reference. Temporal
+locality suggests that whenever an information item, instruction or data, is ﬁrst needed, this
+item should be brought into the cache, because it is likely to be needed again soon. Spatial
+locality suggests that instead of fetching just one item from the main memory to the cache,
+it is useful to fetch several items that are located at adjacent addresses as well. The term
+cache block refers to a set of contiguous address locations of some size. Another term that
+is often used to refer to a cache block is a cache line.
+Consider the arrangement in Figure 8.15. When the processor issues a Read request, the
+contents of a block of memory words containing the location speciﬁed are transferred into
+the cache. Subsequently, when the program references any of the locations in this block,
+the desired contents are read directly from the cache. Usually, the cache memory can store
+a reasonable number of blocks at any given time, but this number is small compared to the
+total number of blocks in the main memory. The correspondence between the main memory
+blocks and those in the cache is speciﬁed by a mapping function. When the cache is full
+and a memory word (instruction or data) that is not in the cache is referenced, the cache
+control hardware must decide which block should be removed to create space for the new
+block that contains the referenced word. The collection of rules for making this decision
+constitutes the cache’s replacement algorithm.
+Cache Hits
+The processor does not need to know explicitly about the existence of the cache. It
+simply issues Read and Write requests using addresses that refer to locations in the memory.
+The cache control circuitry determines whether the requested word currently exists in the
+cache. If it does, the Read or Write operation is performed on the appropriate cache location.
+In this case, a read or write hit is said to have occurred. The main memory is not involved
+when there is a cache hit in a Read operation. For a Write operation, the system can proceed
+in one of two ways. In the ﬁrst technique, called the write-through protocol, both the cache
+location and the main memory location are updated. The second technique is to update
+only the cache location and to mark the block containing it with an associated ﬂag bit, often
+called the dirty or modiﬁed bit. The main memory location of the word is updated later,
+when the block containing this marked word is removed from the cache to make room for
+a new block. This technique is known as the write-back, or copy-back, protocol.
+
+
+===== PAGE 25 (book p.291) =====
+8.6
+Cache Memories
+291
+The write-through protocol is simpler than the write-back protocol, but it results in
+unnecessary Write operations in the main memory when a given cache word is updated
+several times during its cache residency. The write-back protocol also involves unnecessary
+Write operations, because all words of the block are eventually written back, even if only
+a single word has been changed while the block was in the cache. The write-back protocol
+is used most often, to take advantage of the high speed with which data blocks can be
+transferred to memory chips.
+Cache Misses
+A Read operation for a word that is not in the cache constitutes a Read miss. It causes
+the block of words containing the requested word to be copied from the main memory into
+the cache. After the entire block is loaded into the cache, the particular word requested is
+forwarded to the processor. Alternatively, this word may be sent to the processor as soon as
+it is read from the main memory. The latter approach, which is called load-through, or early
+restart, reduces the processor’s waiting time somewhat, at the expense of more complex
+circuitry.
+When a Write miss occurs in a computer that uses the write-through protocol, the
+information is written directly into the main memory. For the write-back protocol, the
+block containing the addressed word is ﬁrst brought into the cache, and then the desired
+word in the cache is overwritten with the new information.
+Recall from Section 6.7 that resource limitations in a pipelined processor can cause
+instruction execution to stall for one or more cycles. This can occur if a Load or Store in-
+struction requests access to data in the memory at the same time that a subsequent instruction
+is being fetched. When this happens, instruction fetch is delayed until the data access op-
+eration is completed. To avoid stalling the pipeline, many processors use separate caches
+for instructions and data, making it possible for the two operations to proceed in parallel.
+8.6.1
+Mapping Functions
+There are several possible methods for determining where memory blocks are placed in the
+cache. It is instructive to describe these methods using a speciﬁc small example. Consider
+a cache consisting of 128 blocks of 16 words each, for a total of 2048 (2K) words, and
+assume that the main memory is addressable by a 16-bit address. The main memory has
+64K words, which we will view as 4K blocks of 16 words each. For simplicity, we have
+assumed that consecutive addresses refer to consecutive words.
+Direct Mapping
+The simplest way to determine cache locations in which to store memory blocks is
+the direct-mapping technique. In this technique, block j of the main memory maps onto
+block j modulo 128 of the cache, as depicted in Figure 8.16. Thus, whenever one of the
+main memory blocks 0, 128, 256, . . . is loaded into the cache, it is stored in cache block
+0. Blocks 1, 129, 257, . . . are stored in cache block 1, and so on. Since more than one
+memory block is mapped onto a given cache block position, contention may arise for that
+position even when the cache is not full. For example, instructions of a program may start
+in block 1 and continue in block 129, possibly after a branch. As this program is executed,
+
+
+===== PAGE 26 (book p.292) =====
+292
+C H A P T E R
+8
+•
+The Memory System
+tag
+tag
+tag
+Cache
+Main
+memory
+Block 0
+Block 1
+Block 127
+Block 128
+Block 129
+Block 255
+Block 256
+Block 257
+Block 4095
+Block 0
+Block 1
+Block 127
+7
+4
+Main memory address
+Tag
+Block
+Word
+5
+Figure 8.16
+Direct-mapped cache.
+both of these blocks must be transferred to the block-1 position in the cache. Contention is
+resolved by allowing the new block to overwrite the currently resident block.
+With direct mapping, the replacement algorithm is trivial. Placement of a block in the
+cache is determined by its memory address. The memory address can be divided into three
+ﬁelds, as shown in Figure 8.16. The low-order 4 bits select one of 16 words in a block.
+When a new block enters the cache, the 7-bit cache block ﬁeld determines the cache position
+in which this block must be stored. The high-order 5 bits of the memory address of the
+
+
+===== PAGE 27 (book p.293) =====
+8.6
+Cache Memories
+293
+block are stored in 5 tag bits associated with its location in the cache. The tag bits identify
+which of the 32 main memory blocks mapped into this cache position is currently resident in
+the cache. As execution proceeds, the 7-bit cache block ﬁeld of each address generated by
+the processor points to a particular block location in the cache. The high-order 5 bits of the
+address are compared with the tag bits associated with that cache location. If they match,
+then the desired word is in that block of the cache. If there is no match, then the block
+containing the required word must ﬁrst be read from the main memory and loaded into the
+cache. The direct-mapping technique is easy to implement, but it is not very ﬂexible.
+Associative Mapping
+Figure 8.17 shows the most ﬂexible mapping method, in which a main memory block
+can be placed into any cache block position. In this case, 12 tag bits are required to identify
+a memory block when it is resident in the cache. The tag bits of an address received from the
+processor are compared to the tag bits of each block of the cache to see if the desired block
+is present. This is called the associative-mapping technique. It gives complete freedom in
+4
+tag
+tag
+tag
+Cache
+Main
+memory
+Block 0
+Block 1
+Block i
+Block 4095
+Block 0
+Block 1
+Block 127
+12
+Main memory address
+Tag
+Word
+Figure 8.17
+Associative-mapped cache.
+
+
+===== PAGE 28 (book p.294) =====
+294
+C H A P T E R
+8
+•
+The Memory System
+choosing the cache location in which to place the memory block, resulting in a more efﬁcient
+use of the space in the cache. When a new block is brought into the cache, it replaces (ejects)
+an existing block only if the cache is full. In this case, we need an algorithm to select the
+block to be replaced. Many replacement algorithms are possible, as we discuss in Section
+8.6.2. The complexity of an associative cache is higher than that of a direct-mapped cache,
+because of the need to search all 128 tag patterns to determine whether a given block is in
+the cache. To avoid a long delay, the tags must be searched in parallel. A search of this
+kind is called an associative search.
+Set-Associative Mapping
+Another approach is to use a combination of the direct- and associative-mapping tech-
+niques. The blocks of the cache are grouped into sets, and the mapping allows a block of the
+main memory to reside in any block of a speciﬁc set. Hence, the contention problem of the
+direct method is eased by having a few choices for block placement. At the same time, the
+hardware cost is reduced by decreasing the size of the associative search. An example of
+this set-associative-mapping technique is shown in Figure 8.18 for a cache with two blocks
+per set. In this case, memory blocks 0, 64, 128, . . . , 4032 map into cache set 0, and they
+can occupy either of the two block positions within this set. Having 64 sets means that the
+6-bit set ﬁeld of the address determines which set of the cache might contain the desired
+block. The tag ﬁeld of the address must then be associatively compared to the tags of the
+two blocks of the set to check if the desired block is present. This two-way associative
+search is simple to implement.
+The number of blocks per set is a parameter that can be selected to suit the requirements
+of a particular computer. For the main memory and cache sizes in Figure 8.18, four blocks
+per set can be accommodated by a 5-bit set ﬁeld, eight blocks per set by a 4-bit set ﬁeld,
+and so on. The extreme condition of 128 blocks per set requires no set bits and corresponds
+to the fully-associative technique, with 12 tag bits. The other extreme of one block per set
+is the direct-mapping method. A cache that has k blocks per set is referred to as a k-way
+set-associative cache.
+Stale Data
+When power is ﬁrst turned on, the cache contains no valid data. A control bit, usually
+called the valid bit, must be provided for each cache block to indicate whether the data in that
+block are valid. This bit should not be confused with the modiﬁed, or dirty, bit mentioned
+earlier. The valid bits of all cache blocks are set to 0 when power is initially applied to
+the system. Some valid bits may also be set to 0 when new programs or data are loaded
+from the disk into the main memory. Data transferred from the disk to the main memory
+using the DMA mechanism are usually loaded directly into the main memory, bypassing
+the cache. If the memory blocks being updated are currently in the cache, the valid bits of
+the corresponding cache blocks are set to 0. As program execution proceeds, the valid bit
+of a given cache block is set to 1 when a memory block is loaded into that location. The
+processor fetches data from a cache block only if its valid bit is equal to 1. The use of the
+valid bit in this manner ensures that the processor will not fetch stale data from the cache.
+Asimilar precaution is needed in a system that uses the write-back protocol. Under this
+protocol, new data written into the cache are not written to the memory at the same time.
+
+
+===== PAGE 29 (book p.295) =====
+8.6
+Cache Memories
+295
+tag
+tag
+tag
+Cache
+Main
+memory
+Block 0
+Block 1
+Block 63
+Block 64
+Block 65
+Block 127
+Block 128
+Block 129
+Block 4095
+Block 0
+Block 1
+Block 126
+tag
+tag
+Block 2
+Block 3
+tag
+Block 127
+Main memory address
+6
+6
+4
+Tag
+Set
+Word
+Set 0
+Set 1
+Set 63
+Figure 8.18
+Set-associative-mapped cache with two blocks per set.
+Hence, data in the memory do not always reﬂect the changes that may have been made in the
+cached copy. It is important to ensure that such stale data in the memory are not transferred
+to the disk. One solution is to ﬂush the cache, by forcing all dirty blocks to be written back
+to the memory before performing the transfer. The operating system can do this by issuing
+a command to the cache before initiating the DMA operation that transfers the data to the
+disk. Flushing the cache does not affect performance greatly, because such disk transfers do
+
+
+===== PAGE 30 (book p.296) =====
+296
+C H A P T E R
+8
+•
+The Memory System
+not occur often. The need to ensure that two different entities (the processor and the DMA
+subsystems in this case) use identical copies of the data is referred to as a cache-coherence
+problem.
+8.6.2
+Replacement Algorithms
+In a direct-mapped cache, the position of each block is predetermined by its address; hence,
+the replacement strategy is trivial. In associative and set-associative caches there exists
+some ﬂexibility. When a new block is to be brought into the cache and all the positions that
+it may occupy are full, the cache controller must decide which of the old blocks to overwrite.
+This is an important issue, because the decision can be a strong determining factor in system
+performance. In general, the objective is to keep blocks in the cache that are likely to be
+referenced in the near future. But, it is not easy to determine which blocks are about to be
+referenced. The property of locality of reference in programs gives a clue to a reasonable
+strategy. Because program execution usually stays in localized areas for reasonable periods
+of time, there is a high probability that the blocks that have been referenced recently will
+be referenced again soon. Therefore, when a block is to be overwritten, it is sensible to
+overwrite the one that has gone the longest time without being referenced. This block is
+called the least recently used (LRU) block, and the technique is called the LRU replacement
+algorithm.
+To use the LRU algorithm, the cache controller must track references to all blocks as
+computation proceeds. Suppose it is required to track the LRU block of a four-block set
+in a set-associative cache. A 2-bit counter can be used for each block. When a hit occurs,
+the counter of the block that is referenced is set to 0. Counters with values originally lower
+than the referenced one are incremented by one, and all others remain unchanged. When a
+miss occurs and the set is not full, the counter associated with the new block loaded from
+the main memory is set to 0, and the values of all other counters are increased by one.
+When a miss occurs and the set is full, the block with the counter value 3 is removed, the
+new block is put in its place, and its counter is set to 0. The other three block counters are
+incremented by one. It can be easily veriﬁed that the counter values of occupied blocks are
+always distinct.
+The LRU algorithm has been used extensively. Although it performs well for many
+access patterns, it can lead to poor performance in some cases. For example, it produces
+disappointing results when accesses are made to sequential elements of an array that is
+slightly too large to ﬁt into the cache (see Section 8.6.3 and Problem 8.11). Performance
+of the LRU algorithm can be improved by introducing a small amount of randomness in
+deciding which block to replace.
+Several other replacement algorithms are also used in practice. An intuitively reason-
+able rule would be to remove the “oldest” block from a full set when a new block must be
+brought in. However, because this algorithm does not take into account the recent pattern
+of access to blocks in the cache, it is generally not as effective as the LRU algorithm in
+choosing the best blocks to remove. The simplest algorithm is to randomly choose the
+block to be overwritten. Interestingly enough, this simple algorithm has been found to be
+quite effective in practice.
+
+
+===== PAGE 31 (book p.297) =====
+8.6
+Cache Memories
+297
+8.6.3
+Examples of Mapping Techniques
+We now consider a detailed example to illustrate the effects of different cache mapping
+techniques. Assume that a processor has separate instruction and data caches. To keep the
+example simple, assume the data cache has space for only eight blocks of data. Also assume
+that each block consists of only one 16-bit word of data and the memory is word-addressable
+with 16-bit addresses. (These parameters are not realistic for actual computers, but they
+allow us to illustrate mapping techniques clearly.) Finally, assume the LRU replacement
+algorithm is used for block replacement in the cache.
+Let us examine changes in the data cache entries caused by running the following
+application. A 4 × 10 array of numbers, each occupying one word, is stored in main
+memory locations 7A00 through 7A27 (hex). The elements of this array, A, are stored in
+column order, as shown in Figure 8.19. The ﬁgure also indicates how tags for different
+cache mapping techniques are derived from the memory address. Note that no bits are
+needed to identify a word within a block, as was done in Figures 8.16 through 8.18, because
+we have assumed that each block contains only one word. The application normalizes the
+elements of the ﬁrst row of A with respect to the average value of the elements in the row.
+Hence, we need to compute the average of the elements in the row and divide each element
+by that average. The required task can be expressed as
+A(0, i) ←
+A(0, i)
+9
+j=0 A(0, j)
+ 
+10
+for i = 0, 1, . . . , 9
+0 1 1 1 1
+1
+0
+0 0 0 0 0 0 0 0 0
+1 1 1 1
+0
+1
+0
+0 0 0 0 0 0 0 0 1
+0 1 1 1 1
+1
+0
+0 0 0 0 0 0 0
+0
+1
+0 1 1 1 1
+1
+0
+0 0 0 0 0 0 0 1 1
+0 1 1 1 1
+1
+0
+0 0 0 0 0 0 1 0 0
+0 1 1 1 1
+1
+0
+0 0 0 1 0 0 1 0 0
+1 1 1 1
+0
+1
+0
+0 0 0 1 0 0 1 0 1
+0 1 1 1 1
+1
+0
+0 0 0 1 0 0 1
+0
+1
+0 1 1 1 1
+1
+0
+0 0 0 1 0 0 1 1 1
+A(0,0)
+A(1,0)
+A(2,0)
+A(3,0)
+A(0,1)
+A(0,9)
+A(1,9)
+A(2,9)
+A(3,9)
+Contents
+Memory address
+Tag for direct mapped
+Tag for set-associative
+Tag for associative
+(7A00)
+(7A01)
+(7A02)
+(7A03)
+(7A04)
+(7A24)
+(7A25)
+(7A26)
+(7A27)
+Figure 8.19
+An array stored in the main memory.
+
+
+===== PAGE 32 (book p.298) =====
+298
+C H A P T E R
+8
+•
+The Memory System
+SUM := 0
+for j := 0 to 9 do
+SUM := SUM + A(0,j)
+end
+AVG := SUM/10
+for i := 9 downto 0 do
+A(0,i) := A(0,i)/AVG
+end
+Figure 8.20
+Task for example in Section 8.6.3.
+Figure 8.20 gives the structure of a program that corresponds to this task. We use the
+variables SUM and AVE to hold the sum and average values, respectively. These variables,
+as well as index variables i and j, are held in processor registers during the computation.
+Direct-Mapped Cache
+In a direct-mapped data cache, the contents of the cache change as shown in Figure
+8.21. The columns in the table indicate the cache contents after various passes through
+the two program loops in Figure 8.20 are completed. For example, after the second pass
+through the ﬁrst loop (j = 1), the cache holds the elements A(0, 0) and A(0, 1). These
+elements are in block positions 0 and 4, as determined by the three least-signiﬁcant bits of
+the address. During the next pass, the A(0, 0) element is replaced by A(0, 2), which maps
+into the same block position. Note that the desired elements map into only two positions
+in the cache, thus leaving the contents of the other six positions unchanged from whatever
+they were before the normalization task started.
+Elements A(0, 8) and A(0, 9) are loaded into the cache during the ninth and tenth passes
+through the ﬁrst loop (j = 8, 9). The second loop reverses the order in which the elements
+are handled. The ﬁrst two passes through this loop (i = 9, 8) ﬁnd the required data in the
+cache. When i = 7, element A(0, 9) is replaced with A(0, 7). When i = 6, element A(0, 8)
+Block
+position
+Contents of data cache after pass:
+j
+1
+=
+j
+3
+=
+j
+5
+=
+j
+7
+=
+j
+9
+=
+i
+6
+=
+i
+4
+=
+i
+2
+=
+i
+0
+=
+A(0,0)
+A(0,2)
+A(0,4)
+A(0,6)
+A(0,8)
+A(0,6)
+A(0,4)
+A(0,2)
+A(0,0)
+A(0,1)
+A(0,3)
+A(0,5)
+A(0,7)
+A(0,9)
+A(0,7)
+A(0,5)
+A(0,3)
+A(0,1)
+0
+1
+2
+3
+4
+5
+6
+7
+Figure 8.21
+Contents of a direct-mapped data cache.
+
+
+===== PAGE 33 (book p.299) =====
+8.6
+Cache Memories
+299
+is replaced with A(0, 6), and so on. Thus, eight elements are replaced while the second
+loop is executed. In total, there are only two hits during execution of this task.
+The reader should keep in mind that the tags must be kept in the cache for each block.
+They are not shown to keep the ﬁgure simple.
+Associative-Mapped Cache
+Figure 8.22 presents the changes in cache contents for the case of an associative-mapped
+cache. During the ﬁrst eight passes through the ﬁrst loop, the elements are brought into
+consecutive block positions, assuming that the cache was initially empty. During the ninth
+pass (j = 8), the LRU algorithm chooses A(0, 0) to be overwritten by A(0, 8). In the next
+and last pass through the j loop, element A(0, 1) is replaced with A(0, 9). Now, for the ﬁrst
+eight passes through the second loop (i = 9, 8, . . . , 2) all the required elements are found
+in the cache. When i = 1, the element needed is A(0, 1), so it replaces the least recently
+used element, A(0, 9). During the last pass, A(0, 0) replaces A(0, 8).
+In this case, when the second loop is executed, only two elements are not found in
+the cache. In the direct-mapped case, eight of the elements had to be reloaded during the
+second loop. Obviously, the associative-mapped cache beneﬁts from the complete freedom
+in mapping a memory block into any position in the cache. In both cases, better utilization
+of the cache is achieved by reversing the order in which the elements are handled in the
+second loop of the program. It is interesting to consider what would happen if the second
+loop dealt with the elements in the same order as in the ﬁrst loop. Using either direct
+mapping or the LRU algorithm, all elements would be overwritten before they are used in
+the second loop (see Problem 8.10).
+Set-Associative-Mapped Cache
+For this example, we assume that a set-associative data cache is organized into two sets,
+each capable of holding four blocks. Thus, the least-signiﬁcant bit of an address determines
+which set a memory block maps into, but the memory data can be placed in any of the four
+blocks of the set. The high-order 15 bits of the address constitute the tag.
+Block
+position
+Contents of data cache after pass:
+j
+7
+=
+j
+8
+=
+j
+9
+=
+i
+1
+=
+i
+0
+=
+A(0,0)
+A(0,8)
+A(0,8)
+A(0,8)
+A(0,0)
+A(0,4)
+A(0,4)
+A(0,4)
+A(0,4)
+A(0,4)
+0
+1
+2
+3
+4
+5
+6
+7
+A(0,1)
+A(0,1)
+A(0,9)
+A(0,1)
+A(0,1)
+A(0,2)
+A(0,2)
+A(0,2)
+A(0,2)
+A(0,2)
+A(0,3)
+A(0,3)
+A(0,3)
+A(0,3)
+A(0,3)
+A(0,5)
+A(0,5)
+A(0,5)
+A(0,5)
+A(0,5)
+A(0,6)
+A(0,6)
+A(0,6)
+A(0,6)
+A(0,6)
+A(0,7)
+A(0,7)
+A(0,7)
+A(0,7)
+A(0,7)
+Figure 8.22
+Contents of an associative-mapped data cache.
+
+
+===== PAGE 34 (book p.300) =====
+300
+C H A P T E R
+8
+•
+The Memory System
+Contents of data cache after pass:
+j
+3
+=
+j
+7
+=
+j
+9
+=
+i
+4
+=
+i
+2
+=
+i
+0
+=
+A(0,0)
+A(0,4)
+A(0,8)
+A(0,4)
+A(0,4)
+A(0,0)
+A(0,1)
+A(0,5)
+A(0,9)
+A(0,5)
+A(0,5)
+A(0,1)
+A(0,2)
+A(0,6)
+A(0,6)
+A(0,6)
+A(0,2)
+A(0,2)
+A(0,3)
+A(0,7)
+A(0,7)
+A(0,7)
+A(0,3)
+A(0,3)
+Set 0
+Set 1
+Figure 8.23
+Contents of a set-associative-mapped data cache.
+Changes in the cache contents are depicted in Figure 8.23. Since all the desired blocks
+have even addresses, they map into set 0. In this case, six elements are reloaded during
+execution of the second loop.
+Even though this is a simpliﬁed example, it illustrates that in general, associative
+mapping performs best, set-associative mapping is next best, and direct mapping is the
+worst. However, fully-associative mapping is expensive to implement, so set-associative
+mapping is a good practical compromise.
+8.7
+Performance Considerations
+Two key factors in the commercial success of a computer are performance and cost; the
+best possible performance for a given cost is the objective. A common measure of success
+is the price/performance ratio. Performance depends on how fast machine instructions
+can be brought into the processor and how fast they can be executed. Chapter 6 shows
+how pipelining increases the speed of program execution. In this chapter, we focus on the
+memory subsystem.
+The memory hierarchy described in Section 8.5 results from the quest for the best
+price/performance ratio. The main purpose of this hierarchy is to create a memory that
+the processor sees as having a short access time and a large capacity. When a cache is
+used, the processor is able to access instructions and data more quickly when the data from
+the referenced memory locations are in the cache. Therefore, the extent to which caches
+improve performance is dependent on how frequently the requested instructions and data
+are found in the cache. In this section, we examine this issue quantitatively.
+
+
+===== PAGE 35 (book p.301) =====
+8.7
+Performance Considerations
+301
+8.7.1
+Hit Rate and Miss Penalty
+An excellent indicator of the effectiveness of a particular implementation of the memory
+hierarchy is the success rate in accessing information at various levels of the hierarchy.
+Recall that a successful access to data in a cache is called a hit. The number of hits stated
+as a fraction of all attempted accesses is called the hit rate, and the miss rate is the number
+of misses stated as a fraction of attempted accesses.
+Ideally, the entire memory hierarchy would appear to the processor as a single memory
+unit that has the access time of the cache on the processor chip and the size of the magnetic
+disk. How close we get to this ideal depends largely on the hit rate at different levels of the
+hierarchy. High hit rates well over 0.9 are essential for high-performance computers.
+Performance is adversely affected by the actions that need to be taken when a miss
+occurs. Aperformance penalty is incurred because of the extra time needed to bring a block
+of data from a slower unit in the memory hierarchy to a faster unit. During that period, the
+processor is stalled waiting for instructions or data. The waiting time depends on the details
+of the operation of the cache. For example, it depends on whether or not the load-through
+approach is used. We refer to the total access time seen by the processor when a miss occurs
+as the miss penalty.
+Consider a system with only one level of cache. In this case, the miss penalty consists
+almost entirely of the time to access a block of data in the main memory. Let h be the
+hit rate, M the miss penalty, and C the time to access information in the cache. Thus, the
+average access time experienced by the processor is
+tavg = hC + (1 −h)M
+The following example illustrates how the values of these parameters affect the average
+access time.
+Example 8.1
+Consider a computer that has the following parameters. Access times to the cache and the
+main memory are τ and 10τ, respectively. When a cache miss occurs, a block of 8 words is
+transferred from the main memory to the cache. It takes 10τ to transfer the ﬁrst word of the
+block, and the remaining 7 words are transferred at the rate of one word every τ seconds.
+The miss penalty also includes a delay of τ for the initial access to the cache, which misses,
+and another delay of τ to transfer the word to the processor after the block is loaded into
+the cache (assuming no load-through). Thus, the miss penalty in this computer is given by:
+M = τ + 10τ + 7τ + τ = 19τ
+Assume that 30 percent of the instructions in a typical program perform a Read or a
+Write operation, which means that there are 130 memory accesses for every 100 instructions
+executed. Assume that the hit rates in the cache are 0.95 for instructions and 0.9 for data.
+Assume further that the miss penalty is the same for both read and write accesses. Then,
+
+
+===== PAGE 36 (book p.302) =====
+302
+C H A P T E R
+8
+•
+The Memory System
+a rough estimate of the improvement in memory performance that results from using the
+cache can be obtained as follows:
+Time without cache
+Time with cache
+=
+130 × 10τ
+100(0.95τ + 0.05 × 19τ) + 30(0.9τ + 0.1 × 19τ) = 4.7
+This result shows that the cache makes the memory appear almost ﬁve times faster than
+it really is. The improvement factor increases as the speed of the cache increases relative
+to the main memory. For example, if the access time of the main memory is 20τ, the
+improvement factor becomes 7.3.
+High hit rates are essential for the cache to be effective in reducing memory access
+time. Hit rates depend on the size of the cache, its design, and the instruction and data
+access patterns of the programs being executed. It is instructive to consider how effective
+the cache of this example is compared to the ideal case in which the hit rate is 100 percent.
+With ideal cache behavior, all memory references take one τ. Thus, an estimate of the
+increase in memory access time caused by misses in the cache is given by:
+Time for real cache
+Time for ideal cache = 100(0.95τ + 0.05 × 19τ) + 30(0.9τ + 0.1 × 19τ)
+130τ
+= 2.1
+In other words, a 100% hit rate in the cache would make the memory appear twice as fast
+as when realistic hit rates are used.
+How can the hit rate be improved? One possibility is to make the cache larger, but
+this entails increased cost. Another possibility is to increase the cache block size while
+keeping the total cache size constant, to take advantage of spatial locality. If all items in a
+larger block are needed in a computation, then it is better to load these items into the cache
+in a single miss, rather than loading several smaller blocks as a result of several misses.
+The high data rate achievable during block transfers is the main reason for this advantage.
+But larger blocks are effective only up to a certain size, beyond which the improvement in
+the hit rate is offset by the fact that some items may not be referenced before the block is
+ejected (replaced). Also, larger blocks take longer to transfer, and hence increase the miss
+penalty. Since the performance of a computer is affected positively by increased hit rate
+and negatively by increased miss penalty, block size should be neither too small nor too
+large. In practice, block sizes in the range of 16 to 128 bytes are the most popular choices.
+Finally, we note that the miss penalty can be reduced if the load-through approach is
+used when loading new blocks into the cache. Then, instead of waiting for an entire block
+to be transferred, the processor resumes execution as soon as the required word is loaded
+into the cache.
+8.7.2
+Caches on the Processor Chip
+When information is transferred between different chips, considerable delays occur in driver
+and receiver gates on the chips. Thus, it is best to implement the cache on the processor
+
+
+===== PAGE 37 (book p.303) =====
+8.7
+Performance Considerations
+303
+chip. Most processor chips include at least one L1 cache. Often there are two separate L1
+caches, one for instructions and another for data.
+In high-performance processors, two levels of caches are normally used, separate L1
+caches for instructions and data and a larger L2 cache. These caches are often implemented
+on the processor chip. In this case, the L1 caches must be very fast, as they determine the
+memory access time seen by the processor. The L2 cache can be slower, but it should be
+much larger than the L1 caches to ensure a high hit rate. Its speed is less critical because
+it only affects the miss penalty of the L1 caches. A typical computer may have L1 caches
+with capacities of tens of kilobytes and an L2 cache of hundreds of kilobytes or possibly
+several megabytes.
+Including an L2 cache further reduces the impact of the main memory speed on the
+performance of a computer. Its effect can be assessed by observing that the average access
+time of the L2 cache is the miss penalty of either of the L1 caches. For simplicity, we will
+assume that the hit rates are the same for instructions and data. Thus, the average access
+time experienced by the processor in such a system is:
+tavg = h1C1 + (1 −h1)(h2C2 + (1 −h2)M )
+where
+h1 is the hit rate in the L1 caches.
+h2 is the hit rate in the L2 cache.
+C1 is the time to access information in the L1 caches.
+C2 is the miss penalty to transfer information from the L2 cache to an L1 cache.
+M is the miss penalty to transfer information from the main memory to the L2 cache.
+Of all memory references made by the processor, the number of misses in the L2 cache is
+given by (1 −h1)(1 −h2). If both h1 and h2 are in the 90 percent range, then the number
+of misses in the L2 cache will be less than one percent of all memory accesses. This makes
+the value of M , and in turn the speed of the main memory, less critical. See Problem 8.14
+for a quantitative examination of this issue.
+8.7.3
+Other Enhancements
+In addition to the main design issues just discussed, several other possibilities exist for
+enhancing performance. We discuss three of them in this section.
+Write Buffer
+When the write-through protocol is used, each Write operation results in writing a new
+value into the main memory. If the processor must wait for the memory function to be
+completed, as we have assumed until now, then the processor is slowed down by all Write
+requests. Yet the processor typically does not need immediate access to the result of a
+Write operation; so it is not necessary for it to wait for the Write request to be completed.
+
+
+===== PAGE 38 (book p.304) =====
+304
+C H A P T E R
+8
+•
+The Memory System
+To improve performance, a Write buffer can be included for temporary storage of Write
+requests. The processor places each Write request into this buffer and continues execution
+of the next instruction. The Write requests stored in the Write buffer are sent to the main
+memory whenever the memory is not responding to Read requests. It is important that the
+Read requests be serviced quickly, because the processor usually cannot proceed before
+receiving the data being read from the memory. Hence, these requests are given priority
+over Write requests.
+The Write buffer may hold a number of Write requests. Thus, it is possible that a
+subsequent Read request may refer to data that are still in the Write buffer. To ensure
+correct operation, the addresses of data to be read from the memory are always compared
+with the addresses of the data in the Write buffer. In the case of a match, the data in the
+Write buffer are used.
+A similar situation occurs with the write-back protocol. In this case, Write commands
+issued by the processor are performed on the word in the cache. When a new block of data
+is to be brought into the cache as a result of a Read miss, it may replace an existing block
+that has some dirty data. The dirty block has to be written into the main memory. If the
+required write-back is performed ﬁrst, then the processor has to wait for this operation to
+be completed before the new block is read into the cache. It is more prudent to read the
+new block ﬁrst. The dirty block being ejected from the cache is temporarily stored in the
+Write buffer and held there while the new block is being read. Afterwards, the contents of
+the buffer are written into the main memory. Thus, the Write buffer also works well for the
+write-back protocol.
+Prefetching
+In the previous discussion of the cache mechanism, we assumed that new data are
+brought into the cache when they are ﬁrst needed. Following a Read miss, the processor
+has to pause until the new data arrive, thus incurring a miss penalty.
+To avoid stalling the processor, it is possible to prefetch the data into the cache before
+they are needed. The simplest way to do this is through software. A special prefetch
+instruction may be provided in the instruction set of the processor. Executing this instruction
+causestheaddresseddatatobeloadedintothecache, asinthecaseofaReadmiss. Aprefetch
+instruction is inserted in a program to cause the data to be loaded in the cache shortly before
+they are needed in the program. Then, the processor will not have to wait for the referenced
+data as in the case of a Read miss. The hope is that prefetching will take place while the
+processor is busy executing instructions that do not result in a Read miss, thus allowing
+accesses to the main memory to be overlapped with computation in the processor.
+Prefetch instructions can be inserted into a program either by the programmer or by
+the compiler. Compilers are able to insert these instructions with good success for many
+applications. Software prefetching entails a certain overhead because inclusion of prefetch
+instructions increases the length of programs. Moreover, some prefetches may load into
+the cache data that will not be used by the instructions that follow. This can happen if the
+prefetcheddataareejectedfromthecachebyaReadmissinvolvingotherdata. However, the
+overall effect of software prefetching on performance is positive, and many processors have
+machine instructions to support this feature. See Reference [1] for a thorough discussion
+of software prefetching.
+
+
+===== PAGE 39 (book p.305) =====
+8.8
+Virtual Memory
+305
+Prefetching can also be done in hardware, using circuitry that attempts to discover a
+pattern in memory references and prefetches data according to this pattern. A number of
+schemes have been proposed for this purpose, as described in References [2] and [3].
+Lockup-Free Cache
+Software prefetching does not work well if it interferes signiﬁcantly with the normal
+execution of instructions. This is the case if the action of prefetching stops other accesses
+to the cache until the prefetch is completed. While servicing a miss, the cache is said to
+be locked. This problem can be solved by modifying the basic cache structure to allow the
+processor to access the cache while a miss is being serviced. In this case, it is possible to have
+more than one outstanding miss, and the hardware must accommodate such occurrences.
+A cache that can support multiple outstanding misses is called lockup-free. Such a
+cache must include circuitry that keeps track of all outstanding misses. This may be done
+with special registers that hold the pertinent information about these misses. Lockup-free
+caches were ﬁrst used in the early 1980s in the Cyber series of computers manufactured by
+the Control Data company [4].
+We have used software prefetching to motivate the need for a cache that is not locked by
+a Read miss. Amuch more important reason is that in a pipelined processor, which overlaps
+the execution of several instructions, a Read miss caused by one instruction could stall the
+execution of other instructions. A lockup-free cache reduces the likelihood of such stalls.
+8.8
+Virtual Memory
+In most modern computer systems, the physical main memory is not as large as the ad-
+dress space of the processor. For example, a processor that issues 32-bit addresses has an
+addressable space of 4G bytes. The size of the main memory in a typical computer with
+a 32-bit processor may range from 1G to 4G bytes. If a program does not completely ﬁt
+into the main memory, the parts of it not currently being executed are stored on a secondary
+storage device, typically a magnetic disk. As these parts are needed for execution, they
+must ﬁrst be brought into the main memory, possibly replacing other parts that are already
+in the memory. These actions are performed automatically by the operating system, using
+a scheme known as virtual memory. Application programmers need not be aware of the
+limitations imposed by the available main memory. They prepare programs using the entire
+address space of the processor.
+Under a virtual memory system, programs, and hence the processor, reference in-
+structions and data in an address space that is independent of the available physical main
+memory space. The binary addresses that the processor issues for either instructions or
+data are called virtual or logical addresses. These addresses are translated into physical
+addresses by a combination of hardware and software actions. If a virtual address refers to a
+part of the program or data space that is currently in the physical memory, then the contents
+of the appropriate location in the main memory are accessed immediately. Otherwise, the
+contents of the referenced address must be brought into a suitable location in the memory
+before they can be used.
+
+
+===== PAGE 40 (book p.306) =====
+306
+C H A P T E R
+8
+•
+The Memory System
+Data
+Data
+DMA transfer
+Physical address
+Physical address
+Virtual address
+Disk storage
+Main memory
+Cache
+MMU
+Processor
+Figure 8.24
+Virtual memory organization.
+Figure 8.24 shows a typical organization that implements virtual memory. A special
+hardware unit, called the Memory Management Unit (MMU), keeps track of which parts of
+the virtual address space are in the physical memory. When the desired data or instructions
+are in the main memory, the MMU translates the virtual address into the corresponding
+physical address. Then, the requested memory access proceeds in the usual manner. If
+the data are not in the main memory, the MMU causes the operating system to transfer the
+data from the disk to the memory. Such transfers are performed using the DMA scheme
+discussed in Section 8.4.
+8.8.1
+Address Translation
+Asimple method for translating virtual addresses into physical addresses is to assume that all
+programs and data are composed of ﬁxed-length units called pages, each of which consists
+of a block of words that occupy contiguous locations in the main memory. Pages commonly
+range from 2K to 16K bytes in length. They constitute the basic unit of information that is
+transferred between the main memory and the disk whenever the MMU determines that a
+transfer is required. Pages should not be too small, because the access time of a magnetic
+disk is much longer (several milliseconds) than the access time of the main memory. The
+
+
+===== PAGE 41 (book p.307) =====
+8.8
+Virtual Memory
+307
+reason for this is that it takes a considerable amount of time to locate the data on the disk,
+but once located, the data can be transferred at a rate of several megabytes per second. On
+the other hand, if pages are too large, it is possible that a substantial portion of a page may
+not be used, yet this unnecessary data will occupy valuable space in the main memory.
+This discussion clearly parallels the concepts introduced in Section 8.6 on cache mem-
+ory. The cache bridges the speed gap between the processor and the main memory and is
+implemented in hardware. The virtual-memory mechanism bridges the size and speed gaps
+between the main memory and secondary storage and is usually implemented in part by
+software techniques. Conceptually, cache techniques and virtual-memory techniques are
+very similar. They differ mainly in the details of their implementation.
+A virtual-memory address-translation method based on the concept of ﬁxed-length
+pages is shown schematically in Figure 8.25. Each virtual address generated by the proces-
+Page frame
+Virtual address from processor
+in memory
+Offset
+Offset
+Virtual page number
+Page table address
+Page table base register
+Control
+bits
+Physical address in main memory
+PAGE TABLE
+Page frame
++
+Figure 8.25
+Virtual-memory address translation.
+
+
+===== PAGE 42 (book p.308) =====
+308
+C H A P T E R
+8
+•
+The Memory System
+sor, whether it is for an instruction fetch or an operand load/store operation, is interpreted
+as a virtual page number (high-order bits) followed by an offset (low-order bits) that spec-
+iﬁes the location of a particular byte (or word) within a page. Information about the main
+memory location of each page is kept in a page table. This information includes the main
+memory address where the page is stored and the current status of the page. An area in
+the main memory that can hold one page is called a page frame. The starting address of
+the page table is kept in a page table base register. By adding the virtual page number
+to the contents of this register, the address of the corresponding entry in the page table is
+obtained. The contents of this location give the starting address of the page if that page
+currently resides in the main memory.
+Each entry in the page table also includes some control bits that describe the status of
+the page while it is in the main memory. One bit indicates the validity of the page, that is,
+whether the page is actually loaded in the main memory. It allows the operating system to
+invalidate the page without actually removing it. Another bit indicates whether the page has
+been modiﬁed during its residency in the memory. As in cache memories, this information
+is needed to determine whether the page should be written back to the disk before it is
+removed from the main memory to make room for another page. Other control bits indicate
+various restrictions that may be imposed on accessing the page. For example, a program
+may be given full read and write permission, or it may be restricted to read accesses only.
+Translation Lookaside Buffer
+The page table information is used by the MMU for every read and write access.
+Ideally, the page table should be situated within the MMU. Unfortunately, the page table
+may be rather large. Since the MMU is normally implemented as part of the processor
+chip, it is impossible to include the complete table within the MMU. Instead, a copy of only
+a small portion of the table is accommodated within the MMU, and the complete table is
+kept in the main memory. The portion maintained within the MMU consists of the entries
+corresponding to the most recently accessed pages. They are stored in a small table, usually
+called the Translation Lookaside Buffer (TLB). The TLB functions as a cache for the page
+table in the main memory. Each entry in the TLB includes a copy of the information in
+the corresponding entry in the page table. In addition, it includes the virtual address of the
+page, which is needed to search the TLB for a particular page. Figure 8.26 shows a possible
+organization of a TLB that uses the associative-mapping technique. Set-associative mapped
+TLBs are also found in commercial products.
+Address translation proceeds as follows. Given a virtual address, the MMU looks in
+the TLB for the referenced page. If the page table entry for this page is found in the TLB,
+the physical address is obtained immediately. If there is a miss in the TLB, then the required
+entry is obtained from the page table in the main memory and the TLB is updated.
+It is essential to ensure that the contents of the TLB are always the same as the contents
+of page tables in the memory. When the operating system changes the contents of a page
+table, it must simultaneously invalidate the corresponding entries in the TLB. One of the
+control bits in the TLB is provided for this purpose. When an entry is invalidated, the TLB
+acquires the new information from the page table in the memory as part of the MMU’s
+normal response to access misses.
+
+
+===== PAGE 43 (book p.309) =====
+8.8
+Virtual Memory
+309
+No
+Yes
+Hit
+Miss
+Virtual address from processor
+TLB
+Offset
+Virtual page number
+number
+Virtual page
+Page frame
+in memory
+Control
+bits
+Offset
+Physical address in main memory
+Page frame
+=?
+Figure 8.26
+Use of an associative-mapped TLB.
+Page Faults
+When a program generates an access request to a page that is not in the main memory,
+a page fault is said to have occurred. The entire page must be brought from the disk into
+the memory before access can proceed. When it detects a page fault, the MMU asks the
+operating system to intervene by raising an exception (interrupt). Processing of the program
+that generated the page fault is interrupted, and control is transferred to the operating system.
+The operating system copies the requested page from the disk into the main memory. Since
+this process involves a long delay, the operating system may begin execution of another
+
+
+===== PAGE 44 (book p.310) =====
+310
+C H A P T E R
+8
+•
+The Memory System
+program whose pages are in the main memory. When page transfer is completed, the
+execution of the interrupted program is resumed.
+When the MMU raises an interrupt to indicate a page fault, the instruction that requested
+the memory access may have been partially executed. It is essential to ensure that the
+interrupted program continues correctly when it resumes execution. There are two options.
+Either the execution of the interrupted instruction continues from the point of interruption,
+or the instruction must be restarted. The design of a particular processor dictates which of
+these two options is used.
+If a new page is brought from the disk when the main memory is full, it must replace
+one of the resident pages. The problem of choosing which page to remove is just as critical
+here as it is in a cache, and the observation that programs spend most of their time in a few
+localized areas also applies. Because main memories are considerably larger than cache
+memories, it should be possible to keep relatively larger portions of a program in the main
+memory. This reduces the frequency of transfers to and from the disk. Concepts similar
+to the LRU replacement algorithm can be applied to page replacement, and the control bits
+in the page table entries can be used to record usage history. One simple scheme is based
+on a control bit that is set to 1 whenever the corresponding page is referenced (accessed).
+The operating system periodically clears this bit in all page table entries, thus providing a
+simple way of determining which pages have not been used recently.
+A modiﬁed page has to be written back to the disk before it is removed from the
+main memory. It is important to note that the write-through protocol, which is useful in the
+frameworkofcachememories, isnotsuitableforvirtualmemory. Theaccesstimeofthedisk
+is so long that it does not make sense to access it frequently to write small amounts of data.
+Looking up entries in the TLB introduces some delay, slowing down the operation of
+the MMU. Here again we can take advantage of the property of locality of reference. It is
+likely that many successive TLB translations involve addresses on the same program page.
+This is particularly likely when fetching instructions. Thus, address translation time can be
+reduced by keeping the most recently used TLB entries in a few special registers that can
+be accessed quickly.
+8.9
+Memory Management Requirements
+In our discussion of virtual-memory concepts, we have tacitly assumed that only one large
+program is being executed. If all of the program does not ﬁt into the available physical
+memory, parts of it (pages) are moved from the disk into the main memory when they are
+to be executed. Although we have alluded to software routines that are needed to manage
+this movement of program segments, we have not been speciﬁc about the details.
+Memory management routines are part of the operating system of the computer. It is
+convenient to assemble the operating system routines into a virtual address space, called
+the system space, that is separate from the virtual space in which user application programs
+reside. The latter space is called the user space. In fact, there may be a number of user
+spaces, one for each user. This is arranged by providing a separate page table for each user
+program. The MMU uses a page table base register to determine the address of the table
+
+
+===== PAGE 45 (book p.311) =====
+8.10
+Secondary Storage
+311
+to be used in the translation process. Hence, by changing the contents of this register, the
+operating system can switch from one space to another. The physical main memory is thus
+shared by the active pages of the system space and several user spaces. However, only the
+pages that belong to one of these spaces are accessible at any given time.
+In any computer system in which independent user programs coexist in the main mem-
+ory, the notion of protection must be addressed. No program should be allowed to destroy
+either the data or instructions of other programs in the memory. The needed protection
+can be provided in several ways. Let us ﬁrst consider the most basic form of protection.
+Most processors can operate in one of two modes, the supervisor mode and the user mode.
+The processor is usually placed in the supervisor mode when operating system routines are
+being executed and in the user mode to execute user programs. In the user mode, some
+machine instructions cannot be executed. These are privileged instructions. They include
+instructions that modify the page table base register, which can only be executed while the
+processor is in the supervisor mode. Since a user program is executed in the user mode, it
+is prevented from accessing the page tables of other users or of the system space.
+It is sometimes desirable for one application program to have access to certain pages
+belonging to another program. The operating system can arrange this by causing these pages
+to appear in both spaces. The shared pages will therefore have entries in two different page
+tables. The control bits in each table entry can be set to control the access privileges granted
+to each program. For example, one program may be allowed to read and write a given page,
+while the other program may be given only read access.
+8.10
+Secondary Storage
+The semiconductor memories discussed in the previous sections cannot be used to provide
+all of the storage capability needed in computers. Their main limitation is the cost per
+bit of stored information. The large storage requirements of most computer systems are
+economically realized in the form of magnetic and optical disks, which are usually referred
+to as secondary storage devices.
+8.10.1
+Magnetic Hard Disks
+The storage medium in a magnetic-disk system consists of one or more disk platters mounted
+on a common spindle. A thin magnetic ﬁlm is deposited on each platter, usually on both
+sides. The assembly is placed in a drive that causes it to rotate at a constant speed. The
+magnetized surfaces move in close proximity to read/write heads, as shown in Figure
+8.27a. Data are stored on concentric tracks, and the read/write heads move radially to
+access different tracks.
+Each read/write head consists of a magnetic yoke and a magnetizing coil, as indicated
+in Figure 8.27b. Digital information can be stored on the magnetic ﬁlm by applying current
+pulses of suitable polarity to the magnetizing coil. This causes the magnetization of the ﬁlm
+in the area immediately underneath the head to switch to a direction parallel to the applied
+
+
+===== PAGE 46 (book p.312) =====
+312
+C H A P T E R
+8
+•
+The Memory System
+drive shaft
+Rotary
+Disk
+Access
+mechanism
+head
+Read/Write
+(a) Mechanical structure
+Air
+gap
+Magnetic
+thin ﬁlm
+yoke
+Magnetic
+Magnetizing
+current
+(b) Read/Write head detail
+Direction of
+magnetization
+0
+1
+0
+1
+1
+1
+0
+One bit
+(c) Bit representation by phase encoding
+Figure 8.27
+Magnetic disk principles.
+ﬁeld. The same head can be used for reading the stored information. In this case, changes
+in the magnetic ﬁeld in the vicinity of the head caused by the movement of the ﬁlm relative
+to the yoke induce a voltage in the coil, which now serves as a sense coil. The polarity of
+this voltage is monitored by the control circuitry to determine the state of magnetization of
+the ﬁlm. Only changes in the magnetic ﬁeld under the head can be sensed during the Read
+operation. Therefore, if the binary states 0 and 1 are represented by two opposite states of
+magnetization, a voltage is induced in the head only at 0-to-1 and at 1-to-0 transitions in
+the bit stream. A long string of 0s or 1s causes an induced voltage only at the beginning
+and end of the string. Therefore, to determine the number of consecutive 0s or 1s stored, a
+clock must provide information for synchronization.
+
+
+===== PAGE 47 (book p.313) =====
+8.10
+Secondary Storage
+313
+In some early designs, a clock was stored on a separate track, on which a change in
+magnetization is forced for each bit period. Using the clock signal as a reference, the
+data stored on other tracks can be read correctly. The modern approach is to combine the
+clocking information with the data. Several different techniques have been developed for
+such encoding. One simple scheme, depicted in Figure 8.27c, is known as phase encoding
+or Manchester encoding. In this scheme, changes in magnetization occur for each data bit,
+as shown in the ﬁgure. Clocking information is provided by the change in magnetization at
+the midpoint of each bit period. The drawback of Manchester encoding is its poor bit-storage
+density. The space required to represent each bit must be large enough to accommodate
+two changes in magnetization. We use the Manchester encoding example to illustrate how
+a self-clocking scheme may be implemented, because it is easy to understand. Other, more
+compact codes have been developed. They are much more efﬁcient and provide better
+storage density. They also require more complex control circuitry. The discussion of such
+codes is beyond the scope of this book.
+Read/write heads must be maintained at a very small distance from the moving disk
+surfaces in order to achieve high bit densities and reliable Read and Write operations. When
+the disks are moving at their steady rate, air pressure develops between the disk surface
+and the head and forces the head away from the surface. This force is counterbalanced by a
+spring-loaded mounting arrangement that presses the head toward the surface. The ﬂexible
+spring connection between the head and its arm mounting permits the head to ﬂy at the
+desired distance away from the surface in spite of any small variations in the ﬂatness of the
+surface.
+In most modern disk units, the disks and the read/write heads are placed in a sealed,
+air-ﬁltered enclosure. This approach is known as Winchester technology. In such units, the
+read/write heads can operate closer to the magnetized track surfaces, because dust particles,
+which are a problem in unsealed assemblies, are absent. The closer the heads are to a track
+surface, the more densely the data can be packed along the track, and the closer the tracks
+can be to each other. Thus, Winchester disks have a larger capacity for a given physical
+size compared to unsealed units. Another advantage of Winchester technology is that data
+integrity tends to be greater in sealed units, where the storage medium is not exposed to
+contaminating elements.
+The read/write heads of a disk system are movable. There is one head per surface. All
+heads are mounted on a comb-like arm that can move radially across the stack of disks to
+provide access to individual tracks, as shown in Figure 8.27a. To read or write data on a
+given track, the read/write heads must ﬁrst be positioned over that track.
+The disk system consists of three key parts. One part is the assembly of disk platters,
+which is usually referred to as the disk. The second part comprises the electromechanical
+mechanism that spins the disk and moves the read/write heads; it is called the disk drive. The
+third part is the disk controller, which is the electronic circuitry that controls the operation
+of the system. The disk controller may be implemented as a separate module, or it may be
+incorporated into the enclosure that contains the entire disk system. We should note that
+the term disk is often used to refer to the combined package of the disk drive and the disk
+it contains. We will do so in the sections that follow, when there is no ambiguity in the
+meaning of the term.
+
+
+===== PAGE 48 (book p.314) =====
+314
+C H A P T E R
+8
+•
+The Memory System
+Organization and Accessing of Data on a Disk
+The organization of data on a disk is illustrated in Figure 8.28. Each surface is divided
+into concentric tracks, and each track is divided into sectors. The set of corresponding
+tracks on all surfaces of a stack of disks forms a logical cylinder. All tracks of a cylinder
+can be accessed without moving the read/write heads. Data are accessed by specifying
+the surface number, the track number, and the sector number. Read and Write operations
+always start at sector boundaries.
+Data bits are stored serially on each track. Each sector may contain 512 or more
+bytes. The data are preceded by a sector header that contains identiﬁcation (addressing)
+information used to ﬁnd the desired sector on the selected track. Following the data, there
+are additional bits that constitute an error-correcting code (ECC). The ECC bits are used
+to detect and correct errors that may have occurred in writing or reading the data bytes.
+There is a small inter-sector gap that enables the disk control circuitry to distinguish easily
+between two consecutive sectors.
+An unformatted disk has no information on its tracks. The formatting process writes
+markers that divide the disk into tracks and sectors. During this process, the disk controller
+may discover some sectors or even whole tracks that are defective. The disk controller
+keeps a record of such defects and excludes them from use. The formatting information
+comprises sector headers, ECC bits, and inter-sector gaps. The capacity of a formatted
+disk, after accounting for the formating information overhead, is the proper indicator of the
+disk’s storage capability. After formatting, the disk is divided into logical partitions.
+Figure 8.28 indicates that each track has the same number of sectors, which means that
+all tracks have the same storage capacity. In this case, the stored information is packed
+more densely on inner tracks than on outer tracks. It is also possible to increase the storage
+density by placing more sectors on the outer tracks, which have longer circumference. This
+would be at the expense of more complicated access circuitry.
+Sector 0, track 0
+Sector 3, track n
+Sector 0, track 1
+Figure 8.28
+Organization of one surface of a disk.
+
+
+===== PAGE 49 (book p.315) =====
+8.10
+Secondary Storage
+315
+Access Time
+There are two components involved in the time delay between the disk receiving an
+address and the beginning of the actual data transfer. The ﬁrst, called the seek time, is the
+time required to move the read/write head to the proper track. This time depends on the
+initial position of the head relative to the track speciﬁed in the address. Average values
+are in the 5- to 8-ms range. The second component is the rotational delay, also called
+latency time, which is the time taken to reach the addressed sector after the read/write head
+is positioned over the correct track. On average, this is the time for half a rotation of the
+disk. The sum of these two delays is called the disk access time. If only a few sectors of
+data are accessed in a single operation, the access time is at least an order of magnitude
+longer than the time it takes to transfer the data.
+Data Buffer/Cache
+Adisk drive is connected to the rest of a computer system using some standard intercon-
+nection scheme, such as SCSI or SATA. The interconnection hardware is usually capable
+of transferring data at much higher rates than the rate at which data can be read from disk
+tracks. An efﬁcient way to deal with the possible differences in transfer rates is to include
+a data buffer in the disk unit. The buffer is a semiconductor memory, capable of storing
+a few megabytes of data. The requested data are transferred between the disk tracks and
+the buffer at a rate dependent on the rotational speed of the disk. Transfers between the
+data buffer and the main memory can then take place at the maximum rate allowed by the
+interconnect between them.
+The data buffer in the disk controller can also be used to provide a caching mechanism
+for the disk. When a Read request arrives at the disk, the controller can ﬁrst check to see
+if the desired data are already available in the buffer. If so, the data are transferred to the
+memory in microseconds instead of milliseconds. Otherwise, the data are read from a disk
+track in the usual way, stored in the buffer, then transferred to the memory. Because of
+locality of reference, a subsequent request is likely to refer to data that sequentially follow
+the data speciﬁed in the current request. In anticipation of future requests, the disk controller
+may read more data than needed and place them into the buffer. When used as a cache,
+the buffer is typically large enough to store entire tracks of data. So, a possible strategy is
+to begin transferring the contents of the track into the data buffer as soon as the read/write
+head is positioned over the desired track.
+Disk Controller
+Operation of a disk drive is controlled by a disk controller circuit, which also provides
+an interface between the disk drive and the rest of the computer system. One disk controller
+may be used to control more than one drive.
+A disk controller that communicates directly with the processor contains a number
+of registers that can be read and written by the operating system. Thus, communication
+between the OS and the disk controller is achieved in the same manner as with any I/O
+interface, as discussed in Chapter 7. The disk controller uses the DMA scheme to transfer
+data between the disk and the main memory. Actually, these transfers are from/to the data
+buffer, which is implemented as a part of the disk controller module. The OS initiates
+the transfers by issuing Read and Write requests, which entail loading the controller’s
+
+
+===== PAGE 50 (book p.316) =====
+316
+C H A P T E R
+8
+•
+The Memory System
+registers with the necessary addressing and control information. Typically, this information
+includes:
+Main memory address—The address of the ﬁrst main memory location of the block of
+words involved in the transfer.
+Disk address—The location of the sector containing the beginning of the desired block of
+words.
+Word count—The number of words in the block to be transferred.
+The disk address issued by the OS is a logical address. The corresponding physical address
+on the disk may be different. For example, bad sectors may be detected when the disk
+is formatted. The disk controller keeps track of such sectors and maintains the mapping
+between logical and physical addresses. Normally, a few spare sectors are kept on each
+track, or on another track in the same cylinder, to be used as substitutes for the bad sectors.
+On the disk drive side, the controller’s major functions are:
+Seek—Causes the disk drive to move the read/write head from its current position to the
+desired track.
+Read—Initiates a Read operation, starting at the address speciﬁed in the disk address
+register. Data read serially from the disk are assembled into words and placed into
+the data buffer for transfer to the main memory. The number of words is determined
+by the word count register.
+Write—Transfers data to the disk, using a control method similar to that for Read opera-
+tions.
+Error checking—Computes the error correcting code (ECC) value for the data read from
+a given sector and compares it with the corresponding ECC value read from the disk.
+In the case of a mismatch, it corrects the error if possible; otherwise, it raises an
+interrupt to inform the OS that an error has occurred. During a Write operation, the
+controller computes the ECC value for the data to be written and stores this value on
+the disk.
+Floppy Disks
+The disks discussed above are known as hard or rigid disk units. Floppy disks are
+smaller, simpler, and cheaper disk units that consist of a ﬂexible, removable, plastic diskette
+coated with magnetic material. The diskette is enclosed in a plastic jacket, which has an
+opening where the read/write head can be positioned. A hole in the center of the diskette
+allows a spindle mechanism in the disk drive to position and rotate the diskette.
+The main feature of ﬂoppy disks is their low cost and shipping convenience. However,
+they have much smaller storage capacities, longer access times, and higher failure rates
+than hard disks. In recent years, they have largely been replaced by CDs, DVDs, and ﬂash
+cards as portable storage media.
+
+
+===== PAGE 51 (book p.317) =====
+8.10
+Secondary Storage
+317
+RAID Disk Arrays
+Processor speeds have increased dramatically. At the same time, access times to disk
+drives are still on the order of milliseconds, because of the limitations of the mechanical
+motion involved. One way to reduce access time is to use multiple disks operating in
+parallel. In 1988, researchers at the University of California-Berkeley proposed such a
+storage system [5].
+They called it RAID, for Redundant Array of Inexpensive Disks.
+(Since all disks are now inexpensive, the acronym was later reinterpreted as Redundant
+Array of Independent Disks.) Using multiple disks also makes it possible to improve the
+reliability of the overall system. Different conﬁgurations were proposed, and many more
+have been developed since.
+The basic conﬁguration, known as RAID 0, is simple. A single large ﬁle is stored in
+several separate disk units by dividing the ﬁle into a number of smaller pieces and storing
+these pieces on different disks. This is called data striping. When the ﬁle is accessed for
+a Read operation, all disks access their portions of the data in parallel. As a result, the
+rate at which the data can be transferred is equal to the data rate of individual disks times
+the number of disks. However, access time, that is, the seek and rotational delay needed
+to locate the beginning of the data on each disk, is not reduced. Since each disk operates
+independently, access times vary. Individual pieces of the data are buffered, so that the
+complete ﬁle can be reassembled and transferred to the memory as a single entity.
+Various RAID conﬁgurations form a hierarchy, with each level in the hierarchy pro-
+viding additional features. For example, RAID 1 is intended to provide better reliability by
+storing identical copies of the data on two disks rather than just one. The two disks are said
+to be mirrors of each other. If one disk drive fails, all Read and Write operations are di-
+rected to its mirror drive. Other levels of the hierarchy achieve increased reliability through
+various parity-checking schemes, without requiring a full duplication of disks. Some also
+have error-recovery capability.
+The RAID concept has gained commercial acceptance. RAID systems are available
+from many manufacturers for use with a variety of operating systems.
+8.10.2
+Optical Disks
+Storage devices can also be implemented using optical means. The familiar compact disk
+(CD), used in audio systems, was the ﬁrst practical application of this technology. Soon
+after, the optical technology was adapted to the computer environment to provide a high-
+capacity read-only storage medium known as a CD-ROM.
+The ﬁrst generation of CDs was developed in the mid-1980s by the Sony and Philips
+companies. The technology exploited the possibility of using a digital representation for
+analog sound signals. To provide high-quality sound recording and reproduction, 16-bit
+samples of the analog signal are taken at a rate of 44,100 samples per second. Initially, CDs
+were designed to hold up to 75 minutes, requiring a total of about 3 × 109 bits (3 gigabits)
+of storage. Since then, higher-capacity devices have been developed.
+CD Technology
+The optical technology that is used for CD systems makes use of the fact that laser
+light can be focused on a very small spot. A laser beam is directed onto a spinning disk,
+
+
+===== PAGE 52 (book p.318) =====
+318
+C H A P T E R
+8
+•
+The Memory System
+with tiny indentations arranged to form a long spiral track on its surface. The indentations
+reﬂect the focused beam toward a photodetector, which detects the stored binary patterns.
+The laser emits a coherent light beam that is sharply focused on the surface of the
+disk. Coherent light consists of synchronized waves that have the same wavelength. If a
+coherent light beam is combined with another beam of the same kind, and the two beams
+are in phase, the result is a brighter beam. But, if the waves of the two beams are 180
+degrees out of phase, they cancel each other. Thus, a photodetector can be used to detect
+the beams. It will see a bright spot in the ﬁrst case and a dark spot in the second case.
+A cross-section of a small portion of a CD is shown in Figure 8.29a. The bottom layer
+is made of transparent polycarbonate plastic, which serves as a clear glass base. The surface
+of this plastic is programmed to store data by indenting it with pits. The unindented parts are
+called lands. Athin layer of reﬂecting aluminum material is placed on top of a programmed
+disk. The aluminum is then covered by a protective acrylic. Finally, the topmost layer is
+deposited and stamped with a label. The total thickness of the disk is 1.2 mm, almost all of
+it contributed by the polycarbonate plastic. The other layers are very thin.
+The laser source and the photodetector are positioned below the polycarbonate plastic.
+The emitted beam travels through the plastic layer, reﬂects off the aluminum layer, and
+travels back toward the photodetector. Note that from the laser side, the pits actually appear
+as bumps rising above the lands.
+Figure 8.29b shows what happens as the laser beam scans across the disk and encounters
+a transition from a pit to a land. Three different positions of the laser source and the detector
+are shown, as would occur when the disk is rotating. When the light reﬂects solely from
+a pit, or from a land, the detector sees the reﬂected beam as a bright spot. But, a different
+situation arises when the beam moves over the edge between a pit and the adjacent land.
+The pit is one quarter of a wavelength closer to the laser source. Thus, the reﬂected beams
+from the pit and the adjacent land will be 180 degrees out of phase, cancelling each other.
+Hence, the detector will not see a reﬂected beam at pit-land and land-pit transitions, and
+will detect a dark spot.
+Figure 8.29c depicts several transitions between lands and pits. If each transition,
+detected as a dark spot, is taken to denote the binary value 1, and the ﬂat portions represent
+0s, then the detected binary pattern will be as shown in the ﬁgure. This pattern is not a
+direct representation of the stored data. CDs use a complex encoding scheme to represent
+data. Each byte of data is represented by a 14-bit code, which provides considerable error
+detection capability. We will not delve into details of this code.
+The pits are arranged on a long track on the surface of the disk, spiraling from the
+middle of the disk toward the outer edge. But, it is customary to refer to each circular path
+spanning 360 degrees as a separate track, which is analogous to the terminology used for
+magnetic disks. The CD is 120 mm in diameter, with a 15-mm hole in the center. The tracks
+cover the area from a 25-mm radius to a 58-mm radius. The space between the tracks is 1.6
+microns. Pits are 0.5 microns wide and 0.8 to 3 microns long. There are more than 15,000
+tracks on a disk. If the entire track spiral were unraveled, it would be over 5 km long!
+CD-ROM
+Since CDs store information in a binary form, they are suitable for use as a storage
+medium in computer systems. The main challenge is to ensure the integrity of stored data.
+
+
+===== PAGE 53 (book p.319) =====
+8.10
+Secondary Storage
+319
+Aluminum
+Acrylic
+Label
+(a) Cross-section
+Polycarbonate plastic
+Source
+Detector
+Source
+Detector
+Source
+Detector
+No reﬂection
+Reﬂection
+Reﬂection
+(b) Transition from pit to land
+Pit
+Land
+0
+0
+0
+1
+0
+0
+0
+0
+1
+0
+0
+0
+1
+0
+0
+1
+0
+0
+1
+0
+(c) Stored binary pattern
+Pit
+Land
+1
+Figure 8.29
+Optical disk.
+Because the pits are very small, it is difﬁcult to implement all of the pits perfectly. In audio
+and video applications, some errors in the data can be tolerated, because they are unlikely
+to affect the reproduced sound or image in a perceptible way. However, such errors are not
+acceptable in computer applications. Since physical imperfections cannot be avoided, it is
+
+
+===== PAGE 54 (book p.320) =====
+320
+C H A P T E R
+8
+•
+The Memory System
+necessary to use additional bits to provide error detection and correction capability. The
+CDs used to store computer data are called CD-ROMs, because, like semiconductor ROM
+chips, their contents can only be read.
+Stored data are organized on CD-ROM tracks in the form of blocks called sectors.
+There are several different formats for a sector. One format, known as Mode 1, uses 2352-
+byte sectors. There is a 16-byte header that contains a synchronization ﬁeld used to detect
+the beginning of the sector and addressing information used to identify the sector. This is
+followed by 2048 bytes of stored data. At the end of the sector, there are 288 bytes used to
+implement the error-correcting scheme. The number of sectors per track is variable; there
+are more sectors on the longer outer tracks. With the Mode 1 format, a CD-ROM has a
+storage capacity of about 650 Mbytes.
+Error detection and correction is done at more than one level. As mentioned earlier,
+each byte of information stored on a CD is encoded using a 14-bit code that has some
+error-correcting capability. This code can correct single-bit errors. Errors that occur in
+short bursts, affecting several bits, are detected and corrected using the error-checking bits
+at the end of the sector.
+CD-ROM drives operate at a number of different rotational speeds. The basic speed,
+known as 1X, is 75 sectors per second. This provides a data rate of 153,600 bytes/s (150
+Kbytes/s), using the Mode 1 format. Higher speed CD-ROM drives are identiﬁed in relation
+to the basic speed. Thus, a 56X CD-ROM has a data transfer rate that is 56 times that of
+the 1X CD-ROM, or about 6 Mbytes/s. This transfer rate is considerably lower than the
+transfer rates of magnetic hard disks, which are in the range of tens of megabytes per second.
+Another signiﬁcant difference in performance is the seek time, which in CD-ROMs may be
+several hundred milliseconds. So, in terms of performance, CD-ROMs are clearly inferior
+to magnetic disks. Their attraction lies in their small physical size, low cost, and ease of
+handling as a removable and transportable mass-storage medium. As a result, they are
+widely used for the distribution of software, textbooks, application programs, video games,
+and so on.
+CD-Recordable
+The CDs described above are read-only devices, in which the information is stored at
+the time of manufacture. First, a master disk is produced using a high-power laser to burn
+holes that correspond to the required pits. A mold is then made from the master disk, which
+has bumps in the place of holes. Copies are made by injecting molten polycarbonate plastic
+into the mold to make CDs that have the same pattern of holes (pits) as the master disk.
+This process is clearly suitable only for volume production of CDs containing the same
+information.
+Anew type of CD was developed in the late 1990s on which data can be easily recorded
+by a computer user. It is known as CD-Recordable (CD-R). A shiny spiral track covered by
+an organic dye is implemented on a disk during the manufacturing process. Then, a laser
+in a CD-R drive burns pits into the organic dye. The burned spots become opaque. They
+reﬂect less light than the shiny areas when the CD is being read. This process is irreversible,
+which means that the written data are stored permanently. Unused portions of a disk can
+be used to store additional data at a later time.
+
+
+===== PAGE 55 (book p.321) =====
+8.10
+Secondary Storage
+321
+CD-Rewritable
+The most ﬂexible CDs are those that can be written multiple times by the user. They
+are known as CD-RWs (CD-ReWritables).
+The basic structure of CD-RWs is similar to the structure of CD-Rs. Instead of using
+an organic dye in the recording layer, an alloy of silver, indium, antimony, and tellurium
+is used. This alloy has interesting and useful behavior when it is heated and cooled. If it
+is heated above its melting point (500 degrees C) and then cooled down, it goes into an
+amorphous state in which it absorbs light. But, if it is heated only to about 200 degrees C
+and this temperature is maintained for an extended period, a process known as annealing
+takes place, which leaves the alloy in a crystalline state that allows light to pass through. If
+the crystalline state represents land area, pits can be created by heating selected spots past
+the melting point. The stored data can be erased using the annealing process, which returns
+the alloy to a uniform crystalline state. A reﬂective material is placed above the recording
+layer to reﬂect the light when the disk is read.
+A CD-RW drive uses three different laser powers. The highest power is used to record
+the pits. The middle power is used to put the alloy into its crystalline state; it is referred to
+as the “erase power.” The lowest power is used to read the stored information.
+CD drives designed to read and write CD-RW disks can usually be used with other
+compact disk media. They can read CD-ROMs and can read and write CD-Rs. They are
+designed to meet the requirements of standard interconnection interfaces, such as SATA
+and USB.
+CD-RW disks provide low-cost storage media. They are suitable for archival storage
+of information that may range from databases to photographic images. They can be used
+for low-volume distribution of information, just like CD-Rs, and for backup purposes. The
+CD-RW technology has made CD-Rs less relevant because it offers superior capability at
+only slightly higher cost.
+DVD Technology
+The success of CD technology and the continuing quest for greater storage capability
+has led to the development of DVD (Digital Versatile Disk) technology. The ﬁrst DVD
+standard was deﬁned in 1996 by a consortium of companies, with the objective of being
+able to store a full-length movie on one side of a DVD disk.
+The physical size of a DVD disk is the same as that of CDs. The disk is 1.2 mm thick,
+and it is 120 mm in diameter. Its storage capacity is made much larger than that of CDs by
+several design changes:
+•
+A red-light laser with a wavelength of 635 nm is used instead of the infrared light laser
+used in CDs, which has a wavelength of 780 nm. The shorter wavelength makes it
+possible to focus the light to a smaller spot.
+•
+Pits are smaller, having a minimum length of 0.4 micron.
+•
+Tracks are placed closer together; the distance between tracks is 0.74 micron.
+Using these improvements leads to a DVD capacity of 4.7 Gbytes.
+Further increases in capacity have been achieved by going to two-layered and two-sided
+disks. Thesingle-layeredsingle-sideddisk, deﬁnedinthestandardasDVD-5, hasastructure
+
+
+===== PAGE 56 (book p.322) =====
+322
+C H A P T E R
+8
+•
+The Memory System
+that is almost the same as the CD in Figure 8.29a. A double-layered disk makes use of two
+layers on which tracks are implemented on top of each other. The ﬁrst layer is the clear base,
+as in CD disks. But, instead of using reﬂecting aluminum, the lands and pits of this layer are
+covered by a translucent material that acts as a semi-reﬂector. The surface of this material
+is then also programmed with indented pits to store data. A reﬂective material is placed on
+top of the second layer of pits and lands. The disk is read by focusing the laser beam on the
+desired layer. When the beam is focused on the ﬁrst layer, sufﬁcient light is reﬂected by the
+translucent material to detect the stored binary patterns. When the beam is focused on the
+second layer, the light reﬂected by the reﬂective material corresponds to the information
+stored on this layer. In both cases, the layer on which the beam is not focused reﬂects a
+much smaller amount of light, which is eliminated by the detector circuit as noise. The total
+storage capacity of both layers is 8.5 Gbytes. This disk is called DVD-9 in the standard.
+Two single-sided disks can be put together to form a sandwich-like structure where the
+top disk is turned upside down. This can be done with single-layered disks, as speciﬁed in
+DVD-10, giving a composite disk with a capacity of 9.4 Gbytes. It can also be done with
+the double-layered disks, as speciﬁed in DVD-18, yielding a capacity of 17 Gbytes.
+Access times for DVD drives are similar to CD drives. However, when the DVD
+disks rotate at the same speed, the data transfer rates are much higher because of the higher
+density of pits. Rewritable versions of DVD devices have also been developed, providing
+large storage capacities.
+8.10.3
+Magnetic Tape Systems
+Magnetic tapes are suited for off-line storage of large amounts of data. They are typically
+used for backup purposes and for archival storage. Magnetic-tape recording uses the same
+principle as magnetic disks. The main difference is that the magnetic ﬁlm is deposited on
+a very thin 0.5- or 0.25-inch wide plastic tape. Seven or nine bits (corresponding to one
+character) are recorded in parallel across the width of the tape, perpendicular to the direction
+of motion. A separate read/write head is provided for each bit position on the tape, so that
+all bits of a character can be read or written in parallel. One of the character bits is used as
+a parity bit.
+Data on the tape are organized in the form of records separated by gaps, as shown in
+Figure 8.30. Tape motion is stopped only when a record gap is underneath the read/write
+heads. The record gaps are long enough to allow the tape to attain its normal speed before
+the beginning of the next record is reached. If a coding scheme such as that in Figure 8.27c
+is used for recording data on the tape, record gaps are identiﬁed as areas where there is
+no change in magnetization. This allows record gaps to be detected independently of the
+recorded data. To help users organize large amounts of data, a group of related records is
+called a ﬁle. The beginning of a ﬁle is identiﬁed by a ﬁle mark, as shown in Figure 8.30.
+The ﬁle mark is a special single- or multiple-character record, usually preceded by a gap
+longer than the inter-record gap. The ﬁrst record following a ﬁle mark can be used as a
+header or identiﬁer for the ﬁle. This allows the user to search a tape containing a large
+number of ﬁles for a particular ﬁle.
+
+
+===== PAGE 57 (book p.323) =====
+8.11
+Concluding Remarks
+323
+File
+File
+mark
+mark
+File
+7 or 9
+gap
+gap
+File gap
+Record
+Record
+Record
+Record
+bits
+Figure 8.30
+Organization of data on magnetic tape.
+Cartridge Tape System
+Tape systems have been developed for backup of on-line disk storage. One such system
+uses an 8-mm video-format tape housed in a cassette. These units are called cartridge tapes.
+They have capacities in the range of 2 to 5 gigabytes and handle data transfers at the rate of
+a few hundred kilobytes per second. Reading and writing is done by a helical scan system
+operating across the tape, similar to that used in video cassette tape drives. Bit densities
+of tens of millions of bits per square inch are achievable. Multiple-cartridge systems are
+available that automate the loading and unloading of cassettes so that tens of gigabytes of
+on-line storage can be backed up unattended.
+8.11
+Concluding Remarks
+The design of the memory hierarchy is critical to the performance of a computer system.
+Modern operating systems and application programs place heavy demands on both the
+capacity and speed of the memory. In this chapter, we presented the most important techno-
+logical and organizational details of memory systems and how they have evolved to meet
+these demands.
+Developments in semiconductor technology have led to signiﬁcant improvements in the
+speedandcapacityofmemorychips, accompaniedbyalargedecreaseinthecostperbit. The
+performance of computer memories is enhanced further by the use of a memory hierarchy.
+Today, a large yet affordable main memory is implemented with dynamic memory chips.
+One or more levels of cache memory are always provided. The introduction of the cache
+memory reduces signiﬁcantly the effective memory access time seen by the processor.
+Virtual memory makes the main memory appear larger than the physical memory.
+Magnetic disks continue to be the primary technology for secondary storage. They
+provide enormous storage capacity, reaching and exceeding a trillion bytes on a single
+drive, with a very low cost per bit. But, ﬂash semiconductor technology is beginning to
+compete effectively in some applications.
+
+
+===== PAGE 58 (book p.324) =====
+324
+C H A P T E R
+8
+•
+The Memory System
+8.12
+Solved Problems
+This section presents some examples of the types of problems that a student may be asked
+to solve, and shows how such problems can be solved.
+Example 8.2
+Problem: Describe a structure similar to the one in Figure 8.10 for an 8M × 32 memory
+using 512K × 8 memory chips.
+Solution: The required structure is essentially the same as in Figure 8.10, except that 16
+rows are needed, each with four 512 × 8 chips. Address lines A18−0 should be connected
+to all chips. Address lines A22−19 should be connected to a 4-bit decoder to select one of
+the 16 rows.
+Example 8.3
+Problem: A computer system uses 32-bit memory addresses and it has a main memory
+consistingof1Gbytes. Ithasa4K-bytecacheorganizedintheblock-set-associativemanner,
+with 4 blocks per set and 64 bytes per block.
+(a) Calculate the number of bits in each of the Tag, Set, and Word ﬁelds of the memory
+address.
+(b) Assume that the cache is initially empty. Suppose that the processor fetches 1088
+words of four bytes each from successive word locations starting at location 0. It
+then repeats this fetch sequence nine more times. If the cache is 10 times faster than
+the memory, estimate the improvement factor resulting from the use of the cache.
+Assume that the LRU algorithm is used for block replacement.
+Solution: Consecutive addresses refer to bytes.
+(a) A block has 64 bytes; hence the Word ﬁeld is 6 bits long. With 4 × 64 = 256 bytes
+in a set, there are 4K/256 = 16 sets, requiring a Set ﬁeld of 4 bits. This leaves
+32 −4 −6 = 22 bits for the Tag ﬁeld.
+(b) The 1088 words constitute 68 blocks, occuping blocks 0 to 67 in the memory. The
+cache has space for 64 blocks. Hence, after blocks 0, 1, 2, . . . , 63 have been read
+from the memory into the cache on the ﬁrst pass, the cache is full. The next four
+blocks, numbered 64 to 67, map to sets 0, 1, 2, and 3. Each of them will replace
+the least recently used cache block in its set, which is block 0. During the second
+pass, memory block 0 has to be reloaded into set 0 of the cache, since it has been
+overwritten by block 64. It will be placed in the least recently used block of set 0 at
+that point, which is block 1. Next, memory blocks 1, 2, and 3 will replace block 1 of
+sets 1, 2 and 3 in the cache, respectively. Memory blocks 4 to 15 will be found in the
+cache. Memory blocks 16 to 19, which were in block location 1 of sets 0 to 3, have
+now been overwritten, and will be reloaded in block location 2 of these sets.
+
+
+===== PAGE 59 (book p.325) =====
+8.12
+Solved Problems
+325
+As execution proceeds, all memory blocks that occupy the ﬁrst four of the 16 cache
+sets are always overwritten before they can be used on a succeeding pass. Memory
+blocks 0, 16, 32, 48, and 64 continually displace each other as they compete for the 4
+block positions in cache set 0. The same thing occurs in cache set 1 (memory blocks
+1, 17, 33, 49, 65), cache set 2 (memory blocks 2, 18, 34, 50, 66), and cache set 3
+(memory blocks 3, 19, 35, 51, 67). Memory blocks that occupy the last 12 sets (sets
+4 through 15) are fetched once on the ﬁrst pass and remain in the cache for the next
+9 passes.
+In summary, on the ﬁrst pass, all 68 blocks of the loop are fetched from the memory.
+On each of the 9 successive passes, 48 blocks are found in sets 4 through 15 of the
+cache, and the remaining 20 blocks must be fetched from the memory. Let τ be the
+access time of the cache. Therefore,
+Improvement factor = Time without cache
+Time with cache
+=
+10 × 68 × 10τ
+1 × 68 × 11τ + 9(20 × 11τ + 48τ)
+= 2.15
+This example illustrates a weakness of the LRU algorithm during the execution of
+program loops. See Problem 8.9 for the performance of an alternative algorithm in this
+case.
+Example 8.4
+Problem: Suppose that a computer has a processor with two L1 caches, one for instructions
+and one for data, and an L2 cache. Let τ be the access time for the two L1 caches. The
+miss penalties are approximately 15τ for transferring a block from L2 to L1, and 100τ for
+transferring a block from the main memory to L2. For the purpose of this problem, assume
+that the hit rates are the same for instructions and data and that the hit rates in the L1 and
+L2 caches are 0.96 and 0.80, respectively.
+(a) What fraction of accesses miss in both the L1 and L2 caches, thus requiring access
+to the main memory?
+(b) What is the average access time as seen by the processor?
+(c) Suppose that the L2 cache has an ideal hit rate of 1. By what factor would this reduce
+the average memory access time as seen by the processor?
+(d) Consider the following change to the memory hierarchy. The L2 cache is removed
+and the size of the L1 caches is increased so that their miss rate is cut in half. What
+is the average memory access time as seen by the processor in this case?
+
+
+===== PAGE 60 (book p.326) =====
+326
+C H A P T E R
+8
+•
+The Memory System
+Solution: The average memory access time with one cache level is given in Section 8.7.1
+as
+tavg = hC + (1 −h)M
+With L1 and L2 caches, the average memory access time is given in Section 8.7.2 as
+tavg = h1C1 + (1 −h1)(h2C2 + (1 −h2)M )
+(a) The fraction of memory accesses that miss in both the L1 and L2 caches is
+(1 −h1)(1 −h2) = (1 −0.96)(1 −0.80) = 0.008
+(b) The average memory access time using two cache levels is
+tavg = 0.96τ + 0.04(0.80 × 15τ + 0.20 × 100τ)
+= 2.24τ
+(c) With no misses in the L2 cache, we get:
+tavg(ideal) = 0.96τ + 0.04 × 15τ = 1.56τ
+Therefore,
+tavg(actual)
+tavg(ideal) = 2.24τ
+1.56τ = 1.44
+(d) With larger L1 caches and the L2 cache removed, the access time is
+tavg = 0.98τ + 0.02 × 100τ = 2.98τ
+Example 8.5
+Problem: A 1024 × 1024 array of 32-bit numbers is to be normalized as follows. For each
+column, the largest element is found and all elements of the column are divided by the value
+of this element. Assume that each page in the virtual memory consists of 4K bytes, and that
+1M bytes of the main memory are allocated for storing array data during this computation.
+Assume that it takes 10 ms to load a page from the disk into the main memory when a page
+fault occurs.
+(a) Assume that the array is processed one column at a time. How many page faults
+would occur and how long does it take to complete the normalization process if the
+elements of the array are stored in column order in the virtual memory?
+(b) Repeat part (a) assuming the elements are stored in row order?
+(c) Propose an alternative way for processing the array to reduce the number of page
+faults when the array is stored in the memory in row order. Estimate the number of
+page faults and the time needed for your solution.
+
+
+===== PAGE 61 (book p.327) =====
+8.12
+Solved Problems
+327
+Solution: Each 32-bit number comprises 4 bytes. Hence, each page holds 1024 numbers.
+There is space for 256 pages in the 1M-byte portion of the main memory that is allocated
+for storing data during the computation.
+(a) Each column is stored in one page; there is a page fault to bring each column to the
+main memory, for a total of 1024 page faults.
+Processing time = 1024 × 10 ms = 10.24 s.
+(b) Processing of each column requires two passes, the ﬁrst to ﬁnd the largest element
+and the second to perform the normalization. When processing the ﬁrst column, each
+element access results in a page fault that brings all elements of the corresponding row
+into the main memory. After 256 elements have been examined, the main memory is
+full. Accessing the next 256 elements results in page faults that replace all the data
+in the memory, and the process repeats. Thus, a page fault occurs for every access to
+every element in the array.
+Processing time = 2 × 1024 × 1024× 10 ms = 20,972 s = 5.8 hours.
+(c) A more efﬁcient alternative for this arrangement of the data is to complete the ﬁrst
+pass for only one quarter of each column for all columns, then process the second
+quarter, and so on. The second pass is handled in the same way. In this case, each
+pass through the array results in 1024 page faults, for a total of 2048.
+Processing time = 2048 × 10 ms = 20.48 s.
+This example illustrates how the number of page faults can increase dramatically in
+some cases when the size of the main memory is insufﬁcient for the application. This
+behavior is called thrashing.
+Example 8.6
+Problem: Consider a long sequence of accesses to a disk with an average seek time of 6
+ms and an average rotational delay of 3 ms. The average size of a block being accessed is
+8K bytes. The data transfer rate from the disk is 34 Mbytes/sec.
+(a) Assuming that the data blocks are randomly located on the disk, estimate the average
+percentage of the total time occupied by seek operations and rotational delays.
+(b) Repeat part (a) for the situation in which disk accesses are arranged so that in 90
+percent of the cases, the next access will be to a data block on the same cylinder.
+Solution: It takes 8K/34M = 0.23 ms to transfer a block of data.
+(a) The total time needed to access each block is 6 + 3 + 0.23 = 9.23 ms. The portion
+of time occupied by seek and rotational delay is 9/9.23 = 0.97 = 97%.
+
+
+===== PAGE 62 (book p.328) =====
+328
+C H A P T E R
+8
+•
+The Memory System
+(b) In 90% of the cases, only rotational delays are involved. Therefore, the average
+time to access a block is 0.9 × 3 + 0.1 × 9 + 0.23 = 3.89 ms. The portion of time
+occupied by seek and rotational delay is 3.6/3.89 = 0.92 = 92%.
+Problems
+8.1
+[M] Consider the dynamic memory cell of Figure 8.6. Assume that C = 30 femtofarads
+(10−15 F) and that leakage current through the transistor is about 0.25 picoamperes (10−12
+A). The voltage across the capacitor when it is fully charged is 1.5 V. The cell must be
+refreshed before this voltage drops below 0.9 V. Estimate the minimum refresh rate.
+8.2
+[M] Consider a main memory built with SDRAM chips. Data are transferred in bursts
+as shown in Figure 8.9, except that the burst length is 8. Assume that 32 bits of data are
+transferred in parallel. If a 400-MHz clock is used, how much time does it take to transfer:
+(a) 32 bytes of data
+(b) 64 bytes of data
+What is the latency in each case?
+8.3
+[E] Describe a structure similar to that in Figure 8.10 for a 16M × 32 memory using 1M
+× 4 memory chips.
+8.4
+[E] Give a critique of the following statement: “Using a faster processor chip results in
+a corresponding increase in performance of a computer even if the main memory speed
+remains the same.”
+8.5
+[M] The memory of a computer is byte-addressable, and the word length is 32 bits. A
+program consists of two nested loops—a small inner loop and a much larger outer loop.
+The general structure of the program is given in Figure P8.1. The decimal memory addresses
+shown delineate the location of the two loops and the beginning and end of the total program.
+All memory locations in the various sections of the program, 8-52, 56-136, 140-240, and
+so on, contain instructions to be executed in straight-line sequencing. The program is to
+be run on a computer that has an instruction cache organized in the direct-mapped manner
+(see Figure 8.16) with the following parameters:
+Cache size
+1K bytes
+Block size
+128 bytes
+The miss penalty in the instruction cache is 80τ, where τ is the access time of the cache.
+Compute the total time needed for instruction fetching during execution of the program in
+Figure P8.1.
+
+
+===== PAGE 63 (book p.329) =====
+Problems
+329
+8
+56
+140
+240
+1200
+1504
+START
+END
+Inner loop
+executed
+20 times
+Outer loop
+executed
+10 times
+Figure P8.1
+A program structure for Problem 8.5.
+8.6
+[M] Acomputer with a 16-bit word length has a direct-mapped cache, used for both instruc-
+tions and data. Memory addresses are 16 bits long, and the memory is byte-addressable.
+The cache is small for illustrative purposes. It contains only four 16-bit words. Each word
+constitutes a cache block and has an associated 13-bit tag, as shown in Figure P8.2a. Words
+are accessed in the cache using the low-order 3 bits of an address. When a miss occurs
+during a Read operation for either an instruction or a data operand, the requested word is
+read from the main memory and sent to the processor. At the same time, it is copied into
+the cache, and its block number is stored in the associated tag. Consider the following short
+loop, in which all instructions are 16 bits long:
+LOOP:
+Add
+R0, (R1)+
+Decrement
+R2
+BNE
+LOOP
+Assume that, before this loop is entered, registers R0, R1, and R2 contain 0, 054E, and 3,
+respectively. Also assume that the main memory contains the data shown in Figure P8.2b,
+where all entries are given in hexadecimal notation. The loop starts at location LOOP =
+02EC. The Autoincrement address mode in the Add instruction is used to access successive
+numbers in a 3-number list and add them into register R0. The counter register, R2, is
+decremented until it reaches 0, at which point an exit is made from the loop.
+(a) Starting with an empty cache, show the contents of the cache, including the tags, at the
+end of each pass through the loop.
+(b) Assume that the access times of the cache and the main memory are τ and 10τ, respec-
+tively. Calculate the execution time for each pass, counting only memory access times.
+
+
+===== PAGE 64 (book p.330) =====
+330
+C H A P T E R
+8
+•
+The Memory System
+Tag
+Data
+13 bits
+16 bits
+0
+2
+4
+6
+A03C
+05D9
+10D7
+054E
+(a) Cache
+(b) Main memory
+Figure P8.2
+Cache and main memory contents in Problem 8.6.
+8.7
+[M] Repeat Problem 8.6 assuming that only instructions are stored in the cache. Data
+operands are fetched directly from the main memory and not copied into the cache. Why
+does this choice lead to faster execution than when both instructions and data are loaded
+into the cache?
+8.8
+[E] A block-set-associative cache consists of a total of 64 blocks, divided into 4-block sets.
+The main memory contains 4096 blocks, each consisting of 32 words. Assuming a 32-bit
+byte-addressable address space, how many bits are there in each of the Tag, Set, and Word
+ﬁelds?
+8.9
+[M] Consider the cache in Example 8.3. Assume that whenever a block is to be brought
+from the main memory and the corresponding set in the cache is full, the new block replaces
+the most recently used block of this set. Derive the solution for part (b) in this case.
+8.10
+[D] Section 8.6.3 illustrates the effect of different cache-mapping techniques, using the
+program in Figure 8.20. Suppose that this program is changed so that in the second loop
+the elements are handled in the same order as in the ﬁrst loop; that is, the control for the
+second loop is speciﬁed as
+for i := 0 to 9 do
+Derive the equivalents of Figures 8.21 through 8.23 for this program. What conclusions
+can be drawn from this exercise?
+8.11
+[M] A byte-addressable computer has a small data cache capable of holding eight 32-bit
+words. Each cache block consists of one 32-bit word. When a given program is executed,
+the processor reads data sequentially from the following hex addresses:
+200, 204, 208, 20C, 2F4, 2F0, 200, 204, 218, 21C, 24C, 2F4
+This pattern is repeated four times.
+(a) Assume that the cache is initially empty. Show the contents of the cache at the end of
+each pass through the loop if a direct-mapped cache is used, and compute the hit rate.
+
+
+===== PAGE 65 (book p.331) =====
+Problems
+331
+(b) Repeat part (a) for an associative-mapped cache that uses the LRU replacement algo-
+rithm.
+(c) Repeat part (a) for a four-way set-associative cache.
+8.12
+[M] Repeat Problem 8.11, assuming that each cache block consists of two 32-bit words.
+For part (c), use a two-way set-associative cache that uses the LRU replacement algorithm.
+8.13
+[E] The cache block size in many computers is in the range of 32 to 128 bytes. What
+would be the main advantages and disadvantages of making the size of cache blocks larger
+or smaller?
+8.14
+[M] A computer has two cache levels L1 and L2. Plot two graphs for the average memory
+access time (y-axis) versus hit rate h1 (x-axis) for the two values h2 = 0.75 and h2 = 0.85.
+Use the values 0.90, 0.92, 0.94, and 0.96, for h1. Assume that the miss penalties are 15τ and
+100τ for the L1 and L2 caches, respectively, where τ is the access time of the L1 caches.
+8.15
+[E] Consider the two-level cache described in Example 8.4. The average access time is
+given in the solution to part (b) of the example as 2.24τ. What value for h1 would be needed
+to reduce tavg to 1.5τ, if all other parameters are the same as in the example? Can the same
+result be achieved by improving the hit rate of L2?
+8.16
+[E] Consider the following analogy for the concept of caching. A serviceman comes to a
+house to repair the heating system. He carries a toolbox that contains a number of tools that
+he has used recently in similar jobs. He uses these tools repeatedly, until he reaches a point
+where other tools are needed. It is likely that he has the required tools in his truck outside
+the house. But, if the needed tools are not in the truck, he must go to his shop to get them.
+Suppose we argue that the toolbox, the truck, and the shop correspond to the L1 cache, the
+L2 cache, and the main memory of a computer. How good is this analogy? Discuss its
+correct and incorrect features.
+8.17
+[E] The purpose of using an L2 cache is to reduce the miss penalty of the L1 cache, and in
+turn to reduce the memory access time as seen by the processor. An alternative is to increase
+the size of the L1 cache to increase its hit rate. What limits the utility of this approach?
+8.18
+[M] Give a critique of the assumption made in Example 8.1, in Section 8.7.1, that the miss
+penalty is the same for both read and write accesses. Consider both the write-through and
+write-back cases, as described in Section 8.6, in formulating your answer.
+8.19
+[M] Consider a computer system in which the available pages in the physical memory
+are divided among several application programs. The operating system monitors the page
+transfer activity and dynamically adjusts the number of pages allocated to various programs.
+Suggest a suitable strategy that the operating system can use to minimize the overall rate
+of page transfers.
+8.20
+[M] In a computer with a virtual-memory system, the execution of an instruction may be
+interrupted by a page fault. What state information has to be saved so that this instruction
+can be resumed later? Note that bringing a new page into the main memory involves a
+DMA transfer, which requires execution of other instructions. Is it simpler to abandon the
+interrupted instruction and completely re-execute it later? Can this be done?
+
+
+===== PAGE 66 (book p.332) =====
+332
+C H A P T E R
+8
+•
+The Memory System
+8.21
+[E] When a program generates a reference to a page that does not reside in the physical
+main memory, execution of the program is suspended until the requested page is loaded
+into the main memory from a disk. What difﬁculties might arise when an instruction in
+one page has an operand in a different page? What capabilities must the processor have to
+handle this situation?
+8.22
+[M] A disk unit has 24 recording surfaces. It has a total of 14,000 cylinders. There is an
+average of 400 sectors per track. Each sector contains 512 bytes of data.
+(a) What is the maximum number of bytes that can be stored in this unit?
+(b) What is the data transfer rate in bytes per second at a rotational speed of 7200 rpm?
+(c) Using a 32-bit word, suggest a suitable scheme for specifying the disk address.
+8.23
+[M] Consider a long sequence of accesses to a disk with 8 ms average seek time, 3 ms
+average rotational delay, and a data transfer rate of 60 Mbytes/sec. The average size of a
+block being accessed is 64 Kbytes. Assume that each data block is stored in contiguous
+sectors.
+(a) Assuming that the blocks are randomly located on the disk, estimate the average per-
+centage of the total time occupied by seek operations and rotational delays.
+(b) Suppose that 20 blocks are transferred in sequence from adjacent cylinders, reducing
+seek time to 1 ms. The blocks are randomly located on these cylinders. What is the total
+transfer time?
+8.24
+[M] The average seek time and rotational delay in a disk system are 6 ms and 3 ms,
+respectively. The rate of data transfer to or from the disk is 30 Mbytes/sec, and all disk
+accesses are for 8 Kbytes of data, stored in contiguous sectors. Data blocks are stored at
+random locations on the disk. The disk controller has an 8-Kbyte buffer. The disk controller,
+the processor, and the main memory are all attached to a single bus. The bus data width is
+32 bits, and a single bus transfer to or from the main memory takes 10 nanoseconds.
+(a) What is the maximum number of disk units that can be simultaneously transferring data
+to or from the main memory?
+(b) What percentage of main memory accesses are used by one disk unit, on average, over a
+long period of time during which a sequence of independent 8-Kbyte transfers takes place?
+8.25
+[M] Magnetic disks are used as the secondary storage for program and data ﬁles in most
+virtual-memory systems. Which disk parameter(s) should inﬂuence the choice of page size?
+References
+1.
+T.C. Mowry, “Tolerating Latency through Software-Controlled Data Prefetching,”
+Tech. Report CSL-TR-94-628, Stanford University, Calif., 1994.
+2.
+J.L. Baer and T.F. Chen, “An Effective On-Chip Preloading Scheme to Reduce Data
+Access Penalty,” Proceedings of Supercomputing ’91, 1991, pp. 176–186.
+
+
+===== PAGE 67 (book p.333) =====
+References
+333
+3.
+J.W.C. Fu and J.H. Patel, “Stride Directed Prefetching in Scalar Processors,”
+Proceedings of the 24th International Symposium on Microarchitecture, 1992, pp.
+102–110.
+4.
+D. Kroft, “Lockup-Free Instruction Fetch/Prefetch Cache Organization,” Proceedings
+of the 8th Annual International Symposium on Computer Architecture, 1981, pp.
+81–85.
+5.
+D.A. Patterson, G.A. Gibson, and R.H. Katz, “A Case for Redundant Arrays of
+Inexpensive Disks (RAID),” Proceedings of the ACM SIGMOD International
+Conference on Management of Data, 1988, pp. 109-166.
