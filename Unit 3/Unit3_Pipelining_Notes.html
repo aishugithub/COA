@@ -290,9 +290,9 @@
   <div class="tclip" style="height:212px; width:864px"><div class="tscale">
     <div class="stage-area" style="height:290px">
       <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div><div class="cyc-num" style="left:1046px">8</div>
-      <div class="rowlab" style="top:88px; font-size:22px">Add</div>
+      <div class="rowlab" style="top:88px; font-size:20px">Add R2,R3,#100</div>
       <div class="stage sF" style="left:150px; top:78px">F</div><div class="stage sD" style="left:278px; top:78px">D</div><div class="stage sC" style="left:406px; top:78px">C</div><div class="stage sM" style="left:534px; top:78px">M</div><div class="stage sW" style="left:662px; top:78px">W</div>
-      <div class="rowlab" style="top:178px; font-size:22px">Sub</div>
+      <div class="rowlab" style="top:178px; font-size:20px">Subtract R9,R2,#30</div>
       <div class="stage sF" style="left:278px; top:168px">F</div><div class="stage sD" style="left:406px; top:168px">D</div>
       <div class="stage sBubble" style="left:534px; top:168px">bubble</div><div class="stage sBubble" style="left:662px; top:168px">bubble</div>
       <div class="stage sC" style="left:790px; top:168px">C</div><div class="stage sM" style="left:918px; top:168px">M</div><div class="stage sW" style="left:1046px; top:168px">W</div>
@@ -314,9 +314,9 @@
   <div class="tclip" style="height:196px; width:864px"><div class="tscale">
     <div class="stage-area" style="height:270px">
       <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
-      <div class="rowlab" style="top:88px; font-size:22px">Add</div>
+      <div class="rowlab" style="top:88px; font-size:20px">Add R2,R3,#100</div>
       <div class="stage sF" style="left:150px; top:78px">F</div><div class="stage sD" style="left:278px; top:78px">D</div><div class="stage sC" style="left:406px; top:78px">C</div><div class="stage sM" style="left:534px; top:78px">M</div><div class="stage sW" style="left:662px; top:78px">W</div>
-      <div class="rowlab" style="top:178px; font-size:22px">Sub</div>
+      <div class="rowlab" style="top:178px; font-size:20px">Subtract R9,R2,#30</div>
       <div class="stage sF" style="left:278px; top:168px">F</div><div class="stage sD" style="left:406px; top:168px">D</div><div class="stage sC" style="left:534px; top:168px">C</div><div class="stage sM" style="left:662px; top:168px">M</div><div class="stage sW" style="left:790px; top:168px">W</div>
       <svg class="fwd-svg" width="1200" height="270" viewBox="0 0 1200 270">
         <defs><marker id="af1" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3FB950"/></marker></defs>
@@ -457,7 +457,42 @@
   </div></div>
   <div class="plabel"><b>Figure 6.7</b> — Stall caused by a memory access delay for a Load instruction (drawn for a 3-cycle delay; a real cache miss costs 10+).</div>
 </div>
-<div class="key"><b>Key idea.</b> A data hazard has a toolkit: <b>forward</b> in hardware, <b>stall</b> when you must, or <b>reschedule</b> in software. Forwarding removes most stalls — but a load-use pair, and any cache miss, still cost cycles.</div>
+<!-- New subsection 3.8, added so the notes carry the same "Role of Cache Memory"
+     material the classroom deck teaches as Chapter 4 (moved there from the very
+     end of the deck, right after Data Hazards, because 3.7 above is exactly where
+     a cache miss first enters the story). Placed after the Chapter 3 key-idea box
+     and before the Chapter-3 question bank, so the question bank below can close
+     over this material too. Content follows Hamacher §6.2 (why pipelining needs a
+     fast memory) and §6.8.1 (hit ratio / average access time), same numbers style
+     as the deck's Chapter 4, rewritten in this file's worked-example + key-box
+     prose format instead of the deck's slide format. -->
+<h3>3.8 The Role of Cache Memory</h3>
+<ul>
+  <li><b>Why the pipeline needs a cache.</b> A 5-stage pipeline wants to touch memory <b>every cycle</b> — the Fetch stage for the next instruction, and the Memory stage for a Load/Store. Main memory (DRAM) is roughly <b>100×</b> slower than the CPU needs, so if every access went straight to main memory the pipeline in Chapter 3 would stall constantly. A small, fast <span class="term">cache</span> — built from SRAM and placed between the CPU and main memory — is what makes "one instruction per cycle" achievable at all.</li>
+  <li><b>The memory hierarchy:</b> registers (fastest, smallest) &rarr; L1 cache &rarr; L2/L3 cache &rarr; main memory (largest, slowest). Each step down trades speed for capacity; the cache levels exist purely to hide the gap between the CPU and DRAM.</li>
+  <li><b>Locality — why a small cache works at all:</b>
+    <ul>
+      <li><span class="term">Temporal locality</span>: a location referenced once is likely to be referenced again soon (e.g. a loop counter, a loop body's instructions).</li>
+      <li><span class="term">Spatial locality</span>: a location near one just referenced is likely to be referenced soon (e.g. the next instruction in sequence, the next array element).</li>
+    </ul>
+    Real programs are predictable enough that a cache a tiny fraction of main memory's size still captures the large majority of accesses.
+  </li>
+</ul>
+<div class="worked"><span class="tag">Hit, miss, and average access time</span> Let <b>h</b> be the <span class="term">hit ratio</span> (fraction of accesses the cache satisfies by itself), <b>t<span class="sub">hit</span></b> the cache's own access time, and <b>t<span class="sub">miss</span></b> the extra time added when the cache must fetch a block from main memory. The average access time seen by the pipeline is:
+  <div class="eqbox">t<span class="sub">avg</span> = h &times; t<span class="sub">hit</span> + (1 &minus; h) &times; (t<span class="sub">hit</span> + t<span class="sub">miss</span>)</div>
+  Example: t<span class="sub">hit</span> = 1 cycle, t<span class="sub">miss</span> = 20 cycles (the extra cost of going to main memory), h = 0.95.
+  t<span class="sub">avg</span> = 0.95 &times; 1 + 0.05 &times; (1 + 20) = 0.95 + 1.05 = <b>2.0 cycles</b> — close to the ideal 1 cycle, even though a miss alone costs 21 cycles, because misses are rare.
+</div>
+<div class="explain"><span class="tag">Explanation</span>This is exactly the "cache miss (3.7)" stall from the previous section, seen from the memory-system side instead of the pipeline side. 3.7 told you <i>what happens to the pipeline</i> when a Fetch or Load misses (every later instruction freezes for 10+ cycles). This section tells you <i>why the miss is rare enough that the pipeline still works</i> — because locality keeps the hit ratio high, so the huge miss penalty gets averaged down to only a little over 1 cycle per access.</div>
+<ul>
+  <li><b>Cache in the pipeline — a structural detail.</b> The Fetch stage and the Memory stage may both want to access <b>the same cycle</b> — if there is only one cache, one of them must wait. §6.2 in Chapter 6 covers this as a <span class="term">structural hazard</span> and its fix: <b>separate instruction and data caches</b> (a Harvard split), so Fetch reads the I-cache while Memory reads the D-cache in the same cycle, with no conflict.</li>
+</ul>
+<div class="key"><b>Key idea.</b> A cache makes a slow main memory look fast to the pipeline — <b>locality</b> is why it works, and it is what lets the pipeline actually sustain close to <b>one instruction per cycle</b> in practice, not just in the ideal diagram of Chapter 1.</div>
+<a class="deeplink" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
+  <span class="arrow">&#8594;</span>
+  <span>Go deeper, with the memory-hierarchy diagram and more worked examples, in the Foothold course &mdash; open <b>Module 3 &rarr; 3.1 The Role of Cache Memory</b>
+  <span class="note">Optional — only if you want to go deeper. Not needed for the exam.</span></span>
+</a>
 
 <div class="qbox">
   <h4>QUESTIONS — Chapter 3</h4>
@@ -467,6 +502,9 @@
     <li>Why does a load-use dependency cost at least one stall even with forwarding? <span class="mk">[2 marks · Apply]</span></li>
     <li>For <span class="mono">Add R2,R3,#100</span> then <span class="mono">Subtract R9,R2,#30</span>, draw the pipeline timing <b>with</b> and <b>without</b> operand forwarding, and state the cycles saved. <span class="mk">[5 marks · Apply]</span></li>
     <li>How can a compiler handle a data dependency in software? Compare NOP insertion with instruction reordering. <span class="mk">[5 marks · Analyse]</span></li>
+    <li>Why does a pipelined processor need a cache instead of accessing main memory directly? <span class="mk">[1 mark · Remember]</span></li>
+    <li>Differentiate temporal locality from spatial locality, with one example of each. <span class="mk">[2 marks · Understand]</span></li>
+    <li>A cache has hit time 1 cycle, miss penalty 20 cycles, and hit ratio 0.95. Compute the average memory access time, and comment on how close it is to the ideal. <span class="mk">[5 marks · Apply]</span></li>
   </ol>
 </div>
 

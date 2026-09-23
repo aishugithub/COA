@@ -196,6 +196,17 @@
     .unit.muted { opacity:.6; }
     .unit.muted .u-open { color:var(--muted); }
 
+    /* ---- Per-unit grouping wrapper ----
+       Wraps one unit's cards (deck / notes / Foothold) together so a reader
+       scanning the page sees "everything for Unit N" as one visual block,
+       instead of decks-in-one-list and notes-in-another-list far apart. */
+    .unit-group { margin-top:30px; }
+    .unit-group:first-of-type { margin-top:8px; }
+    .unit-group-title {
+      font-family:'Inter'; font-size:.72rem; font-weight:600; letter-spacing:1.4px;
+      text-transform:uppercase; color:var(--accent); margin:0 0 10px;
+    }
+
     /* ==========================================================================
        FOOTER — self-contained, no links off this page.
        ========================================================================== */
@@ -331,180 +342,212 @@
         </div>
 
         <h2 style="font-family:'Fraunces'; font-size:1.6rem; margin:38px 0 18px;">Lessons &amp; lecture decks</h2>
-        <div class="units">
-          <!-- Unit 0 landing lesson. EDIT: URL if it changes. -->
-          <a class="unit" href="https://aishugithub.github.io/COA/" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 0 — Introduction Lesson</span>
-              <span class="u-sub">The starting lesson — sets up the subject</span>
-            </span>
-            <span class="u-open">Open lesson →</span>
-          </a>
+        <p style="color:var(--muted); margin-bottom:8px;">Grouped by unit — each unit's lecture deck, its student
+           notes, and the matching Foothold self-paced course sit together, so everything for one unit is in one
+           place instead of split across separate lists further down the page.</p>
 
-          <!-- Unit 1 lecture deck. EDIT: URL if it changes. -->
-          <a class="unit" href="https://aishugithub.github.io/COA/Unit1_Deck.html" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 1 — Lecture Deck</span>
-              <span class="u-sub">Classroom teaching deck</span>
-            </span>
-            <span class="u-open">Open deck →</span>
-          </a>
+        <!-- =====================================================================
+             PER-UNIT GROUPS
+             ---------------------------------------------------------------------
+             Each unit below gets its own ".unit-group": a small uppercase label
+             (".unit-group-title" — styled like the page's ".section-tag" eyebrow,
+             just scoped to one unit instead of a whole page section), followed by
+             its own ".units" grid holding exactly three ".unit" cards, always in
+             the SAME order — Deck, Notes, Foothold — so a reader scanning down
+             the page finds the same kind of thing in the same slot every time.
 
-          <!-- Unit 2 lecture deck. EDIT: URL if it changes. -->
-          <a class="unit" href="https://aishugithub.github.io/COA/Unit2_Deck.html" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 2 — Lecture Deck</span>
-              <span class="u-sub">Classroom teaching deck</span>
-            </span>
-            <span class="u-open">Open deck →</span>
-          </a>
+             A slot with nothing published yet is never just left out — it's shown
+             as a muted "Coming soon" card (the same ".unit.muted" treatment used
+             elsewhere on this page), so the page keeps telling the truth about
+             what exists rather than the layout quietly reshuffling per unit.
 
-<<<<<<< HEAD
-          <!-- Unit 3 lecture deck. Points into the "Unit 3" subfolder next to this page —
-               %20 escapes the space in the folder name so the link works from any host. -->
-          <a class="unit" href="Unit%203/Unit3_Pipelining_Deck.html" target="_blank" rel="noopener">
-=======
-          <!-- Unit 3 lecture deck. -->
-          <a class="unit" href="Unit3_Deck.html" target="_blank" rel="noopener">
->>>>>>> 3d64d85888c49d2de468eb7bca5713fea13262d7
-            <span>
-              <span class="u-title">Unit 3 — Lecture Deck</span>
-              <span class="u-sub">Classroom teaching deck · pipelining</span>
-            </span>
-            <span class="u-open">Open deck →</span>
-          </a>
+             EDIT: add a new ".unit-group" block, same three-slot shape, whenever
+             a new unit's materials go live — copy the most recently finished
+             unit's markup below as the template.
+             ================================================================== -->
 
-<<<<<<< HEAD
-          <!-- Unit 3 — Foothold self-paced course, repeated HERE (right under the deck it pairs with).
-               The Foothold course is already linked once at the very top of #materials, but it's easy
-               to scroll past — putting a second copy next to each unit's deck means nobody misses it.
-               The Foothold app is a single-page dashboard (course_COA repo) with no per-unit deep link
-               yet, so both this and the Unit 4 copy below point at the same course home for now; once
-               the app supports linking straight into a unit, swap these two hrefs for the real ones. -->
-          <a class="unit" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 3 — Foothold Course</span>
-              <span class="u-sub">Self-paced interactive lessons for this unit</span>
-            </span>
-            <span class="u-open">Open course →</span>
-          </a>
-
-          <!-- Unit 3 student notes (the "Student Notes" / reading-handout card from Unit3_Index.html —
-               full textbook explanation behind each slide, the two worked examples, and a question bank).
-               The old href ("Unit3_Notes.html") pointed at a file that doesn't exist in this folder —
-               fixed to the real filename and relabelled to match what the file actually is. -->
-          <a class="unit" href="Unit%203/Unit3_Pipelining_Notes.html" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 3 — Student Notes</span>
-              <span class="u-sub">Reading handout — full textbook explanation, worked examples &amp; question bank</span>
-=======
-          <!-- Unit 3 class notes. -->
-          <a class="unit" href="Unit3_Notes.html" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 3 — Class Notes</span>
-              <span class="u-sub">Detailed pipelining notes — the idea, performance, data &amp; instruction hazards, scheduling</span>
->>>>>>> 3d64d85888c49d2de468eb7bca5713fea13262d7
-            </span>
-            <span class="u-open">Open notes →</span>
-          </a>
-
-<<<<<<< HEAD
-          <!-- Unit 4 lecture deck — the classroom deck itself isn't built yet, so this stays a
-               "muted" placeholder (no href, greyed out via .unit.muted) until it's ready. Swap this
-               <div> for a real <a class="unit" href="Unit%204/Unit4_...Deck.html"> once the deck exists. -->
-          <div class="unit muted">
-            <span>
-              <span class="u-title">Unit 4 — Lecture Deck</span>
-              <span class="u-sub">Classroom teaching deck · coming soon</span>
-            </span>
-            <span class="u-open">In progress</span>
-          </div>
-
-          <!-- Unit 4 — Foothold self-paced course. Same reasoning and same caveat as the Unit 3 copy
-               above: real link, but pointing at the course home until per-unit deep links exist. This
-               one matters most right now since the Unit 4 deck itself is still "coming soon" above. -->
-          <a class="unit" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 4 — Foothold Course</span>
-              <span class="u-sub">Self-paced interactive lessons for this unit</span>
-            </span>
-            <span class="u-open">Open course →</span>
-          </a>
-
-          <!-- Placeholder for units not yet published. Turn into a real <a> as decks go live. -->
-          <div class="unit muted">
-            <span>
-              <span class="u-title">Units 5 onward</span>
-=======
-          <!-- Placeholder for units not yet published. Turn into a real <a> as decks go live. -->
-          <div class="unit muted">
-            <span>
-              <span class="u-title">Units 4 onward</span>
->>>>>>> 3d64d85888c49d2de468eb7bca5713fea13262d7
-              <span class="u-sub">Coming soon</span>
-            </span>
-            <span class="u-open">In progress</span>
+        <!-- ===== UNIT 0 ===== -->
+        <div class="unit-group">
+          <h3 class="unit-group-title">Unit 0</h3>
+          <div class="units">
+            <!-- Deck slot. Unit 0's only live resource today is the hosted intro
+                 lesson, so it fills the deck slot here. EDIT: URL if it changes. -->
+            <a class="unit" href="https://aishugithub.github.io/COA/" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 0 — Introduction Lesson</span>
+                <span class="u-sub">The starting lesson — sets up the subject</span>
+              </span>
+              <span class="u-open">Open lesson →</span>
+            </a>
+            <!-- Notes slot: no separate reading-handout for Unit 0 yet. -->
+            <div class="unit muted">
+              <span>
+                <span class="u-title">Unit 0 — Student Notes</span>
+                <span class="u-sub">Coming soon</span>
+              </span>
+              <span class="u-open">In progress</span>
+            </div>
+            <!-- Foothold slot. Same caveat as every unit's Foothold card below:
+                 the Foothold app (course_COA repo) is one dashboard with no
+                 per-unit deep link yet, so this points at the course home for
+                 now — swap in the real per-unit URL once that exists. -->
+            <a class="unit" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 0 — Foothold Course</span>
+                <span class="u-sub">Self-paced interactive lessons for this unit</span>
+              </span>
+              <span class="u-open">Open course →</span>
+            </a>
           </div>
         </div>
 
-        <!-- ---------- EXAM READY RECKONERS ----------
-             A third resource group, using the SAME .units / .unit card styling as the
-             decks above so it fits the page automatically. These are the exam-focused
-             question banks: each shows the different ways a question can be asked and
-             reveals a ready-to-reproduce answer on a click.
-             URLs follow the SAME flat pattern as the decks (all files live together in
-             the .../COA/ folder on the server), e.g. COA/Unit1_ExamReadyReckoner.html.
-             EDIT the filenames/URLs here if you host them under a different path. -->
-        <h2 style="font-family:'Fraunces'; font-size:1.6rem; margin:38px 0 8px;">Exam ready reckoners</h2>
-        <p style="color:var(--muted); margin-bottom:18px;">Skimmed, exam-focused question banks. Each one shows the different
-           ways a question can be asked and reveals a ready-to-reproduce answer on a click — best used for last-minute
-           revision alongside the decks.</p>
-        <div class="units">
-          <!-- Unit 1 reckoner. EDIT: URL if it changes. -->
-          <a class="unit" href="https://aishugithub.github.io/COA/Unit1_ExamReadyReckoner.html" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 1 — Exam Ready Reckoner &amp; Question Bank</span>
-              <span class="u-sub">Click-to-reveal answers · functional units, registers, buses, memory, addressing, sequencing</span>
-            </span>
-            <span class="u-open">Open reckoner →</span>
-          </a>
-
-          <!-- Unit 2 reckoner. EDIT: URL if it changes. -->
-          <a class="unit" href="https://aishugithub.github.io/COA/Unit2_ExamReadyReckoner.html" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 2 — Exam Ready Reckoner &amp; Question Bank</span>
-              <span class="u-sub">Click-to-reveal answers · microoperations, ALU, instruction execution, buses, control unit</span>
-            </span>
-            <span class="u-open">Open reckoner →</span>
-          </a>
-
-<<<<<<< HEAD
-          <!-- Unit 4 reckoner. Aishu's source file is literally named "Unit4_Notes.html" but its
-               content and purpose are the click-to-reveal exam reckoner (same family as Unit 1 &amp; 2
-               above), so it's linked here rather than under "Lessons & lecture decks". -->
-          <a class="unit" href="Unit%204/Unit4_Notes.html" target="_blank" rel="noopener">
-            <span>
-              <span class="u-title">Unit 4 — Exam Ready Reckoner &amp; Question Bank</span>
-              <span class="u-sub">Click-to-reveal answers · memory organization</span>
-            </span>
-            <span class="u-open">Open reckoner →</span>
-          </a>
-
-          <!-- Placeholder for future units' reckoners. Turn into a real <a> as they go live. -->
-          <div class="unit muted">
-            <span>
-              <span class="u-title">Unit 3 &amp; units 5 onward — reckoners</span>
-=======
-          <!-- Placeholder for future units' reckoners. Turn into a real <a> as they go live. -->
-          <div class="unit muted">
-            <span>
-              <span class="u-title">Units 3 onward — reckoners</span>
->>>>>>> 3d64d85888c49d2de468eb7bca5713fea13262d7
-              <span class="u-sub">Coming soon</span>
-            </span>
-            <span class="u-open">In progress</span>
+        <!-- ===== UNIT 1 ===== -->
+        <div class="unit-group">
+          <h3 class="unit-group-title">Unit 1</h3>
+          <div class="units">
+            <!-- Deck slot. EDIT: URL if it changes. -->
+            <a class="unit" href="https://aishugithub.github.io/COA/Unit1_Deck.html" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 1 — Lecture Deck</span>
+                <span class="u-sub">Classroom teaching deck</span>
+              </span>
+              <span class="u-open">Open deck →</span>
+            </a>
+            <!-- Notes slot: no separate reading-handout for Unit 1 — the Exam Ready
+                 Reckoner *is* the notes for this unit, so it fills the slot directly. -->
+            <a class="unit" href="https://aishugithub.github.io/COA/Unit1_ExamReadyReckoner.html" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 1 — Exam Ready Reckoner &amp; Question Bank</span>
+                <span class="u-sub">Click-to-reveal answers · functional units, registers, buses, memory, addressing, sequencing</span>
+              </span>
+              <span class="u-open">Open notes →</span>
+            </a>
+            <!-- Foothold slot: see the Unit 0 comment above — same course-home caveat. -->
+            <a class="unit" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 1 — Foothold Course</span>
+                <span class="u-sub">Self-paced interactive lessons for this unit</span>
+              </span>
+              <span class="u-open">Open course →</span>
+            </a>
           </div>
         </div>
+
+        <!-- ===== UNIT 2 ===== -->
+        <div class="unit-group">
+          <h3 class="unit-group-title">Unit 2</h3>
+          <div class="units">
+            <!-- Deck slot. EDIT: URL if it changes. -->
+            <a class="unit" href="https://aishugithub.github.io/COA/Unit2_Deck.html" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 2 — Lecture Deck</span>
+                <span class="u-sub">Classroom teaching deck</span>
+              </span>
+              <span class="u-open">Open deck →</span>
+            </a>
+            <!-- Notes slot: no separate reading-handout for Unit 2 — the Exam Ready
+                 Reckoner *is* the notes for this unit, so it fills the slot directly. -->
+            <a class="unit" href="https://aishugithub.github.io/COA/Unit2_ExamReadyReckoner.html" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 2 — Exam Ready Reckoner &amp; Question Bank</span>
+                <span class="u-sub">Click-to-reveal answers · microoperations, ALU, instruction execution, buses, control unit</span>
+              </span>
+              <span class="u-open">Open notes →</span>
+            </a>
+            <!-- Foothold slot: see the Unit 0 comment above — same course-home caveat. -->
+            <a class="unit" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 2 — Foothold Course</span>
+                <span class="u-sub">Self-paced interactive lessons for this unit</span>
+              </span>
+              <span class="u-open">Open course →</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- ===== UNIT 3 ===== -->
+        <div class="unit-group">
+          <h3 class="unit-group-title">Unit 3 — Pipelining</h3>
+          <div class="units">
+            <!-- Deck slot. Points into the "Unit 3" subfolder next to this page —
+                 %20 escapes the space in the folder name so the link works from any host. -->
+            <a class="unit" href="Unit%203/Unit3_Pipelining_Deck.html" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 3 — Lecture Deck</span>
+                <span class="u-sub">Classroom teaching deck · pipelining</span>
+              </span>
+              <span class="u-open">Open deck →</span>
+            </a>
+            <!-- Notes slot: the real reading handout — full textbook explanation
+                 behind each slide, the two worked examples, and a question bank. -->
+            <a class="unit" href="Unit%203/Unit3_Pipelining_Notes.html" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 3 — Student Notes</span>
+                <span class="u-sub">Reading handout — full textbook explanation, worked examples &amp; question bank</span>
+              </span>
+              <span class="u-open">Open notes →</span>
+            </a>
+            <!-- Foothold slot: see the Unit 0 comment above — same course-home caveat. -->
+            <a class="unit" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 3 — Foothold Course</span>
+                <span class="u-sub">Self-paced interactive lessons for this unit</span>
+              </span>
+              <span class="u-open">Open course →</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- ===== UNIT 4 ===== -->
+        <div class="unit-group">
+          <h3 class="unit-group-title">Unit 4</h3>
+          <div class="units">
+            <!-- Deck slot. Points into the "Unit 4" subfolder next to this page —
+                 %20 escapes the space in the folder name, same as the Unit 3 deck link above. -->
+            <a class="unit" href="Unit%204/Unit4_Deck.html" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 4 — Lecture Deck</span>
+                <span class="u-sub">Classroom teaching deck</span>
+              </span>
+              <span class="u-open">Open deck →</span>
+            </a>
+            <!-- Notes slot: Unit4_Notes.html's content IS the Exam Ready Reckoner
+                 (same as Units 1 &amp; 2 above) — that reckoner is the notes for this
+                 unit, so it fills the slot directly instead of staying muted. -->
+            <a class="unit" href="Unit%204/Unit4_Notes.html" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 4 — Exam Ready Reckoner &amp; Question Bank</span>
+                <span class="u-sub">Click-to-reveal answers · memory organization</span>
+              </span>
+              <span class="u-open">Open notes →</span>
+            </a>
+            <!-- Foothold slot: see the Unit 0 comment above — same course-home caveat. -->
+            <a class="unit" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 4 — Foothold Course</span>
+                <span class="u-sub">Self-paced interactive lessons for this unit</span>
+              </span>
+              <span class="u-open">Open course →</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- ===== UNITS 5+ ===== -->
+        <!-- Nothing published for these yet, so — unlike the groups above — this
+             is a single muted placeholder rather than three empty slots. -->
+        <div class="unit-group">
+          <h3 class="unit-group-title">Units 5 onward</h3>
+          <div class="units">
+            <div class="unit muted">
+              <span>
+                <span class="u-title">Units 5 onward</span>
+                <span class="u-sub">Coming soon</span>
+              </span>
+              <span class="u-open">In progress</span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
