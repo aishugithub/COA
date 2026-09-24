@@ -316,6 +316,34 @@
             </span>
             <span class="u-open">Start course →</span>
           </a>
+
+          <!-- =================================================================
+               AVPS — AI-Enhanced Visual Pipeline Simulator (course-wide tool)
+               -----------------------------------------------------------------
+               WHAT  : Our own browser-based 5-stage RISC pipeline simulator
+                       (IF · ID · EX · MEM · WB) with a built-in AI tutor. The
+                       tutor is "state-aware": the live pipeline state is sent
+                       with every question, so its answers are about exactly
+                       what the student is looking at.
+               WHY HERE: It sits beside Foothold because it is the other
+                       self-paced, hands-on entry point on this page. It is
+                       also repeated inside the Unit 3 — Pipelining group
+                       below, where students actually meet the topic.
+               HOW   : It reuses the page's existing ".unit" card styling (the
+                       same classes as the Foothold card above), so no new CSS
+                       is needed. target="_blank" opens it in a new tab so this
+                       index stays open; rel="noopener" is the usual security
+                       setting for new-tab links.
+               EDIT  : Change the href if the Vercel deployment URL changes
+                       (keep it in step with the Unit 3 card below).
+               ================================================================= -->
+          <a class="unit" href="https://avps-deploy.vercel.app/" target="_blank" rel="noopener">
+            <span>
+              <span class="u-title">AVPS — AI-Enhanced Visual Pipeline Simulator</span>
+              <span class="u-sub">Step through a 5-stage pipeline · see hazards, stalls &amp; forwarding · ask the built-in AI tutor</span>
+            </span>
+            <span class="u-open">Launch simulator →</span>
+          </a>
         </div>
 
         <h2 style="font-family:'Fraunces'; font-size:1.6rem; margin:38px 0 18px;">Lessons &amp; lecture decks</h2>
@@ -337,6 +365,9 @@
              as a muted "Coming soon" card (the same ".unit.muted" treatment used
              elsewhere on this page), so the page keeps telling the truth about
              what exists rather than the layout quietly reshuffling per unit.
+
+             Exception: Unit 3 — Pipelining has a fourth "Simulator" slot after
+             Foothold, linking to AVPS (our pipeline simulator).
 
              EDIT: add a new ".unit-group" block, same three-slot shape, whenever
              a new unit's materials go live — copy the most recently finished
@@ -464,6 +495,20 @@
                 <span class="u-sub">Self-paced interactive lessons for this unit</span>
               </span>
               <span class="u-open">Open course →</span>
+            </a>
+            <!-- Simulator slot (Unit 3 only). This is an extra fourth card after the
+                 usual Deck · Notes · Foothold slots, because pipelining is the one
+                 unit with its own hands-on simulator (AVPS). Students can take the
+                 hazard and forwarding examples from the deck/notes and replay them
+                 cycle by cycle here. It uses the same ".unit" card as its neighbours.
+                 EDIT: keep this URL in step with the AVPS card in the
+                 "interactive course" section at the top of Materials. -->
+            <a class="unit" href="https://avps-deploy.vercel.app/" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 3 — AVPS Pipeline Simulator</span>
+                <span class="u-sub">Hands-on 5-stage pipeline with an AI tutor · replay the hazard &amp; forwarding examples</span>
+              </span>
+              <span class="u-open">Launch simulator →</span>
             </a>
           </div>
         </div>
