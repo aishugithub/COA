@@ -366,8 +366,9 @@
              elsewhere on this page), so the page keeps telling the truth about
              what exists rather than the layout quietly reshuffling per unit.
 
-             Exception: Unit 3 — Pipelining has a fourth "Simulator" slot after
-             Foothold, linking to AVPS (our pipeline simulator).
+             Exceptions: Unit 3 — Pipelining has a fourth "Simulator" slot after
+             Foothold, linking to AVPS (our pipeline simulator); Unit 5 has a fourth
+             "Case Study" slot linking to the in-class case-study test.
 
              EDIT: add a new ".unit-group" block, same three-slot shape, whenever
              a new unit's materials go live — copy the most recently finished
@@ -547,19 +548,52 @@
           </div>
         </div>
 
-        <!-- ===== UNITS 5+ ===== -->
-        <!-- Nothing published for these yet, so — unlike the groups above — this
-             is a single muted placeholder rather than three empty slots. -->
+        <!-- ===== UNIT 5 ===== -->
         <div class="unit-group">
-          <h3 class="unit-group-title">Units 5 onward</h3>
+          <h3 class="unit-group-title">Unit 5 — Input/Output Organization</h3>
           <div class="units">
+            <!-- Deck slot: no Unit 5 lecture deck published yet, so it stays a
+                 muted "Coming soon" card (same rule as every unit above).
+                 EDIT: swap in an <a class="unit" href="Unit%205/Unit5_Deck.html"> card when the deck exists. -->
             <div class="unit muted">
               <span>
-                <span class="u-title">Units 5 onward</span>
+                <span class="u-title">Unit 5 — Lecture Deck</span>
                 <span class="u-sub">Coming soon</span>
               </span>
               <span class="u-open">In progress</span>
             </div>
+            <!-- Notes slot: the Unit 5 reading handout (Hamacher Ch. 3, 7, 8) —
+                 accessing I/O, interrupts, exceptions, DMA, bus arbitration,
+                 buses, PCI & SCSI, with worked examples and questions. -->
+            <a class="unit" href="Unit%205/Unit5_InputOutputOrganizations_Notes.html" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 5 — Student Notes</span>
+                <span class="u-sub">Reading handout — interrupts, exceptions, DMA, bus arbitration, buses, PCI &amp; SCSI</span>
+              </span>
+              <span class="u-open">Open notes →</span>
+            </a>
+            <!-- Foothold slot: see the Unit 0 comment above — same course-home caveat. -->
+            <a class="unit" href="https://aishugithub.github.io/course_COA/" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 5 — Foothold Course</span>
+                <span class="u-sub">Self-paced interactive lessons for this unit</span>
+              </span>
+              <span class="u-open">Open course →</span>
+            </a>
+            <!-- Case-study slot (Unit 5 only) — an extra fourth card, like Unit 3's
+                 simulator. The in-class case-study test: students read a real-life
+                 case and answer 13 auto-scored MCQs; the page lives in the
+                 "Unit 5/coa_unit5_case" subfolder. Without ?case= the student picks
+                 their department; in class, share ?case=cyber | aiml | ece links.
+                 NOTE: only coa_unit5_case/index.html should be public — its
+                 .gitignore keeps the answer key (teacher/, Code.gs, source/) out of git. -->
+            <a class="unit" href="Unit%205/coa_unit5_case/" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 5 — Case Study</span>
+                <span class="u-sub">In-class test · read a real-life I/O case and answer 13 MCQs</span>
+              </span>
+              <span class="u-open">Open case study →</span>
+            </a>
           </div>
         </div>
 

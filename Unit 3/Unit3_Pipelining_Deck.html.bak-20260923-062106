@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COA Unit 3 · Pipelining — Complete Classroom Deck</title>
+
+<!--
+  ============================================================================
+  COA UNIT 3 · PIPELINING — COMPLETE CLASSROOM DECK (CSE23CT201)
+  One self-contained HTML deck covering the WHOLE of Hamacher Chapter 6, in
+  textbook + syllabus order. Diagrams are re-drawn (coloured) to match the
+  book's figures faithfully. Companion: Unit3_Pipelining_Notes.html carries the
+  full textbook prose.
+
+  Structure (chapters):
+    1. The Pipelining Idea        §6.1–6.2  (Fig 6.1, Fig 6.2) + 2 interactive sims
+    2. Pipeline Performance       §6.8 basics
+    3. Data Hazards               §6.3–6.5  (Fig 6.3–6.8, Fig 6.15)
+    4. Instruction (Control) Hazards §6.6   (Fig 6.9–6.12)
+    5. Influence on Instruction Sets §6.10
+    6. Datapath & Control Considerations §6.2, 6.7  (+ δ performance, Ex 6.2)
+    7. Superscalar Operation      §6.9      (Fig 6.13, 6.14)
+
+  Controls: → / Space / click = next reveal or slide · ← = back · Home/End ·
+  R = reset the sim on the two interactive slides · F11 = fullscreen.
+  ============================================================================
+-->
+
+<style>
+  /* ---- Shared palette (bright for the projector) ---- */
+  :root{
+    --bg:#0D1117; --surface:#161B22; --card:#1C2333;
+    --accent:#58A6FF; --accentGlow:#1F6FEB;
+    --green:#3FB950; --yellow:#D29922; --purple:#BC8CFF;
+    --red:#F85149; --orange:#F0883E; --teal:#39D0D8;
+    --text:#E6EDF3; --muted:#C3D1E0; --border:#30363D; --ink:#0D1117;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{background:var(--bg); color:var(--text); font-family:"Segoe UI",system-ui,-apple-system,sans-serif; overflow:hidden}
+  #deck{position:fixed; inset:0}
+  .slide{position:absolute; inset:0; display:none; flex-direction:column; padding:52px 68px 66px}
+  .slide.active{display:flex}
+
+  h2{font-size:54px; font-weight:800; line-height:1.05; letter-spacing:-.5px}
+  .foothold{font-size:23px; color:var(--muted); font-style:italic; line-height:1.34;
+    margin:2px 0 16px; padding-left:18px; border-left:4px solid var(--accentGlow); max-width:1200px}
+  .foothold b{color:var(--accent); font-style:normal; font-weight:700}
+  .foothold .lbl{color:var(--accentGlow); font-style:normal; font-weight:800; text-transform:uppercase; letter-spacing:1px; font-size:19px}
+
+  .body{flex:1; display:flex; flex-direction:column; justify-content:center}
+  .points{list-style:none; max-width:1250px}
+  .points li{font-size:30px; line-height:1.38; margin:14px 0; padding-left:38px; position:relative}
+  .points li::before{content:"▸"; position:absolute; left:0; color:var(--accent)}
+  .dim{color:var(--muted)} .em{color:var(--accent); font-weight:700}
+  .emg{color:var(--green); font-weight:700} .emr{color:var(--red); font-weight:700}
+  .emp{color:var(--purple); font-weight:700} .emy{color:var(--yellow); font-weight:700} .emt{color:var(--teal); font-weight:700}
+
+  .frag{opacity:0; transform:translateY(14px); transition:opacity .42s ease, transform .42s ease}
+  .frag.on{opacity:1; transform:none}
+  .frag.slidein{transform:translateX(-40px)} .frag.slidein.on{transform:none}
+
+  /* ---- Divider / title / ask / key ---- */
+  .divider{justify-content:center; align-items:flex-start}
+  .divider .kicker{font-size:25px; font-weight:800; letter-spacing:6px; color:var(--orange)}
+  .divider .chno{font-size:148px; font-weight:900; line-height:.9; color:var(--accent); text-shadow:0 0 40px rgba(88,166,255,.35)}
+  .divider .chtitle{font-size:56px; font-weight:800; margin:6px 0 20px; max-width:1180px}
+  .divider .hook{font-size:29px; font-style:italic; color:var(--muted); max-width:1080px; line-height:1.4; padding-left:22px; border-left:5px solid var(--orange)}
+  .divider .sec{margin-top:18px; font-size:20px; color:var(--muted); letter-spacing:1px}
+
+  .title-slide{justify-content:center}
+  .title-slide .unit{font-size:29px; font-weight:800; letter-spacing:8px; color:var(--orange)}
+  .title-slide h1{font-size:98px; font-weight:900; letter-spacing:-2px; margin:6px 0 4px}
+  .title-slide .part{font-size:34px; color:var(--accent); font-weight:700; margin-bottom:36px}
+  .title-slide .course{font-size:27px} .title-slide .fac{font-size:21px; color:var(--muted); margin-top:6px}
+  .title-slide .bar{width:260px; height:6px; background:var(--orange); border-radius:3px; margin-top:32px}
+
+  .mic-badge{display:inline-flex; align-items:center; gap:12px; font-size:23px; font-weight:800; color:var(--ink); background:var(--yellow); padding:8px 20px; border-radius:30px; align-self:flex-start}
+  .ask-q{font-size:40px; font-weight:800; line-height:1.24; max-width:1240px; margin:22px 0}
+  .ask-a{font-size:31px; line-height:1.4; color:var(--green); font-weight:700; background:rgba(63,185,80,.10); border:2px solid var(--green); border-radius:14px; padding:20px 26px; max-width:1240px}
+  .ask-a .q2{color:var(--text); font-weight:400}
+
+  .key-slide{justify-content:center; align-items:center; text-align:center}
+  .key-badge{font-size:60px; margin-bottom:18px}
+  .key-text{font-size:52px; font-weight:800; line-height:1.24; max-width:1340px}
+  .key-text .hl{color:var(--accent)} .key-text .hlg{color:var(--green)}
+  .key-sub{font-size:25px; color:var(--muted); font-style:italic; margin-top:30px; max-width:1150px; padding-left:22px; border-left:4px solid var(--orange); text-align:left}
+  .key-sub a{color:var(--accent)}
+
+  /* ---- Pipeline stage diagrams. leftOf(c) = 150 + (c-1)*128 ---- */
+  .stage-area{position:relative; width:1200px; height:340px; margin:6px auto 0}
+  .stage-area.tall{height:370px}
+  .cyc-num{position:absolute; top:0; width:116px; text-align:center; font-size:22px; color:var(--muted)}
+  .time-arrow{position:absolute; top:-2px; font-size:20px; color:var(--muted)}
+  .rowlab{position:absolute; left:0; width:150px; font-size:22px; font-weight:700; color:var(--teal)}
+  .stage{position:absolute; width:116px; height:56px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:23px; font-weight:800; color:var(--ink); transition:left .6s ease, opacity .4s ease, box-shadow .3s ease}
+  .stage.words{font-size:17px; letter-spacing:.3px}
+  .sF{background:var(--accent)} .sD{background:var(--purple)} .sC{background:var(--orange)} .sM{background:var(--teal)} .sW{background:var(--green)}
+  .sBr{background:var(--yellow)} .sTgt{background:var(--green)}
+  .sBubble{background:transparent; color:var(--red); border:2px dashed var(--red); font-size:19px; font-weight:700}
+  .discard{background:transparent!important; color:var(--red); border:2px dashed var(--red); font-size:18px; font-weight:800}
+  .diag-caption{text-align:center; font-size:21px; color:var(--muted); font-style:italic; margin-top:10px}
+  .marker{position:absolute; font-size:20px; font-weight:700; text-align:center; width:200px}
+  .penalty-bracket{position:absolute; border:3px solid var(--red); border-bottom:none; height:18px}
+  .fwd-svg{position:absolute; left:0; top:0; overflow:visible; pointer-events:none}
+
+  .instr-line{font-family:"Consolas",monospace; font-size:27px; margin:7px 0; color:var(--text)}
+  .instr-line .rtn{color:var(--muted); font-size:22px}
+  .reg{color:var(--teal); font-weight:700} .br{color:var(--yellow); font-weight:700} .mv{color:var(--green); font-weight:700} .nop{color:var(--muted)}
+  .codebox{background:var(--surface); border:2px solid var(--border); border-radius:12px; padding:15px 20px; display:inline-block; vertical-align:top}
+  .codebox .cap{font-size:17px; color:var(--muted); font-style:italic; margin-top:8px}
+
+  /* ---- equations ---- */
+  .eqn{font-family:"Cambria Math","Times New Roman",serif; font-size:40px; text-align:center;
+    background:var(--surface); border:2px solid var(--border); border-radius:14px; padding:18px 28px; margin:8px 0; max-width:960px}
+  .eqn .sub{font-size:24px; vertical-align:sub} .eqn .var{color:var(--accent); font-style:italic}
+  .eqn .note{display:block; font-family:"Segoe UI",sans-serif; font-size:19px; color:var(--muted); font-style:italic; margin-top:8px}
+  .eqctr{display:flex; flex-direction:column; align-items:center}
+
+  /* ---- block-diagram (datapath / superscalar) ---- */
+  .dp text{fill:var(--text); font-family:"Segoe UI",sans-serif}
+  .dp .box{fill:var(--card); stroke:var(--accent); stroke-width:2.5}
+  .dp .stagebox{fill:var(--card); stroke:var(--teal); stroke-width:2.5}
+  .dp .unit{fill:var(--card); stroke:var(--teal); stroke-width:2.5}
+  .dp .buf{fill:rgba(88,166,255,.16); stroke:var(--accentGlow); stroke-width:2}
+  .dp .q{fill:rgba(88,166,255,.14); stroke:var(--accentGlow); stroke-width:2}
+  .dp .alu{fill:var(--surface); stroke:var(--accent); stroke-width:2.5}
+  .dp .wire{stroke:var(--muted); stroke-width:2.5; fill:none}
+  .dp .fb{stroke:var(--green); stroke-width:3; fill:none}
+
+  /* ---- branch-prediction FSM ---- */
+  .fsm text{fill:var(--text); font-family:"Segoe UI",sans-serif; font-weight:700}
+  .fsm .st-node{stroke-width:3}
+  .fsm .taken{fill:rgba(63,185,80,.18); stroke:var(--green)}
+  .fsm .nottaken{fill:rgba(248,81,73,.15); stroke:var(--red)}
+  .fsm .edge{stroke:var(--muted); stroke-width:2.5; fill:none}
+  .fsm .elabel{fill:var(--muted); font-size:17px; font-weight:700}
+
+  /* ---- two-column compare ---- */
+  .cols{display:flex; gap:24px; max-width:1250px; margin-top:6px}
+  .col{flex:1; background:var(--surface); border:2px solid var(--border); border-radius:14px; padding:18px 22px}
+  .col.good{border-color:var(--green)} .col.bad{border-color:var(--red)}
+  .col h3{font-size:25px; margin-bottom:10px} .col.good h3{color:var(--green)} .col.bad h3{color:var(--red)}
+  .col ul{list-style:none} .col li{font-size:22px; line-height:1.32; margin:8px 0; padding-left:24px; position:relative}
+  .col li::before{content:"•"; position:absolute; left:5px; color:var(--muted)}
+
+  /* ---- summary table ---- */
+  table.haz{border-collapse:collapse; width:100%; max-width:1240px; font-size:24px}
+  table.haz th,table.haz td{border:1px solid var(--border); padding:12px 16px; text-align:left}
+  table.haz th{background:var(--card); color:var(--accent); font-weight:800}
+  table.haz td:first-child{color:var(--text); font-weight:700}
+
+  /* ===========================================================================
+     INTERACTIVE SIMULATOR (two intro slides) — 5 robot workers + clock control
+     =========================================================================== */
+  .cartoon-stage{display:flex; justify-content:center; align-items:flex-end; gap:22px; width:100%; max-width:1250px; margin:14px auto 0}
+  #anim-pipe .cartoon-stage{margin-top:56px}
+  .buddy{position:relative; width:188px; display:flex; flex-direction:column; align-items:center}
+  .buddy .token{height:30px; line-height:24px; margin-bottom:10px; opacity:0; font-weight:800; font-size:19px; color:var(--ink);
+    padding:3px 15px; border-radius:16px; background:#888; transform:translateY(6px); transition:opacity .3s ease, transform .3s ease}
+  .buddy.work .token{opacity:1; transform:none}
+  .buddy .scene{position:relative; width:176px; height:160px; border-radius:20px; background:var(--card); border:3px solid var(--border);
+    display:flex; align-items:center; justify-content:center; overflow:hidden; transition:box-shadow .3s ease, border-color .3s ease, background .3s ease}
+  .buddy.work .scene{border-color:var(--tc,var(--uc)); box-shadow:0 0 30px var(--tc,var(--uc)); background:rgba(255,255,255,.05)}
+  .buddy .name{margin-top:12px; font-size:23px; font-weight:800}
+  .creature{width:116px; height:116px; color:var(--uc)}
+  .buddy.work .creature{animation:workbounce .42s infinite}
+  .buddy.relax .creature{animation:sway 2.6s ease-in-out infinite}
+  .creature .shades{opacity:0; transition:opacity .3s ease}
+  .buddy.relax .creature .shades{opacity:1}
+  .buddy.relax .creature .eye,.buddy.relax .creature .pupil{opacity:0}
+  @keyframes workbounce{0%,100%{transform:translateY(0) rotate(-3deg)} 50%{transform:translateY(-10px) rotate(3deg)}}
+  @keyframes sway{0%,100%{transform:rotate(-5deg)} 50%{transform:rotate(5deg)}}
+  .prop-relax,.prop-work{position:absolute; font-size:32px; transition:opacity .3s ease}
+  .prop-relax{top:8px; right:12px} .prop-work{bottom:8px; left:12px}
+  .buddy.relax .prop-work{opacity:0} .buddy.work .prop-relax{opacity:0}
+  .buddy.work .prop-work{animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .pulse-counter{position:absolute; top:0; right:0; font-size:24px; font-weight:800; color:var(--yellow); background:var(--card); padding:7px 16px; border-radius:12px; border:2px solid var(--yellow)}
+  .clockbar-wrap{position:absolute; left:0; right:0; bottom:40px; height:24px; background:var(--surface); border:2px solid var(--border); border-radius:14px; overflow:hidden}
+  .clockbar{height:100%; width:0; background:linear-gradient(90deg,var(--accent),var(--teal)); border-radius:12px}
+  .sim{position:relative; display:flex; flex-direction:column; align-items:center}
+  .sim-controls{display:flex; align-items:center; gap:13px; flex-wrap:wrap; justify-content:center; margin-bottom:8px}
+  .sim-controls .lab{font-size:19px; color:var(--muted); font-weight:700}
+  .sim-select{font-size:19px; font-weight:700; padding:8px 11px; border-radius:10px; margin-left:8px; background:var(--card); color:var(--text); border:2px solid var(--border); font-family:inherit}
+  .sim-btn{font-size:19px; font-weight:800; padding:9px 16px; border-radius:10px; cursor:pointer; border:2px solid var(--border); background:var(--surface); color:var(--text); font-family:inherit; transition:filter .15s}
+  .sim-btn.primary{background:var(--accent); color:var(--ink); border-color:var(--accent)}
+  .sim-btn.pulse{background:var(--yellow); color:var(--ink); border-color:var(--yellow)}
+  .sim-btn:hover{filter:brightness(1.12)}
+  .sim-msg{min-height:32px; text-align:center; font-size:23px; font-weight:800; margin-top:6px}
+  .sim-msg.warn{color:var(--red)} .sim-msg.ok{color:var(--green)} .sim-msg.info{color:var(--accent)}
+  .buddy.bubbling .token{opacity:1; background:transparent!important; color:var(--red); border:2px dashed var(--red); font-weight:700}
+  .buddy .speech{position:absolute; bottom:100%; left:50%; transform:translateX(-50%) translateY(2px); width:300px; background:var(--red); color:#fff;
+    font-size:15px; font-weight:700; line-height:1.2; padding:8px 11px; border-radius:12px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:6}
+  .buddy .speech::after{content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:9px solid transparent; border-top-color:var(--red)}
+  .buddy.say .speech{opacity:1}
+
+  #bar{position:fixed; top:0; left:0; height:5px; background:var(--accent); width:0; transition:width .3s ease; z-index:50}
+  #count{position:fixed; right:20px; bottom:14px; font-size:17px; color:var(--muted); z-index:50}
+  #chip{position:fixed; left:20px; bottom:14px; font-size:16px; color:var(--muted); z-index:50}
+
+  /* =========================================================================
+     ▼▼▼  EDITS (Sep 2026) — additions for the reworked/integrated slides  ▼▼▼
+     These rules are APPENDED so they never disturb the original section 1–4
+     styling; each new class is unique to a reworked slide.
+     ========================================================================= */
+
+  /* -------------------------------------------------------------------------
+     SLIDE 9 · "Overlap — the ideal case" — STEADY-STATE FILL
+     The original showed 3 instructions over 7 cycles, which never fills all
+     five units. We now run FIVE instructions over NINE cycles so that at
+     clock cycle 5 every stage-unit is busy at once. A rounded highlight
+     (.s9ring) is revealed LAST around the cycle-5 column to spell that out.
+     Geometry: leftOf(c) = 110 + (c-1)*118  → 9 columns inside the 1200px area;
+     five rows stacked 62px apart (tops 66,128,190,252,314); cells 100×48.
+     ------------------------------------------------------------------------- */
+  .s9area{width:1200px; height:420px; margin:2px auto 0}   /* taller area: 5 rows + a cycle-number row */
+  .s9area .cyc-num{width:100px}                            /* match cell width so numbers centre over columns */
+  .s9lab{position:absolute; left:0; width:96px; font-size:21px; font-weight:700; color:var(--teal)} /* Ij, Ij+1 … row label */
+  .s9cell{position:absolute; width:100px; height:48px; border-radius:9px;   /* one stage = one instruction × one cycle */
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:800; color:var(--ink); letter-spacing:.2px}
+  /* The rounded "all units busy" highlight around the cycle-5 column (revealed last). */
+  .s9ring{position:absolute; border:3px solid var(--yellow); border-radius:18px;
+    background:rgba(210,153,34,.12); box-shadow:0 0 26px rgba(210,153,34,.45)}
+  .s9ring .cap{position:absolute; top:-40px; left:50%; transform:translateX(-50%);
+    white-space:nowrap; font-size:20px; font-weight:800; color:var(--yellow); font-style:normal}
+
+  /* -------------------------------------------------------------------------
+     CONDITION-CODE side-effect slide (§5) — a Compare→Branch worked example.
+     Reuses the .stage colour classes with inline sizing; .ccring marks the
+     cycle where the flags are produced AND needed (the hidden hazard).
+     ------------------------------------------------------------------------- */
+  .cccell{position:absolute; width:96px; height:46px; border-radius:9px; display:flex;
+    align-items:center; justify-content:center; font-size:16px; font-weight:800; color:var(--ink)}
+  .ccring{position:absolute; border:3px dashed var(--red); border-radius:14px; background:rgba(248,81,73,.10)}
+  .ccring .cap{position:absolute; top:-34px; left:50%; transform:translateX(-50%); white-space:nowrap;
+    font-size:17px; font-weight:800; color:var(--red); font-style:normal}
+
+  /* -------------------------------------------------------------------------
+     TIMELINE slides (Fig 6.14 space-time, reorder buffer) — ported from the
+     Topics 5–7 deck. cyc-num there is 92px wide to match the 92px cells.
+     ------------------------------------------------------------------------- */
+  [data-anim="timeline"] .cyc-num{width:92px}
+
+  /* ===========================================================================
+     ANIMATION LAYER — genuine motion pieces. Each is CSS-only and loops while
+     its slide is active (a display:none slide neither renders nor animates,
+     so loops are free when off-screen). JS-timed pieces are marked below.
+     =========================================================================== */
+
+  /* -- S5: fetch pointer stepping over memory words (RISC vs CISC) -- */
+  .memstrip{position:relative; height:78px; margin:6px 0}
+  .memcell{position:absolute; top:0; height:64px; border:2px solid var(--border); border-radius:8px;
+    background:var(--surface); display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:700; color:var(--muted)}
+  .fetchwin{position:absolute; top:-4px; height:72px; border-radius:10px; border:3px solid var(--accent);
+    background:rgba(88,166,255,.16); box-shadow:0 0 22px rgba(88,166,255,.5)}
+  .active .fetchwin.risc{animation:riscfetch 6s steps(1) infinite}
+  .active .fetchwin.cisc{animation:ciscfetch 6s ease-in-out infinite}
+  @keyframes riscfetch{               /* clean one-word jumps, one per beat */
+    0%{left:0;width:96px}      16%{left:104px;width:96px} 33%{left:208px;width:96px}
+    50%{left:312px;width:96px} 66%{left:416px;width:96px} 83%{left:520px;width:96px} 100%{left:0;width:96px} }
+  @keyframes ciscfetch{               /* lurching: window must stretch over 1–3 words */
+    0%{left:0;width:96px}      18%{left:104px;width:200px} 40%{left:312px;width:96px}
+    60%{left:416px;width:304px} 85%{left:0;width:96px} 100%{left:0;width:96px} }
+
+  /* -- S7: cracking one CISC instruction into 3 RISC-like micro-ops -- */
+  .crack{position:relative; height:220px; max-width:1180px; margin:10px auto 0}
+  .cisc-blk{position:absolute; left:0; top:78px; width:300px; height:66px; border-radius:12px;
+    background:rgba(248,81,73,.14); border:2.5px solid var(--red); color:var(--text);
+    display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; font-family:Consolas,monospace}
+  .uop{position:absolute; left:360px; width:250px; height:46px; border-radius:10px; background:rgba(63,185,80,.14);
+    border:2.5px solid var(--green); color:var(--text); display:flex; align-items:center; justify-content:center;
+    font-size:19px; font-weight:700; font-family:Consolas,monospace; opacity:0}
+  .active .uop{animation:uopfly 5s ease-in-out infinite}
+  .active .uop.u1{animation-delay:.2s} .active .uop.u2{animation-delay:.9s} .active .uop.u3{animation-delay:1.6s}
+  @keyframes uopfly{ 0%{opacity:0; transform:translateX(-90px)} 18%,72%{opacity:1; transform:translateX(0)} 100%{opacity:0; transform:translateX(140px)} }
+  .crack .arrow{position:absolute; left:300px; top:104px; font-size:40px; color:var(--accent); font-weight:800}
+
+  /* -- S12: structural-hazard collision, pulsing on a loop -- */
+  .active .collide{animation:collide 1.5s ease-in-out infinite}
+  @keyframes collide{0%,100%{opacity:.35; transform:scale(.9)} 50%{opacity:1; transform:scale(1.12)}}
+  .active .clashwire{animation:clashwire 1.5s ease-in-out infinite}
+  @keyframes clashwire{0%,100%{opacity:.4} 50%{opacity:1}}
+
+  /* -- S14: delta-contribution bars grow when revealed -- */
+  .barchart{max-width:1120px; margin:6px auto 0}
+  .barrow{display:flex; align-items:center; gap:18px; margin:16px 0}
+  .barrow .lab{width:230px; font-size:24px; font-weight:800; text-align:right}
+  .bartrack{flex:1; height:44px; background:var(--surface); border:2px solid var(--border); border-radius:10px; overflow:hidden}
+  .barfill{height:100%; width:0; border-radius:8px; transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+  .frag.on .barfill{width:var(--w)}   /* grows only once its row is revealed */
+  .barrow .val{width:110px; font-size:23px; font-weight:800}
+
+  /* -- S18: supermarket checkout lanes — instructions (dots) flowing -- */
+  .lanes{display:flex; gap:60px; justify-content:center; margin:10px auto 0; max-width:1200px}
+  .lane-group{flex:1; text-align:center}
+  .lane-group h3{font-size:25px; margin-bottom:14px}
+  .lane{position:relative; height:56px; background:var(--surface); border:2px solid var(--border); border-radius:28px; margin:12px 0; overflow:hidden}
+  .lane .till{position:absolute; right:0; top:0; height:100%; width:58px; background:var(--card);
+    border-left:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:24px}
+  .dot{position:absolute; top:14px; width:28px; height:28px; border-radius:50%; background:var(--accent); box-shadow:0 0 12px var(--accent)}
+  .active .lane .dot{animation:flow 3.2s linear infinite}
+  @keyframes flow{0%{left:-32px} 100%{left:calc(100% - 58px)}}
+
+  /* -- S20: TWO packets travelling the superscalar wires AT ONCE.
+        Superscalar = multiple issue: two independent instructions are dispatched
+        in the SAME cycle, one to each execution unit. So both packets share ONE
+        keyframe (they move in lockstep), run in parallel lanes on the shared
+        Fetch→queue→dispatch wire, then split to the two units simultaneously.
+        Distinct colours make clear these are two different instructions. -- */
+  .packet.p1{fill:var(--yellow)}          /* instruction A → arithmetic unit */
+  .packet.p2{fill:var(--purple)}          /* instruction B → Load/Store unit */
+  .active .packet.p1{animation:pk 3s ease-in-out infinite}
+  .active .packet.p2{animation:pk 3s ease-in-out infinite}
+  @keyframes pk{                          /* one shared timeline → both fire together */
+    0%{opacity:0; offset-distance:0%}
+    8%{opacity:1; offset-distance:0%}
+    72%{opacity:1; offset-distance:100%}
+    82%{opacity:0; offset-distance:100%}
+    100%{opacity:0; offset-distance:100%}}
+
+  /* -- JS-timed pieces (space-time fill S21, reorder buffer S24): a cell/badge
+        lights when the timeline step reaches its data-at value. -- */
+  .stage[data-at]{opacity:0; transform:scale(.55); transition:opacity .35s ease, transform .35s ease}
+  .stage[data-at].lit{opacity:1; transform:none}
+  .rob-badge{opacity:0; transform:translateY(8px); transition:opacity .4s ease, transform .4s ease}
+  .rob-badge.lit{opacity:1; transform:none}
+
+  .rob{display:flex; gap:46px; justify-content:center; max-width:1200px; margin:6px auto 0}
+  .rob-col{flex:1}
+  .rob-col h3{font-size:24px; margin-bottom:12px; text-align:center}
+  .rob-col.exec h3{color:var(--orange)} .rob-col.commit h3{color:var(--green)}
+  .rob-row{display:flex; align-items:center; gap:14px; background:var(--surface); border:2px solid var(--border);
+    border-radius:12px; padding:12px 16px; margin:10px 0; font-family:Consolas,monospace; font-size:22px; font-weight:700}
+  .rob-row .nm{flex:1}
+  .rob-badge.done{color:var(--ink); background:var(--orange); border-radius:16px; padding:3px 14px; font-size:18px; font-weight:800}
+  .rob-badge.ok{color:var(--ink); background:var(--green); border-radius:16px; padding:3px 14px; font-size:18px; font-weight:800}
+
+  /* ▲▲▲  end EDITS additions  ▲▲▲ */
+
+</style>
+</head>
+
+<body>
+<div id="deck">
+
+  <!-- ==================== 0 · TITLE ==================== -->
+  <section class="slide title-slide active" data-chip="">
+    <div class="unit">UNIT 3</div>
+    <h1>Pipelining</h1>
+    <div class="part">Complete Classroom Deck · CO3</div>
+    <div class="course">Computer Organization and Architecture &nbsp;·&nbsp; CSE23CT201</div>
+    <div class="fac">Sri Ramachandra Faculty of Engineering and Technology</div>
+    <div class="bar"></div>
+  </section>
+
+  <!-- ==================== 0b · LEARNING OBJECTIVES ==================== -->
+  <section class="slide" data-chip="Objectives">
+    <h2>What you'll be able to do</h2>
+    <div class="foothold"><span class="lbl">CO3 ·</span> Learn the concept of pipelining for consistent execution of
+      instructions with minimum hazards. This unit follows <b>Hamacher, Chapter 6</b>.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">Explain how pipelining <b>overlaps</b> the execution of instructions to raise throughput.</li>
+        <li class="frag">Identify <b>data</b>, <b>structural</b> and <b>control</b> hazards, and the techniques that resolve them.</li>
+        <li class="frag">Evaluate pipeline <b>performance</b> — speedup, and the penalties that pull it below the ideal.</li>
+        <li class="frag">Describe how pipelining <b>shapes the instruction set</b>, the datapath and control.</li>
+        <li class="frag">Outline <b>superscalar</b> operation — issuing more than one instruction per cycle.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ==================== CHAPTER 1 · THE PIPELINING IDEA ==================== -->
+  <section class="slide divider" data-chip="1 · The Pipelining Idea">
+    <div class="kicker">CHAPTER 1</div>
+    <div class="chno">1</div>
+    <div class="chtitle">The Pipelining Idea</div>
+    <div class="hook">Four loads of laundry, one washer and one dryer. Must the second load really wait for the first
+      to be washed, dried and folded before it can even start?</div>
+    <div class="sec">Hamacher §6.1 – §6.2 · Basic concept &amp; pipeline organization</div>
+  </section>
+
+  <section class="slide" data-chip="1 · The Pipelining Idea">
+    <h2>One instruction, five steps</h2>
+    <div class="foothold"><span class="lbl">Recall ·</span> In <b>Unit 2</b> we ran a single instruction as
+      Fetch → Decode → Compute → Memory → Write. We revisit it — now watching the hardware between the steps.</div>
+    <div class="body">
+      <div class="stage-area" style="height:150px">
+        <div class="rowlab" style="top:46px">I<sub>j</sub></div>
+        <div class="frag stage sF words" style="left:150px; top:46px">Fetch</div>
+        <div class="frag stage sD words" style="left:278px; top:46px">Decode</div>
+        <div class="frag stage sC words" style="left:406px; top:46px">Compute</div>
+        <div class="frag stage sM words" style="left:534px; top:46px">Memory</div>
+        <div class="frag stage sW words" style="left:662px; top:46px">Write</div>
+        <div class="frag marker" style="left:806px; top:54px; width:360px; text-align:left; color:var(--muted); font-style:italic">
+          Five steps, <b class="em">five different hardware units</b> — one busy at a time.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="1 · The Pipelining Idea">
+    <h2>One at a time wastes the machine</h2>
+    <div class="foothold"><span class="lbl">The gap ·</span> We can run one instruction correctly. But while it
+      <b>Decodes</b>, the Fetch hardware sits <b>idle</b> — and the next instruction can't even begin until this one finishes.</div>
+    <div class="body">
+      <div class="stage-area" style="height:250px">
+        <div class="time-arrow" style="left:1090px">Time →</div>
+        <div class="rowlab" style="top:70px">I<sub>1</sub></div>
+        <div class="frag stage sF" style="left:150px; top:70px">F</div><div class="frag stage sD" style="left:278px; top:70px">D</div>
+        <div class="frag stage sC" style="left:406px; top:70px">C</div><div class="frag stage sM" style="left:534px; top:70px">M</div>
+        <div class="frag stage sW" style="left:662px; top:70px">W</div>
+        <div class="frag rowlab slidein" style="top:150px">I<sub>2</sub></div>
+        <div class="frag stage sF slidein" style="left:790px; top:150px">F</div><div class="frag stage sD slidein" style="left:918px; top:150px">D</div>
+        <div class="frag stage sC slidein" style="left:1046px; top:150px">C</div>
+        <div class="frag marker" style="left:1156px; top:158px; width:44px; color:var(--muted); font-size:34px; font-weight:800">…</div>
+        <div class="frag marker" style="left:150px; top:222px; width:1000px; text-align:left; color:var(--muted); font-style:italic">
+          2 instructions need <b class="emr">10 cycles</b> — and <b class="emr">4 of 5</b> units idle every cycle.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="1 · The Pipelining Idea">
+    <h2>The assembly line</h2>
+    <div class="foothold"><span class="lbl">Analogy ·</span> A car takes <b>hours</b> to build, yet one rolls off the line
+      every <b>few minutes</b>. The trick isn't a faster station — it's never letting a station stand idle. That is pipelining.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">An assembly line has dedicated stations: body, paint, engine, test.</li>
+        <li class="frag">While one car is painted, the next is having its body built — <b class="emg">every station always busy</b>.</li>
+        <li class="frag">A processor does the same: while I<sub>j</sub> decodes, fetch I<sub>j+1</sub>; while I<sub>j</sub> computes, decode I<sub>j+1</sub>, fetch I<sub>j+2</sub>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Interactive sim · WITHOUT pipelining -->
+  <section class="slide" id="anim-nopipe" data-chip="1 · The Pipelining Idea">
+    <h2>Interactive: without pipelining</h2>
+    <div class="foothold"><span class="lbl">You drive ·</span> Pick an instruction and <b>issue</b> it, then step the clock.
+      Only <b>one</b> instruction fits — try issuing a second before it exits and see what happens. 😎</div>
+    <div class="body">
+      <div class="pulse-counter">Clock pulse <span class="pnum">0</span></div>
+      <div class="sim">
+        <div class="sim-controls">
+          <span class="lab">Instruction:<select class="sim-select"></select></span>
+          <button class="sim-btn primary sim-issue">＋ Issue instruction</button>
+          <button class="sim-btn pulse sim-pulse">⏭ Next clock pulse</button>
+          <button class="sim-btn sim-reset">↺ Reset</button>
+        </div>
+        <div class="cartoon-stage"></div>
+        <div class="sim-msg"></div>
+      </div>
+      <div class="clockbar-wrap"><div class="clockbar"></div></div>
+    </div>
+  </section>
+
+  <!-- Interactive sim · WITH pipelining -->
+  <section class="slide" id="anim-pipe" data-chip="1 · The Pipelining Idea">
+    <h2>Interactive: with pipelining</h2>
+    <div class="foothold"><span class="lbl">You drive ·</span> Issue a <b>new instruction every pulse</b>. Pick one that
+      <b>depends</b> on a previous result and watch it refuse to move until the value is ready. 🎉</div>
+    <div class="body">
+      <div class="pulse-counter">Clock pulse <span class="pnum">0</span></div>
+      <div class="sim">
+        <div class="sim-controls">
+          <span class="lab">Instruction:<select class="sim-select"></select></span>
+          <button class="sim-btn primary sim-issue">＋ Issue instruction</button>
+          <button class="sim-btn pulse sim-pulse">⏭ Next clock pulse</button>
+          <button class="sim-btn sim-reset">↺ Reset</button>
+        </div>
+        <div class="cartoon-stage"></div>
+        <div class="sim-msg"></div>
+      </div>
+      <div class="clockbar-wrap"><div class="clockbar"></div></div>
+    </div>
+  </section>
+
+  <!-- Fig 6.1 -->
+  <section class="slide" data-chip="1 · The Pipelining Idea">
+    <h2>Overlap — the ideal case</h2>
+    <div class="foothold"><span class="lbl">The idea ·</span> Once one instruction leaves a stage, the next flows straight in.
+      Feed in <b>five</b> instructions and by <b>clock cycle 5</b> the pipeline is full — <b>all five units work at once</b>.</div>
+    <div class="body">
+      <!-- Steady-state fill: 5 instructions (rows) × 9 clock cycles (columns).
+           leftOf(c) = 110 + (c-1)*118. Instruction r (0..4) is in stage k during
+           cycle c = r+k+1, so its active stage always sits in column c — which is
+           why at cycle 5 one cell of EVERY row lines up in the same column: the
+           pipeline's steady state. Rows reveal one per click (the staircase builds
+           up); the yellow .s9ring reveals LAST around the cycle-5 column. -->
+      <div class="stage-area s9area">
+        <div class="cyc-num" style="left:0; top:2px; width:96px; color:var(--muted); font-weight:700">cycle →</div>
+        <div class="cyc-num" style="left:110px">1</div><div class="cyc-num" style="left:228px">2</div><div class="cyc-num" style="left:346px">3</div>
+        <div class="cyc-num" style="left:464px">4</div><div class="cyc-num" style="left:582px">5</div><div class="cyc-num" style="left:700px">6</div>
+        <div class="cyc-num" style="left:818px">7</div><div class="cyc-num" style="left:936px">8</div><div class="cyc-num" style="left:1054px">9</div>
+
+        <!-- Row I_j (issued cycle 1) -->
+        <div class="frag slidein" style="position:absolute; inset:0">
+          <div class="s9lab" style="top:96px">I<sub>j</sub></div>
+          <div class="s9cell sF" style="left:110px; top:84px">Fetch</div><div class="s9cell sD" style="left:228px; top:84px">Decode</div><div class="s9cell sC" style="left:346px; top:84px">Compute</div><div class="s9cell sM" style="left:464px; top:84px">Memory</div><div class="s9cell sW" style="left:582px; top:84px">Write</div>
+        </div>
+        <!-- Row I_j+1 (issued cycle 2) -->
+        <div class="frag slidein" style="position:absolute; inset:0">
+          <div class="s9lab" style="top:158px">I<sub>j+1</sub></div>
+          <div class="s9cell sF" style="left:228px; top:146px">Fetch</div><div class="s9cell sD" style="left:346px; top:146px">Decode</div><div class="s9cell sC" style="left:464px; top:146px">Compute</div><div class="s9cell sM" style="left:582px; top:146px">Memory</div><div class="s9cell sW" style="left:700px; top:146px">Write</div>
+        </div>
+        <!-- Row I_j+2 (issued cycle 3) -->
+        <div class="frag slidein" style="position:absolute; inset:0">
+          <div class="s9lab" style="top:220px">I<sub>j+2</sub></div>
+          <div class="s9cell sF" style="left:346px; top:208px">Fetch</div><div class="s9cell sD" style="left:464px; top:208px">Decode</div><div class="s9cell sC" style="left:582px; top:208px">Compute</div><div class="s9cell sM" style="left:700px; top:208px">Memory</div><div class="s9cell sW" style="left:818px; top:208px">Write</div>
+        </div>
+        <!-- Row I_j+3 (issued cycle 4) — one of the two NEW instructions -->
+        <div class="frag slidein" style="position:absolute; inset:0">
+          <div class="s9lab" style="top:282px">I<sub>j+3</sub></div>
+          <div class="s9cell sF" style="left:464px; top:270px">Fetch</div><div class="s9cell sD" style="left:582px; top:270px">Decode</div><div class="s9cell sC" style="left:700px; top:270px">Compute</div><div class="s9cell sM" style="left:818px; top:270px">Memory</div><div class="s9cell sW" style="left:936px; top:270px">Write</div>
+        </div>
+        <!-- Row I_j+4 (issued cycle 5) — the second NEW instruction; its Fetch completes the cycle-5 column -->
+        <div class="frag slidein" style="position:absolute; inset:0">
+          <div class="s9lab" style="top:344px">I<sub>j+4</sub></div>
+          <div class="s9cell sF" style="left:582px; top:332px">Fetch</div><div class="s9cell sD" style="left:700px; top:332px">Decode</div><div class="s9cell sC" style="left:818px; top:332px">Compute</div><div class="s9cell sM" style="left:936px; top:332px">Memory</div><div class="s9cell sW" style="left:1054px; top:332px">Write</div>
+        </div>
+
+        <!-- Revealed LAST: rounded highlight around the cycle-5 column = all five units busy. -->
+        <div class="frag s9ring" style="left:574px; top:76px; width:116px; height:312px">
+          <span class="cap">Cycle 5 — all 5 units busy ✓</span>
+        </div>
+      </div>
+      <div class="diag-caption">Figure 6.1 — Steady state: from cycle 5 on, the pipe is full — <span style="color:var(--green); font-weight:700">one instruction completes every cycle</span> while every unit stays busy.</div>
+    </div>
+  </section>
+
+  <!-- Fig 6.2 -->
+  <section class="slide" data-chip="1 · The Pipelining Idea">
+    <h2>Pipeline organization — the five stages as hardware</h2>
+    <div class="foothold"><span class="lbl">Under the hood ·</span> Each stage is <b>separate hardware</b>. Between them sit
+      registers — the <b>interstage buffers</b> B1–B4 — that latch one instruction's work and hand it to the next stage.</div>
+    <div class="body" style="align-items:center">
+      <svg class="dp" width="530" height="346" viewBox="0 0 720 470">
+        <g class="frag"><rect class="box" x="270" y="8" width="180" height="46" rx="6"/><text x="360" y="37" text-anchor="middle" font-size="20" font-weight="700">Instruction fetch</text></g>
+        <g class="frag"><rect class="buf" x="220" y="70" width="280" height="24" rx="4"/><text x="360" y="87" text-anchor="middle" font-size="16">Interstage buffer B1</text><path class="wire" d="M360,54 V70"/></g>
+        <g class="frag">
+          <rect class="stagebox" x="150" y="110" width="150" height="52" rx="6"/><text x="225" y="141" text-anchor="middle" font-size="18" font-weight="700">Register file</text>
+          <rect class="stagebox" x="420" y="110" width="150" height="52" rx="6"/><text x="495" y="135" text-anchor="middle" font-size="16" font-weight="700">Instruction</text><text x="495" y="153" text-anchor="middle" font-size="16" font-weight="700">decode</text>
+          <path class="wire" d="M300,82 H495 M225,94 V110 M495,94 V110"/></g>
+        <g class="frag"><rect class="buf" x="150" y="178" width="420" height="24" rx="4"/><text x="360" y="195" text-anchor="middle" font-size="16">Interstage buffer B2</text><path class="wire" d="M225,162 V178 M495,162 V178"/></g>
+        <g class="frag"><rect class="stagebox" x="150" y="218" width="150" height="50" rx="6"/><text x="225" y="248" text-anchor="middle" font-size="18" font-weight="700">Compute</text><path class="wire" d="M225,202 V218"/></g>
+        <g class="frag"><rect class="buf" x="150" y="284" width="420" height="24" rx="4"/><text x="360" y="301" text-anchor="middle" font-size="16">Interstage buffer B3</text><path class="wire" d="M225,268 V284"/></g>
+        <g class="frag"><rect class="stagebox" x="150" y="324" width="150" height="50" rx="6"/><text x="225" y="348" text-anchor="middle" font-size="17" font-weight="700">Memory access</text><path class="wire" d="M225,308 V324"/></g>
+        <g class="frag"><rect class="buf" x="150" y="390" width="420" height="24" rx="4"/><text x="360" y="407" text-anchor="middle" font-size="16">Interstage buffer B4</text><path class="wire" d="M225,374 V390"/></g>
+        <g class="frag"><path class="fb" d="M150,402 H70 V136 H150"/><text x="60" y="270" text-anchor="middle" font-size="14" fill="#3FB950" transform="rotate(-90 60 270)">Write result → register file</text></g>
+      </svg>
+    </div>
+    <div class="diag-caption">Figure 6.2 — A five-stage pipeline built from stage hardware and interstage buffers.</div>
+  </section>
+
+  <section class="slide" data-chip="1 · The Pipelining Idea">
+    <h2>What each buffer hands forward</h2>
+    <div class="foothold"><span class="lbl">Follow the work ·</span> Each buffer carries exactly what the <b>next</b> stage
+      needs — data, register identifiers, and the <b>control signals</b> that tell that stage what to do.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b class="emt">B1</b> → the newly fetched instruction, ready to decode.</li>
+        <li class="frag"><b class="emt">B2</b> → operands read from registers, the immediate value, and the <b>control signals</b> for later stages.</li>
+        <li class="frag"><b class="emt">B3</b> → the ALU result (or the address / data for a memory access).</li>
+        <li class="frag"><b class="emt">B4</b> → the value to be written back into the register file.</li>
+        <li class="frag dim">Control signals travel <b>with</b> the instruction — this is <b class="emp">pipelined control</b> (revisited in Chapter 6).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="1 · The Pipelining Idea">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="foothold" style="margin-top:18px"><span class="lbl">Predict ·</span> Before we count — trust the staircase you just saw.</div>
+    <div class="body">
+      <div class="ask-q">3 instructions, 5 stages each. How many clock cycles —<br>running <b class="emr">one at a time</b>, versus <b class="em">pipelined</b>?</div>
+      <div class="frag ask-a"><span class="q2">Sequential:</span> 3 × 5 = <b>15 cycles</b> &nbsp;·&nbsp; <span class="q2">Pipelined:</span> 5 + (3 − 1) = <b>7 cycles</b></div>
+    </div>
+  </section>
+
+  <section class="slide key-slide" data-chip="1 · The Pipelining Idea">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Pipelining does <span class="hl">not</span> make one instruction faster.<br>It raises <span class="hlg">throughput</span> by overlapping many, across dedicated hardware stages.</div>
+  </section>
+
+  <!-- ==================== CHAPTER 2 · PIPELINE PERFORMANCE ==================== -->
+  <section class="slide divider" data-chip="2 · Pipeline Performance">
+    <div class="kicker">CHAPTER 2</div>
+    <div class="chno">2</div>
+    <div class="chtitle">Pipeline Performance</div>
+    <div class="hook">If overlapping k stages lets a new instruction finish every cycle, how much faster is that,
+      really — and what stops us reaching the full k-fold gain?</div>
+    <div class="sec">Hamacher §6.8 · Performance evaluation (the basics)</div>
+  </section>
+
+  <section class="slide" data-chip="2 · Pipeline Performance">
+    <h2>Counting the cycles</h2>
+    <div class="foothold"><span class="lbl">The payoff ·</span> A pipeline of <b>k</b> stages fills up in k cycles, then finishes
+      <b>one instruction per cycle</b>. Put numbers to the staircase.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b class="em">k</b> stages, <b class="em">n</b> instructions → <b>k + (n − 1)</b> cycles &nbsp;<span class="dim">versus</span>&nbsp; <b>k × n</b> with no overlap.</li>
+        <li class="frag">Concrete: n = 100, k = 5 → <b class="emg">104</b> cycles instead of <b class="emr">500</b> &nbsp;≈&nbsp; <b class="emg">4.8× faster</b>.</li>
+        <li class="frag">Speedup approaches <b class="em">k</b> (the number of stages) as <b class="em">n</b> grows large.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="2 · Pipeline Performance">
+    <h2>The basic performance equation</h2>
+    <div class="foothold"><span class="lbl">Formally ·</span> Execution time depends on how many instructions run, the average
+      cycles each takes, and the clock rate. Throughput is instructions completed per second.</div>
+    <div class="body eqctr">
+      <div class="frag eqn"><span class="var">T</span> = ( <span class="var">N</span> × <span class="var">S</span> ) / <span class="var">R</span>
+        <span class="note">N = instructions · S = average cycles per instruction · R = clock rate</span></div>
+      <div class="frag eqn">Throughput&nbsp; <span class="var">P</span><span class="sub">np</span> = <span class="var">R</span> / <span class="var">S</span>
+        &nbsp;→&nbsp; ideal pipeline (S = 1): &nbsp;<span class="var">P</span><span class="sub">p</span> = <span class="var">R</span>
+        <span class="note">Non-pipelined S = 5; ideal pipelining drops S to 1 → up to a 5× throughput gain.</span></div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="2 · Pipeline Performance">
+    <h2>How deep should the pipeline be?</h2>
+    <div class="foothold"><span class="lbl">Diminishing returns ·</span> An n-stage pipeline promises up to n× throughput.
+      So why not 50 stages? Each extra stage brings costs that scale against depth.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b class="emg">More stages</b> → less work per stage → shorter clock period → higher clock rate.</li>
+        <li class="frag"><b class="emr">But</b> more instructions in flight → more dependencies → more stalls.</li>
+        <li class="frag"><b class="emr">And</b> the branch penalty grows if the decision moves to a later stage.</li>
+        <li class="frag">The clock is ultimately limited by the <b>slowest basic operation</b> (usually the ALU). Real designs: ~10–20 stages.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide key-slide" data-chip="2 · Pipeline Performance">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Ideal speedup approaches the <span class="hl">number of stages</span>.<br>
+      Every stall pulls the real gain <span class="hlg">below</span> that ideal — which is what the rest of the unit is about.</div>
+  </section>
+
+  <!-- ==================== CHAPTER 3 · DATA HAZARDS ==================== -->
+  <section class="slide divider" data-chip="3 · Data Hazards">
+    <div class="kicker">CHAPTER 3</div>
+    <div class="chno">3</div>
+    <div class="chtitle">Data Hazards</div>
+    <div class="hook">The staircase assumed every instruction is independent. But real code chains — one instruction's
+      result feeds the next. What happens when the value isn't ready in time?</div>
+    <div class="sec">Hamacher §6.3 – §6.5 · Data dependencies, forwarding, memory delays</div>
+  </section>
+
+  <section class="slide" data-chip="3 · Data Hazards">
+    <h2>A dependency between neighbours</h2>
+    <div class="foothold"><span class="lbl">The catch ·</span> The destination of one instruction is a source of the next.
+      Register <b>R2</b> carries data from the Add to the Subtract — a <b>data dependency</b>.</div>
+    <div class="body">
+      <div style="max-width:1150px">
+        <div class="frag instr-line">Add&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="reg">R2</span>, R3, #100 <span class="rtn">&nbsp;&nbsp; R2 ← [R3] + 100</span></div>
+        <div class="frag instr-line">Subtract&nbsp;R9, <span class="reg">R2</span>, #30 <span class="rtn">&nbsp;&nbsp; R9 ← [R2] − 30</span></div>
+        <ul class="points" style="margin-top:22px">
+          <li class="frag"><span class="reg">R2</span> is <b class="emp">produced</b> by the Add and <b class="emp">consumed</b> by the Subtract.</li>
+          <li class="frag">The Add writes R2 in cycle 5, but the Subtract reads it in cycle 3 — a read-before-write. Fine when run one at a time; the trouble starts when we overlap them…</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="3 · Data Hazards">
+    <h2>The write comes too late — so we stall</h2>
+    <div class="foothold"><span class="lbl">Trace it ·</span> Any condition that forces the pipeline to wait is a <b>hazard</b>.
+      This one, from a data dependency, is a <b>data hazard</b>. The simplest cure: freeze the Subtract until R2 is ready.</div>
+    <div class="body">
+      <div class="stage-area tall">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div><div class="cyc-num" style="left:1046px">8</div>
+        <div class="rowlab" style="top:88px; font-size:22px">Add</div>
+        <div class="stage sF" style="left:150px; top:78px">F</div><div class="stage sD" style="left:278px; top:78px">D</div><div class="stage sC" style="left:406px; top:78px">C</div><div class="stage sM" style="left:534px; top:78px">M</div><div class="stage sW" style="left:662px; top:78px">W</div>
+        <div class="rowlab" style="top:178px; font-size:22px">Sub</div>
+        <div class="stage sF" style="left:278px; top:168px">F</div><div class="stage sD" style="left:406px; top:168px">D</div>
+        <div class="frag stage sBubble" style="left:534px; top:168px">bubble</div><div class="frag stage sBubble" style="left:662px; top:168px">bubble</div>
+        <div class="frag stage sC" style="left:790px; top:168px">C</div><div class="frag stage sM" style="left:918px; top:168px">M</div><div class="frag stage sW" style="left:1046px; top:168px">W</div>
+        <div class="frag marker" style="left:470px; top:250px; width:340px; color:var(--red)">▲ &nbsp;3-cycle stall (bubbles)</div>
+        <div class="frag marker" style="left:850px; top:250px; width:320px; color:var(--green)">▲ &nbsp;R2 read safely now — cycle 6</div>
+      </div>
+      <div class="diag-caption">Figure 6.3 — Pipeline stall due to a data dependency.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="3 · Data Hazards">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="foothold" style="margin-top:18px"><span class="lbl">Think ·</span> Look at <b>when</b> the answer exists, not when it gets written.</div>
+    <div class="body">
+      <div class="ask-q">The Add's ALU finishes computing R2 by the end of cycle 3.<br>The Subtract needs it in Compute, cycle 4. Must we really stall?</div>
+      <div class="frag ask-a"><b>No.</b> <span class="q2">The value sits at the ALU output after cycle 3 — <b style="color:var(--green)">route it straight across</b> to the Subtract, without waiting for the register write.</span></div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="3 · Data Hazards">
+    <h2>Operand forwarding — no stall at all</h2>
+    <div class="foothold"><span class="lbl">The fix ·</span> Take the Add's result the moment the ALU produces it (end of cycle 3)
+      and feed it directly into the Subtract's ALU input in cycle 4. <b>Zero</b> stall cycles.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div><div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div>
+        <div class="rowlab" style="top:88px; font-size:22px">Add</div>
+        <div class="frag slidein stage sF" style="left:150px; top:78px">F</div><div class="frag slidein stage sD" style="left:278px; top:78px">D</div><div class="frag slidein stage sC" style="left:406px; top:78px">C</div><div class="frag slidein stage sM" style="left:534px; top:78px">M</div><div class="frag slidein stage sW" style="left:662px; top:78px">W</div>
+        <div class="rowlab" style="top:178px; font-size:22px">Sub</div>
+        <div class="frag slidein stage sF" style="left:278px; top:168px">F</div><div class="frag slidein stage sD" style="left:406px; top:168px">D</div><div class="frag slidein stage sC" style="left:534px; top:168px">C</div><div class="frag slidein stage sM" style="left:662px; top:168px">M</div><div class="frag slidein stage sW" style="left:790px; top:168px">W</div>
+        <svg class="fwd-svg frag" width="1200" height="340" viewBox="0 0 1200 340">
+          <defs><marker id="ahf" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3FB950"/></marker></defs>
+          <path d="M464,138 C500,158 540,150 585,166" stroke="#3FB950" stroke-width="4" fill="none" marker-end="url(#ahf)"/>
+          <text x="452" y="258" fill="#3FB950" font-size="21" font-weight="700">forward the ALU result — no wait</text>
+        </svg>
+      </div>
+      <div class="diag-caption">Figure 6.4 — Avoiding the stall by operand forwarding.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="3 · Data Hazards">
+    <h2>The hardware that forwards</h2>
+    <div class="foothold"><span class="lbl">Under the hood ·</span> The ALU result is captured in register <b>RZ</b>. Wires from RZ
+      back to the ALU inputs, plus multiplexers to select them, are all forwarding needs.</div>
+    <div class="body" style="align-items:center">
+      <svg class="dp" width="640" height="376" viewBox="0 0 720 420">
+        <rect class="box" x="250" y="12" width="220" height="80" rx="6"/><text x="360" y="47" text-anchor="middle" font-size="22" font-weight="700">Register file</text>
+        <text x="285" y="86" text-anchor="middle" font-size="18">A</text><text x="435" y="86" text-anchor="middle" font-size="18">B</text>
+        <rect class="box" x="240" y="130" width="90" height="42" rx="5"/><text x="285" y="157" text-anchor="middle" font-size="20" font-weight="700">RA</text>
+        <rect class="box" x="390" y="130" width="90" height="42" rx="5"/><text x="435" y="157" text-anchor="middle" font-size="20" font-weight="700">RB</text>
+        <path class="wire" d="M285,92 V130"/><path class="wire" d="M435,92 V130"/>
+        <text x="612" y="196" font-size="16" fill="#C3D1E0">Immediate</text>
+        <polygon class="box" points="250,210 330,210 316,250 264,250"/><text x="290" y="235" text-anchor="middle" font-size="16">MuxA</text>
+        <polygon class="box" points="392,210 500,210 486,250 406,250"/><text x="446" y="235" text-anchor="middle" font-size="16">MuxB</text>
+        <path class="wire" d="M285,172 V210"/><path class="wire" d="M435,172 V210"/><path class="wire" d="M600,196 H470 M470,196 V210"/>
+        <polygon class="alu" points="255,290 465,290 430,360 290,360"/><text x="360" y="325" text-anchor="middle" font-size="22" font-weight="700" fill="#58A6FF">ALU</text>
+        <text x="292" y="286" font-size="15" fill="#C3D1E0">InA</text><text x="410" y="286" font-size="15" fill="#C3D1E0">InB</text>
+        <path class="wire" d="M290,250 V290"/><path class="wire" d="M446,250 V290"/>
+        <rect class="box" x="320" y="378" width="80" height="36" rx="5"/><text x="360" y="402" text-anchor="middle" font-size="20" font-weight="700" fill="#3FB950">RZ</text>
+        <path class="wire" d="M360,360 V378"/>
+        <g class="frag">
+          <path class="fb" d="M400,396 H650 V182 H300 V206" marker-end="url(#ah2)"/><path class="fb" d="M452,182 V206" marker-end="url(#ah3)"/>
+          <defs>
+            <marker id="ah2" markerWidth="12" markerHeight="12" refX="4" refY="6" orient="auto"><path d="M0,0 L8,0 L4,8 Z" fill="#3FB950"/></marker>
+            <marker id="ah3" markerWidth="12" markerHeight="12" refX="4" refY="6" orient="auto"><path d="M0,0 L8,0 L4,8 Z" fill="#3FB950"/></marker>
+          </defs>
+          <text x="498" y="286" font-size="17" font-weight="700" fill="#3FB950">RZ forwarded</text><text x="498" y="308" font-size="17" font-weight="700" fill="#3FB950">to ALU inputs</text>
+        </g>
+      </svg>
+    </div>
+    <div class="diag-caption">Figure 6.5 — Datapath modified so RZ feeds back to the ALU inputs.</div>
+  </section>
+
+  <section class="slide" data-chip="3 · Data Hazards">
+    <h2>Handling it in software</h2>
+    <div class="foothold"><span class="lbl">Another route ·</span> If the hardware won't forward, the <b>compiler</b> must create the delay —
+      by inserting three <b>NOP</b>s, or better, by reordering useful work into those slots.</div>
+    <div class="body" style="justify-content:flex-start">
+      <div class="frag codebox" style="margin-top:4px">
+        <div class="instr-line">Add&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="reg">R2</span>, R3, #100</div>
+        <div class="instr-line nop">NOP</div><div class="instr-line nop">NOP</div><div class="instr-line nop">NOP</div>
+        <div class="instr-line">Subtract&nbsp;R9, <span class="reg">R2</span>, #30</div>
+        <div class="cap">(a) Three NOPs give R2 time to be written before the Subtract reads it.</div>
+      </div>
+      <ul class="points" style="margin-top:16px">
+        <li class="frag">The three NOPs create the same delay as the hardware stall — simple, but they <b class="emr">grow the code</b> and waste cycles.</li>
+        <li class="frag">Better: the compiler <b class="emp">reorders independent instructions</b> into those slots — <b class="emg">real work</b>, no waste. This is <b>instruction scheduling</b>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="3 · Data Hazards">
+    <h2>Memory delays — a cache miss stalls the pipe</h2>
+    <div class="foothold"><span class="lbl">Slower still ·</span> If a Fetch or Load misses the cache, memory takes <b>many cycles</b>.
+      Every following instruction is held until the word arrives — a memory-induced stall.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+        <div class="rowlab" style="top:88px; font-size:20px">I<sub>j</sub>: Load</div>
+        <div class="frag slidein stage sF" style="left:150px; top:78px">F</div><div class="frag slidein stage sD" style="left:278px; top:78px">D</div><div class="frag slidein stage sC" style="left:406px; top:78px">C</div>
+        <div class="frag stage sM" style="left:534px; top:78px; width:372px; background:var(--red)">Memory — cache miss (3 cycles)</div>
+        <div class="frag slidein stage sW" style="left:918px; top:78px">W</div>
+        <div class="rowlab" style="top:168px; font-size:20px">I<sub>j+1</sub></div>
+        <div class="frag slidein stage sF" style="left:278px; top:158px">F</div><div class="frag slidein stage sD" style="left:406px; top:158px">D</div>
+        <div class="frag stage sBubble" style="left:534px; top:158px; width:244px">stalled</div>
+        <div class="frag slidein stage sC" style="left:790px; top:158px">C</div><div class="frag slidein stage sM" style="left:918px; top:158px">M</div>
+        <div class="frag marker" style="left:534px; top:246px; width:372px; color:var(--red)">▲ following instructions wait for the miss</div>
+      </div>
+      <div class="diag-caption">Figure 6.7 — A cache miss delays the pipeline (shown as 3 cycles; real misses cost 10+).</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="3 · Data Hazards">
+    <h2>A load's value arrives one stage later</h2>
+    <div class="foothold"><span class="lbl">The load-use case ·</span> A Load reads its data in the <b>Memory</b> stage — a whole stage
+      after the ALU. Forwarding still helps, but it can't beat time: <b>one</b> stall cycle is unavoidable.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+        <div class="rowlab" style="top:88px; font-size:20px">Load R2,(R3)</div>
+        <div class="frag slidein stage sF" style="left:150px; top:78px">F</div><div class="frag slidein stage sD" style="left:278px; top:78px">D</div><div class="frag slidein stage sC" style="left:406px; top:78px">C</div><div class="frag slidein stage sM" style="left:534px; top:78px">M</div><div class="frag slidein stage sW" style="left:662px; top:78px">W</div>
+        <div class="rowlab" style="top:178px; font-size:20px">Sub R9,R2</div>
+        <div class="frag slidein stage sF" style="left:278px; top:168px">F</div><div class="frag slidein stage sD" style="left:406px; top:168px">D</div>
+        <div class="frag stage sBubble" style="left:534px; top:168px">bubble</div>
+        <div class="frag stage sC" style="left:662px; top:168px">C</div><div class="frag stage sM" style="left:790px; top:168px">M</div><div class="frag stage sW" style="left:918px; top:168px">W</div>
+        <svg class="fwd-svg frag" width="1200" height="340" viewBox="0 0 1200 340">
+          <defs><marker id="ahL" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3FB950"/></marker></defs>
+          <path d="M592,138 C640,158 670,150 713,166" stroke="#3FB950" stroke-width="4" fill="none" marker-end="url(#ahL)"/>
+          <text x="760" y="258" fill="#3FB950" font-size="21" font-weight="700">forward from Memory</text>
+        </svg>
+        <div class="frag marker" style="left:470px; top:238px; width:260px; color:var(--red)">▲ one unavoidable stall</div>
+      </div>
+      <div class="diag-caption">Figure 6.8 — A load-use hazard: forwarding still needs a single-cycle stall.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="3 · Data Hazards">
+    <h2>Worked example — forwarding two results</h2>
+    <div class="foothold"><span class="lbl">Example 6.1 ·</span> <span style="font-family:Consolas,monospace; font-size:22px">Add R4,R3,R2 · Or R7,R6,R5 · Subtract R8,R7,R4</span>.
+      The Subtract needs <b>both</b> R4 (from Add) and R7 (from Or) — each forwarded from a different producer.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+        <div class="rowlab" style="top:88px; font-size:20px">Add R4,R3,R2</div>
+        <div class="frag slidein stage sF" style="left:150px; top:78px">F</div><div class="frag slidein stage sD" style="left:278px; top:78px">D</div><div class="frag slidein stage sC" style="left:406px; top:78px">C</div><div class="frag slidein stage sM" style="left:534px; top:78px">M</div><div class="frag slidein stage sW" style="left:662px; top:78px">W</div>
+        <div class="rowlab" style="top:168px; font-size:20px">Or R7,R6,R5</div>
+        <div class="frag slidein stage sF" style="left:278px; top:158px">F</div><div class="frag slidein stage sD" style="left:406px; top:158px">D</div><div class="frag slidein stage sC" style="left:534px; top:158px">C</div><div class="frag slidein stage sM" style="left:662px; top:158px">M</div><div class="frag slidein stage sW" style="left:790px; top:158px">W</div>
+        <div class="rowlab" style="top:248px; font-size:20px">Subtract R8,R7,R4</div>
+        <div class="frag slidein stage sF" style="left:406px; top:238px">F</div><div class="frag slidein stage sD" style="left:534px; top:238px">D</div><div class="frag slidein stage sC" style="left:662px; top:238px">C</div><div class="frag slidein stage sM" style="left:790px; top:238px">M</div><div class="frag slidein stage sW" style="left:918px; top:238px">W</div>
+        <svg class="fwd-svg frag" width="1200" height="340" viewBox="0 0 1200 340">
+          <defs>
+            <marker id="ahG" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#3FB950"/></marker>
+            <marker id="ahT" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#39D0D8"/></marker>
+          </defs>
+          <!-- R7 forwarded from Or (row 2) into the Subtract's Compute -->
+          <path d="M600,214 C630,224 660,230 690,236" stroke="#3FB950" stroke-width="3.5" fill="none" marker-end="url(#ahG)"/>
+          <!-- R4 forwarded from Add (row 1, via RY) into the Subtract's Compute -->
+          <path d="M660,132 C705,178 725,200 748,236" stroke="#39D0D8" stroke-width="3.5" fill="none" marker-end="url(#ahT)"/>
+          <text x="360" y="308" fill="#3FB950" font-size="18" font-weight="700">R7 forwarded from Or</text>
+          <text x="812" y="308" fill="#39D0D8" font-size="18" font-weight="700">R4 forwarded from Add</text>
+        </svg>
+      </div>
+      <div class="diag-caption">Figure 6.15 — Two operands forwarded into one instruction; no stall required.</div>
+    </div>
+  </section>
+
+  <section class="slide key-slide" data-chip="3 · Data Hazards">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">A data hazard has a <span class="hlg">toolkit</span>:<br>
+      forward in hardware, stall when you must, or <span class="hl">reschedule</span> in software.</div>
+    <div class="key-sub">Forwarding removes most data-hazard stalls — but a <b>load-use</b> pair, and any <b>cache miss</b>, still cost cycles.</div>
+  </section>
+
+  <!-- ==================== CHAPTER 4 · INSTRUCTION (CONTROL) HAZARDS ==================== -->
+  <section class="slide divider" data-chip="4 · Instruction Hazards">
+    <div class="kicker">CHAPTER 4</div>
+    <div class="chno">4</div>
+    <div class="chtitle">Instruction (Control) Hazards</div>
+    <div class="hook">A data hazard made one instruction wait. A branch is nastier: the pipeline doesn't even know
+      <em>which</em> instruction to fetch next — so it may fetch the wrong ones entirely.</div>
+    <div class="sec">Hamacher §6.6 · Branch delays &amp; branch prediction</div>
+  </section>
+
+  <section class="slide" data-chip="4 · Instruction Hazards">
+    <h2>The pipeline fetches ahead — and may guess wrong</h2>
+    <div class="foothold"><span class="lbl">The gap ·</span> To stay full, the pipeline fetches the <b>next in sequence</b> every cycle.
+      But a <b>branch</b> can redirect execution — so those already-fetched instructions may be wrong.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">A <b class="em">branch</b> changes which instruction runs next <span class="dim">(loops, if-else, calls)</span>.</li>
+        <li class="frag">But the branch must be <b>executed</b> before we know the outcome and the target address.</li>
+        <li class="frag">Meanwhile the pipeline has <b class="emr">already fetched</b> the instructions behind it — which must be discarded. That waste is a <b class="emr">control hazard</b>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="4 · Instruction Hazards">
+    <h2>Branch penalty — two wasted cycles</h2>
+    <div class="foothold"><span class="lbl">Trace it ·</span> If the branch is resolved in its <b>Compute</b> stage (cycle 3), two following
+      instructions have already been fetched wrongly — and must be discarded.</div>
+    <div class="body">
+      <div class="stage-area" style="height:360px">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div><div class="cyc-num" style="left:1046px">8</div>
+        <div class="rowlab" style="top:78px">I<sub>j</sub>: Branch→I<sub>k</sub></div>
+        <div class="frag slidein stage sBr" style="left:150px; top:70px">F</div><div class="frag slidein stage sBr" style="left:278px; top:70px">D</div><div class="frag slidein stage sBr" style="left:406px; top:70px">C</div>
+        <div class="rowlab" style="top:158px">I<sub>j+1</sub></div>
+        <div class="frag stage discard" style="left:278px; top:150px">F ✗</div><div class="frag stage discard" style="left:406px; top:150px">D ✗</div>
+        <div class="rowlab" style="top:238px">I<sub>j+2</sub></div>
+        <div class="frag stage discard" style="left:406px; top:230px">F ✗</div>
+        <div class="rowlab" style="top:308px">I<sub>k</sub>: target</div>
+        <div class="frag slidein stage sTgt" style="left:534px; top:300px">F</div><div class="frag slidein stage sTgt" style="left:662px; top:300px">D</div><div class="frag slidein stage sTgt" style="left:790px; top:300px">C</div><div class="frag slidein stage sTgt" style="left:918px; top:300px">M</div><div class="frag slidein stage sTgt" style="left:1046px; top:300px">W</div>
+        <div class="frag penalty-bracket" style="left:534px; top:212px; width:244px"></div>
+        <div class="frag marker" style="left:534px; top:176px; width:244px; color:var(--red)">2-cycle penalty</div>
+      </div>
+      <div class="diag-caption">Figure 6.9 — Branch penalty when the target is determined in the Compute stage.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="4 · Instruction Hazards">
+    <h2>Decide in Decode — penalty drops to one</h2>
+    <div class="foothold"><span class="lbl">The fix ·</span> Add a comparator and an adder so the branch condition <b>and</b> target are
+      worked out in the <b>Decode</b> stage. Now only <b>one</b> wrong instruction is fetched.</div>
+    <div class="body">
+      <div class="stage-area">
+        <div class="cyc-num" style="left:150px">1</div><div class="cyc-num" style="left:278px">2</div><div class="cyc-num" style="left:406px">3</div><div class="cyc-num" style="left:534px">4</div>
+        <div class="cyc-num" style="left:662px">5</div><div class="cyc-num" style="left:790px">6</div><div class="cyc-num" style="left:918px">7</div>
+        <div class="rowlab" style="top:88px">I<sub>j</sub>: Branch→I<sub>k</sub></div>
+        <div class="frag slidein stage sBr" style="left:150px; top:80px">F</div><div class="frag slidein stage sBr" style="left:278px; top:80px">D</div>
+        <div class="rowlab" style="top:168px">I<sub>j+1</sub></div>
+        <div class="frag stage discard" style="left:278px; top:160px">F ✗</div>
+        <div class="rowlab" style="top:248px">I<sub>k</sub>: target</div>
+        <div class="frag slidein stage sTgt" style="left:406px; top:240px">F</div><div class="frag slidein stage sTgt" style="left:534px; top:240px">D</div><div class="frag slidein stage sTgt" style="left:662px; top:240px">C</div><div class="frag slidein stage sTgt" style="left:790px; top:240px">M</div><div class="frag slidein stage sTgt" style="left:918px; top:240px">W</div>
+        <div class="frag penalty-bracket" style="left:406px; top:212px; width:116px"></div>
+        <div class="frag marker" style="left:352px; top:176px; width:224px; color:var(--green)">1-cycle penalty</div>
+      </div>
+      <div class="diag-caption">Figure 6.10 — Resolving the branch in Decode cuts the penalty from two cycles to one.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="4 · Instruction Hazards">
+    <h2>Conditional branches — test early too</h2>
+    <div class="foothold"><span class="lbl">One more move ·</span> For a conditional branch such as
+      <span style="font-family:Consolas,monospace; font-size:22px">Branch_if_[R5]=[R6] LOOP</span>, the <b>comparison</b> must also be done early.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">Move the <b>comparator</b> into the Decode stage — it uses the register-file outputs directly.</li>
+        <li class="frag">Now the branch decision <b>and</b> the target address are both known at the end of Decode.</li>
+        <li class="frag">This gives a common <b class="emg">one-cycle penalty</b> for <b>all</b> branch instructions.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="4 · Instruction Hazards">
+    <h2>The branch delay slot</h2>
+    <div class="foothold"><span class="lbl">Turn waste into work ·</span> The instruction right after the branch is <b>always</b> fetched anyway.
+      So let it <b>always execute</b> — and let the compiler move something useful there.</div>
+    <div class="body" style="justify-content:flex-start">
+      <div style="display:flex; align-items:center; gap:22px; margin-top:8px">
+        <div class="frag codebox" style="width:430px">
+          <div class="instr-line mv">Add&nbsp;&nbsp;R7, R8, R9</div>
+          <div class="instr-line"><span class="br">Branch_if&lt;R3=0&gt;</span> TARGET</div>
+          <div class="instr-line emr">NOP&nbsp;&nbsp;<span class="dim">← wasted slot</span></div>
+          <div class="cap">Before: a NOP wastes the slot right after the branch.</div>
+        </div>
+        <div class="frag" style="font-size:42px; color:var(--accent); font-weight:800">→</div>
+        <div class="frag codebox" style="width:430px">
+          <div class="instr-line"><span class="br">Branch_if&lt;R3=0&gt;</span> TARGET</div>
+          <div class="instr-line mv">Add&nbsp;&nbsp;R7, R8, R9 &nbsp;<span class="dim">← delay slot</span></div>
+          <div class="instr-line dim">…</div>
+          <div class="cap">After: the Add moves into the slot — always executed.</div>
+        </div>
+      </div>
+      <ul class="points" style="margin-top:16px">
+        <li class="frag"><b class="emp">Delayed branching</b>: the branch takes effect one instruction later. Compilers fill the slot usefully about <b class="emg">70%</b> of the time.</li>
+      </ul>
+    </div>
+    <div class="diag-caption" style="margin-top:2px">Figure 6.11 — Filling the branch delay slot with a useful instruction.</div>
+  </section>
+
+  <section class="slide" data-chip="4 · Instruction Hazards">
+    <h2>Static prediction — a fixed guess</h2>
+    <div class="foothold"><span class="lbl">Simplest first ·</span> Guess the <b>same way every time</b>, decided before the program runs.
+      If right, no penalty; if wrong, pay the penalty and refetch.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b>Assume not-taken:</b> keep fetching in sequence — but only ~50% right for a coin-flip branch.</li>
+        <li class="frag"><b>Use the branch direction:</b> a <b class="em">backward</b> branch (loop end) is usually <b class="emg">taken</b>; predict by the sign of the offset.</li>
+        <li class="frag">A single <b>hint bit</b> in the instruction lets the compiler say "expect taken / not-taken".</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="4 · Instruction Hazards">
+    <h2>Dynamic prediction — learn from history</h2>
+    <div class="foothold"><span class="lbl">Do better ·</span> Keep <b>2 bits</b> of history. A <b>confident</b> (strong) prediction survives one surprise —
+      it takes <b>two misses in a row</b> to flip. But from a <b>weak</b> state a single surprise jumps straight to the opposite <b>strong</b> state.</div>
+    <div class="body" style="align-items:center">
+      <!-- ================================================================
+           REDRAWN to match Hamacher Fig 6.12(b) exactly (the earlier linear
+           chain was wrong: it had LNT→LT on taken and LT→LNT on not-taken).
+           Correct 4-state transitions (BT = branch taken, BNT = not taken):
+              SNT: BT→LNT,  BNT→SNT(self)
+              LNT: BT→ST,   BNT→SNT          ← the "jump" to the opposite strong
+              LT : BT→ST,   BNT→SNT          ← the "jump" to the opposite strong
+              ST : BT→ST(self), BNT→LT
+           Predict TAKEN in {LT, ST}; predict NOT-TAKEN in {SNT, LNT}.
+           Layout is a 2×2 grid (top: SNT,LNT ; bottom: LT,ST) like the book.
+           Reveal order: nodes → taken(BT) edges → not-taken(BNT) edges.
+           ================================================================ -->
+      <svg class="fsm" width="720" height="430" viewBox="0 0 1000 560">
+        <defs><marker id="eaP" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#C3D1E0"/></marker></defs>
+
+        <!-- The four states (SNT/LNT predict not-taken = red; LT/ST predict taken = green) -->
+        <g class="frag">
+          <circle class="st-node nottaken" cx="300" cy="140" r="72"/>
+          <text x="300" y="130" text-anchor="middle" font-size="30" font-weight="800">SNT</text>
+          <text x="300" y="158" text-anchor="middle" font-size="15" fill="#C3D1E0">predict</text>
+          <text x="300" y="178" text-anchor="middle" font-size="16" fill="#F85149" font-weight="700">Not-taken</text>
+
+          <circle class="st-node nottaken" cx="700" cy="140" r="72"/>
+          <text x="700" y="130" text-anchor="middle" font-size="30" font-weight="800">LNT</text>
+          <text x="700" y="158" text-anchor="middle" font-size="15" fill="#C3D1E0">predict</text>
+          <text x="700" y="178" text-anchor="middle" font-size="16" fill="#F85149" font-weight="700">Not-taken</text>
+
+          <circle class="st-node taken" cx="300" cy="420" r="72"/>
+          <text x="300" y="410" text-anchor="middle" font-size="30" font-weight="800">LT</text>
+          <text x="300" y="438" text-anchor="middle" font-size="15" fill="#C3D1E0">predict</text>
+          <text x="300" y="458" text-anchor="middle" font-size="16" fill="#3FB950" font-weight="700">Taken</text>
+
+          <circle class="st-node taken" cx="700" cy="420" r="72"/>
+          <text x="700" y="410" text-anchor="middle" font-size="30" font-weight="800">ST</text>
+          <text x="700" y="438" text-anchor="middle" font-size="15" fill="#C3D1E0">predict</text>
+          <text x="700" y="458" text-anchor="middle" font-size="16" fill="#3FB950" font-weight="700">Taken</text>
+        </g>
+
+        <!-- Taken (BT) transitions: SNT→LNT (top arc), LNT→ST (right, down),
+             LT→ST (bottom arc), ST→ST (self, right). -->
+        <g class="frag">
+          <path class="edge" d="M362,102 Q500,40 638,102" marker-end="url(#eaP)"/>
+          <text class="elabel" x="500" y="46" text-anchor="middle" fill="#3FB950">BT (taken)</text>
+          <path class="edge" d="M712,208 L712,346" marker-end="url(#eaP)"/>
+          <text class="elabel" x="742" y="285" text-anchor="start" fill="#3FB950">BT</text>
+          <path class="edge" d="M362,382 Q500,320 638,382" marker-end="url(#eaP)"/>
+          <text class="elabel" x="500" y="330" text-anchor="middle" fill="#3FB950">BT (taken)</text>
+          <path class="edge" d="M766,388 C838,368 838,472 766,452" marker-end="url(#eaP)"/>
+          <text class="elabel" x="852" y="424" text-anchor="start" fill="#3FB950">BT</text>
+        </g>
+
+        <!-- Not-taken (BNT) transitions: SNT→SNT (self, left), LNT→SNT (lower arc),
+             LT→SNT (left, up), ST→LT (lower arc). -->
+        <g class="frag">
+          <path class="edge" d="M234,108 C162,88 162,192 234,172" marker-end="url(#eaP)"/>
+          <text class="elabel" x="150" y="146" text-anchor="middle" fill="#F85149">BNT</text>
+          <path class="edge" d="M638,180 Q500,242 362,180" marker-end="url(#eaP)"/>
+          <text class="elabel" x="500" y="256" text-anchor="middle" fill="#F85149">BNT (not taken)</text>
+          <path class="edge" d="M288,348 L288,210" marker-end="url(#eaP)"/>
+          <text class="elabel" x="256" y="285" text-anchor="end" fill="#F85149">BNT</text>
+          <path class="edge" d="M638,460 Q500,522 362,460" marker-end="url(#eaP)"/>
+          <text class="elabel" x="500" y="540" text-anchor="middle" fill="#F85149">BNT (not taken)</text>
+        </g>
+      </svg>
+      <div class="diag-caption">Figure 6.12(b) — Hamacher's 4-state predictor. A weak miss <b>jumps</b> to the opposite strong state; a strong state needs two misses in a row to flip. <span style="color:#3FB950">BT = branch taken</span> · <span style="color:#F85149">BNT = branch not taken</span>.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="4 · Instruction Hazards">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="foothold" style="margin-top:18px"><span class="lbl">Predict ·</span> A loop runs 100 times — its branch is taken 99 times, not-taken once (the exit).</div>
+    <div class="body">
+      <div class="ask-q">With the 2-bit predictor, about how many of those 100 branches are <b class="em">mispredicted</b>?</div>
+      <div class="frag ask-a">Just <b>~1</b> — the loop exit. <span class="q2">The single not-taken pass isn't enough to flip a <b>strongly-taken</b> counter, so every looping pass is predicted correctly.</span></div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="4 · Instruction Hazards">
+    <h2>Predicting in cycle 1 — the branch target buffer</h2>
+    <div class="foothold"><span class="lbl">The last piece ·</span> To fetch the right instruction next cycle, we must predict <b>while still fetching</b>
+      the branch — before we even know it's a branch.</div>
+    <div class="body">
+      <!-- ================================================================
+           BTB explained as a lookup-table diagram (from the notes):
+           the fetch PC (0x4A24) indexes the table WHILE the branch is being
+           fetched (cycle 1); a HIT returns both the prediction (state bits)
+           and the target address, so the correct instruction is fetched in
+           cycle 2 with no wasted fetch. A MISS → keep fetching in sequence.
+           Flow reveals left→right: PC in → table → matched row → outputs.
+           ================================================================ -->
+      <div style="display:flex; align-items:center; justify-content:center; gap:22px; margin:6px 0 14px">
+
+        <!-- The fetch address arriving in cycle 1 -->
+        <div class="frag codebox" style="text-align:center">
+          <div style="font-size:15px; color:var(--muted)">Fetch address (PC)</div>
+          <div class="instr-line" style="margin:8px 0 2px"><span class="reg">0x4A24</span></div>
+          <div class="cap" style="margin-top:2px">being fetched · cycle 1</div>
+        </div>
+
+        <div class="frag" style="font-size:38px; color:var(--accent); font-weight:800">→</div>
+
+        <!-- The buffer: the 0x4A24 entry is ALREADY stored (it was added the last
+             time this branch ran). The lookup does NOT insert it — it FINDS it, and
+             the reveal simply CIRCLES the already-present row. -->
+        <div class="frag" style="text-align:center">
+          <div style="font-size:16px; color:var(--purple); font-weight:800; margin-bottom:6px">Branch Target Buffer &nbsp;·&nbsp; <span style="color:var(--muted); font-weight:600">≈1024 most-recent branches</span></div>
+          <div style="position:relative; display:inline-block">
+            <table id="btbtable" style="border-collapse:collapse; font-family:Consolas,monospace; font-size:18px">
+              <tr style="background:var(--card)">
+                <th style="border:1px solid var(--border); padding:6px 16px; color:var(--accent)">Branch address</th>
+                <th style="border:1px solid var(--border); padding:6px 16px; color:var(--accent)">State bits</th>
+                <th style="border:1px solid var(--border); padding:6px 16px; color:var(--accent)">Target address</th>
+              </tr>
+              <tr>
+                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">0x4A00</td>
+                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">01</td>
+                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">0x4A04</td>
+              </tr>
+              <!-- The matched entry — a normal stored row, shown from the start -->
+              <tr>
+                <td style="border:1px solid var(--border); padding:6px 16px">0x4A24</td>
+                <td style="border:1px solid var(--border); padding:6px 16px">11 (taken)</td>
+                <td style="border:1px solid var(--border); padding:6px 16px">0x5100</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">0x4B10</td>
+                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">00</td>
+                <td style="border:1px solid var(--border); padding:6px 16px; color:var(--muted)">0x4B90</td>
+              </tr>
+            </table>
+            <!-- Revealed as its own step: a hand-drawn-style ring that CIRCLES the
+                 already-present matched row (this is the lookup hit — nothing is inserted). -->
+            <svg class="frag" style="position:absolute; left:0; top:0; overflow:visible; pointer-events:none" width="10" height="10">
+              <ellipse cx="215" cy="117" rx="224" ry="31" fill="none" stroke="var(--yellow)" stroke-width="3.5" stroke-dasharray="7 5"/>
+            </svg>
+          </div>
+          <div class="cap" style="margin-top:6px">The PC matches this <b>already-stored</b> entry → <b style="color:var(--yellow)">hit</b></div>
+        </div>
+
+        <div class="frag" style="font-size:38px; color:var(--accent); font-weight:800">→</div>
+
+        <!-- What the hit gives us, both in the same fetch cycle -->
+        <div class="frag" style="text-align:left; font-size:19px; line-height:1.5">
+          <div><b style="color:var(--green)">Predict: TAKEN</b> <span class="dim">(from the state bits)</span></div>
+          <div><b style="color:var(--green)">Target → 0x5100</b> <span class="dim">(where to fetch next)</span></div>
+          <div style="margin-top:8px; color:var(--teal); font-weight:700">Both ready in cycle 1<br>→ cycle 2 fetches the right instruction, no wasted fetch ✓</div>
+        </div>
+      </div>
+
+      <ul class="points" style="max-width:1260px">
+        <li class="frag" style="font-size:22px; margin:10px 0">Keyed by the <b>branch's address</b> and read <b>while the branch is still being fetched</b> — prediction and target emerge together, before Decode even knows it is a branch.</li>
+        <li class="frag" style="font-size:22px; margin:10px 0"><b class="emr">Miss</b> → not in the table: keep fetching in sequence; the branch is <b>added</b> when it resolves. Kept small (~1024 entries) for a fast lookup.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide key-slide" data-chip="4 · Instruction Hazards">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Control hazards shrink three ways:<br>decide <span class="hl">early</span>, fill the <span class="hl">delay slot</span>, and <span class="hlg">predict</span> the branch.</div>
+  </section>
+
+  <!-- ==================== CHAPTERS 5–7 · INTEGRATED FROM Unit3_Topics5-7_Deck.html (richer explanations + CSS/JS animations; condition-code example added) ==================== -->
+  <section class="slide divider" data-chip="5 · Influence on Instruction Sets">
+    <div class="kicker">CHAPTER 5</div>
+    <div class="chno">5</div>
+    <div class="chtitle">Influence on Instruction Sets</div>
+    <div class="hook">The pipeline runs smoothest on simple, regular instructions. So the wish to pipeline actually
+      <em>reshaped</em> how instruction sets are designed — that is the RISC story.</div>
+    <div class="sec">Hamacher §6.10 · Pipelining and the instruction set</div>
+  </section>
+
+  <section class="slide" data-chip="5 · Influence on Instruction Sets">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="ask-q">Every instruction runs on the <em>same</em> five stages. So why should the <em>shape</em> of an instruction — its length, its operands — matter to how fast the pipeline runs?</div>
+    <div class="frag ask-a">Because the stages are only as fast as their slowest, least predictable job.
+      <span class="q2">If Fetch can't tell where the next instruction ends, or if Decode finds three memory operands to arrange, the neat one-cycle-per-stage rhythm breaks — and every following instruction waits.</span></div>
+  </section>
+
+  <section class="slide" data-chip="5 · Influence on Instruction Sets">
+    <h2>Simple instructions vs complex ones</h2>
+    <div class="foothold"><span class="lbl">Design for the pipe ·</span> The five-stage pipeline was tailored to <b>RISC-style</b> instructions.
+      Regularity keeps Fetch and Decode fast and every stage predictable.</div>
+    <div class="body">
+      <div class="cols">
+        <div class="col good">
+          <h3>RISC — pipeline-friendly</h3>
+          <ul>
+            <li class="frag"><b>Uniform length</b> (one word), few formats → fast, fixed-time Fetch/Decode</li>
+            <li class="frag"><b>Load–Store</b> architecture: only Load/Store touch memory; arithmetic is register-to-register</li>
+            <li class="frag">Simple, regular <b>addressing</b> → simple operand-stage control, predictable timing</li>
+          </ul>
+        </div>
+        <div class="col bad">
+          <h3>CISC — pipeline friction</h3>
+          <ul>
+            <li class="frag"><b>Variable length</b> → several cycles just to fetch one instruction</li>
+            <li class="frag"><b>Multiple memory operands</b> per instruction → extra stalls</li>
+            <li class="frag">Complex addressing → <b>side effects</b> &amp; condition codes (hidden dependencies)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="5 · Influence on Instruction Sets">
+    <h2>Why uniform length helps Fetch</h2>
+    <div class="foothold"><span class="lbl">Watch the pointer ·</span> Fetch must find where the next instruction <b>ends</b> before it can start the one after.
+      Fixed length makes that trivial; variable length makes Fetch <b>lurch</b>.</div>
+    <div class="body">
+      <div style="max-width:640px; margin:0 auto">
+        <div class="dim" style="font-size:22px; font-weight:800; color:var(--green)">RISC · every instruction = one word</div>
+        <div class="memstrip" style="width:616px">
+          <div class="memcell" style="left:0;width:96px">I1</div><div class="memcell" style="left:104px;width:96px">I2</div>
+          <div class="memcell" style="left:208px;width:96px">I3</div><div class="memcell" style="left:312px;width:96px">I4</div>
+          <div class="memcell" style="left:416px;width:96px">I5</div><div class="memcell" style="left:520px;width:96px">I6</div>
+          <div class="fetchwin risc"></div>
+        </div>
+        <div class="dim" style="font-size:22px; font-weight:800; color:var(--red); margin-top:18px">CISC · instructions span 1–3 words</div>
+        <div class="memstrip" style="width:616px">
+          <div class="memcell" style="left:0;width:96px">A</div><div class="memcell" style="left:104px;width:200px">B (long)</div>
+          <div class="memcell" style="left:312px;width:96px">C</div><div class="memcell" style="left:416px;width:304px">D (longer)</div>
+          <div class="fetchwin cisc"></div>
+        </div>
+      </div>
+      <div class="diag-caption">The RISC window steps one clean word per beat; the CISC window must stretch — extra fetch cycles.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="5 · Influence on Instruction Sets">
+    <h2>Side effects fight the pipe</h2>
+    <div class="foothold"><span class="lbl">The hidden dependency ·</span> A <b>side effect</b> changes a location <em>other</em> than the named destination —
+      an extra dependency the hazard logic must catch, on top of the obvious one.</div>
+    <div class="body" style="justify-content:flex-start">
+      <div class="frag codebox" style="margin-top:6px">
+        <div class="instr-line"><span class="mv">Move</span> R5, (R8)+ <span class="rtn">&nbsp;&nbsp; auto-increment</span></div>
+        <div class="cap">Writes <b>R5</b> — <em>and also</em> changes <b>R8</b>. Two writes, one instruction.</div>
+      </div>
+      <ul class="points" style="margin-top:16px">
+        <li class="frag">A later instruction using <b class="reg">R8</b> now has a dependency the compiler never wrote — it needs extra <b>stall / forward</b> logic.</li>
+        <li class="frag"><b>Condition codes</b> are another side effect: a <span style="font-family:Consolas,monospace">Compare</span> sets flags that a later <span style="font-family:Consolas,monospace">Branch</span> silently depends on.</li>
+        <li class="frag">More possible side effects = more hidden dependencies = more hazard hardware. RISC simply <b class="emg">bans</b> them.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- NEW SLIDE — condition-code side effect worked with a Compare→Branch example
+       (requested: "explain condition code side effect with branch instn example"). -->
+  <section class="slide" data-chip="5 · Influence on Instruction Sets">
+    <h2>Condition codes — a branch's hidden operand</h2>
+    <div class="foothold"><span class="lbl">Worked example ·</span> A <b>Compare</b> sets the condition flags; a later <b>Branch</b> reads them.
+      The Branch names <b>no register</b>, yet it depends on Compare — a hidden operand the pipeline must catch like any data hazard.</div>
+    <div class="body" style="justify-content:flex-start">
+
+      <!-- The two-instruction sequence: the dependency is invisible in the code. -->
+      <div class="frag codebox" style="margin:2px 0 12px">
+        <div class="instr-line"><span class="br">Compare</span> R1, R2 <span class="rtn">&nbsp;&nbsp; sets flags Z, N, C, V &nbsp;← the side effect</span></div>
+        <div class="instr-line"><span class="br">Branch&gt;0</span> LOOP <span class="rtn">&nbsp;&nbsp;&nbsp; decision reads those flags</span></div>
+        <div class="cap">The <b>Branch</b> line mentions no operand — its true input is the flag state left behind by <b>Compare</b>.</div>
+      </div>
+
+      <!-- Mini space-time: Compare makes the flags in its Compute stage (cycle 3);
+           the Branch, fetched right after, wants to decide in its Decode stage
+           (also cycle 3). The flags are not ready in time → forward them, or stall
+           one cycle. The dashed ring marks that clash in column 3. -->
+      <div class="stage-area" style="width:760px; height:160px; margin:0 0 4px">
+        <div class="cyc-num" style="left:0; top:2px; width:96px; color:var(--muted); font-weight:700">cycle →</div>
+        <div class="cyc-num" style="left:120px; width:96px">1</div><div class="cyc-num" style="left:220px; width:96px">2</div><div class="cyc-num" style="left:320px; width:96px">3</div><div class="cyc-num" style="left:420px; width:96px">4</div><div class="cyc-num" style="left:520px; width:96px">5</div>
+        <div class="frag slidein" style="position:absolute; inset:0">
+          <div class="s9lab" style="top:58px; color:var(--teal)">Compare</div>
+          <div class="cccell sF" style="left:120px; top:46px">F</div><div class="cccell sD" style="left:220px; top:46px">D</div><div class="cccell sC" style="left:320px; top:46px">C</div><div class="cccell sM" style="left:420px; top:46px">M</div><div class="cccell sW" style="left:520px; top:46px">W</div>
+        </div>
+        <div class="frag slidein" style="position:absolute; inset:0">
+          <div class="s9lab" style="top:112px; color:var(--yellow)">Branch</div>
+          <div class="cccell sF" style="left:220px; top:100px">F</div><div class="cccell sD" style="left:320px; top:100px">D</div>
+        </div>
+        <div class="frag ccring" style="left:312px; top:38px; width:112px; height:116px"></div>
+      </div>
+      <div class="diag-caption frag" style="margin:0 0 8px">Cycle 3: Compare produces the flags in <b>Compute</b> — but the Branch wants them in <b>Decode</b>. The hardware must <b style="color:var(--red)">forward the flags, or stall one cycle</b>.</div>
+
+      <ul class="points" style="margin-top:0">
+        <li class="frag" style="font-size:21px; margin:8px 0">The flags are an <b>invisible operand</b> — a read-after-write dependency on <b>hidden state</b>, so the hazard logic must track it too.</li>
+        <li class="frag" style="font-size:21px; margin:8px 0"><b class="emg">RISC way:</b> fold the test into the branch (e.g. <span style="font-family:Consolas,monospace">Branch-if-greater R1,R2,LOOP</span>) — no hidden flags, no side effect.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="5 · Influence on Instruction Sets">
+    <h2>Modern CPUs: keep CISC, crack it inside</h2>
+    <div class="foothold"><span class="lbl">The compromise ·</span> Real x86 chips keep the familiar CISC instruction set for compatibility,
+      but internally <b>crack each instruction into simple RISC-like micro-operations</b> — then pipeline those.</div>
+    <div class="body">
+      <div class="crack">
+        <div class="cisc-blk">one CISC instruction</div>
+        <div class="arrow">→</div>
+        <div class="uop u1">µop 1 · load</div>
+        <div class="uop u2" style="top:88px">µop 2 · add</div>
+        <div class="uop u3" style="top:150px">µop 3 · store</div>
+      </div>
+      <div class="diag-caption">The messy instruction is split into a stream of clean micro-ops that flow through the pipeline.</div>
+    </div>
+  </section>
+
+  <section class="slide key-slide" data-chip="5 · Influence on Instruction Sets">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">The instruction set and the pipeline are designed <span class="hl">together</span>.<br>
+      <span class="hlg">Simplicity and regularity</span> — uniform length, load-store, simple addressing — are what make overlap pay off.</div>
+  </section>
+
+  <!-- ==================== CHAPTER 6 · DATAPATH & CONTROL CONSIDERATIONS ==================== -->
+  <section class="slide divider" data-chip="6 · Datapath &amp; Control">
+    <div class="kicker">CHAPTER 6</div>
+    <div class="chno">6</div>
+    <div class="chtitle">Datapath &amp; Control Considerations</div>
+    <div class="hook">Overlap only works if no two stages ever fight over the same hardware — and if we can put honest
+      numbers on every stall we have met so far.</div>
+    <div class="sec">Hamacher §6.2, §6.7, §6.8.1 · Structural hazards &amp; quantified penalties</div>
+  </section>
+
+  <section class="slide" data-chip="6 · Datapath &amp; Control">
+    <h2>Every stage needs its own hardware</h2>
+    <div class="foothold"><span class="lbl">Why ·</span> If two stages shared one unit, they could not both work in the same cycle — the overlap
+      we bought in Ch 1 would be lost. So the datapath is <b>replicated per stage</b>.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">Separate hardware in each stage → all five instructions can advance <b class="emg">simultaneously</b>.</li>
+        <li class="frag">Each stage owns a <b>buffer register</b> (B1–B4) that holds its result for the next stage to pick up.</li>
+        <li class="frag"><b class="emp">Pipelined control:</b> the control signals are generated once in Decode and travel <b>with</b> the instruction down the pipe — each stage reads the signals meant for it.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="6 · Datapath &amp; Control">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="ask-q">Fetch reads from memory <em>every</em> cycle. A Load also reads memory in its Memory stage. If there is only <em>one</em> memory, what happens when both want it in the same cycle?</div>
+    <div class="frag ask-a">They collide — and one must wait.
+      <span class="q2">This is a brand-new kind of hazard: not about data, not about branches, but about two stages needing the same <b>physical resource</b>. We call it a structural hazard.</span></div>
+  </section>
+
+  <section class="slide" data-chip="6 · Datapath &amp; Control">
+    <h2>Structural hazard — two stages, one resource</h2>
+    <div class="foothold"><span class="lbl">The clash ·</span> A single memory serves both <b>Fetch</b> (every cycle) and <b>Memory access</b> (loads/stores).
+      In the same cycle they collide — one must <b>stall</b>. The cure: give each its own cache.</div>
+    <div class="body" style="align-items:center">
+      <svg class="dp" width="1000" height="290" viewBox="0 0 1000 300">
+        <!-- left: the clash -->
+        <rect class="stagebox" x="40" y="30" width="150" height="48" rx="6" style="stroke:var(--accent)"/><text x="115" y="60" text-anchor="middle" font-size="18" font-weight="700">Fetch</text>
+        <rect class="stagebox" x="40" y="200" width="150" height="48" rx="6" style="stroke:var(--teal)"/><text x="115" y="230" text-anchor="middle" font-size="18" font-weight="700">Memory</text>
+        <rect x="290" y="110" width="150" height="60" rx="8" fill="rgba(248,81,73,.14)" stroke="#F85149" stroke-width="2.5"/><text x="365" y="146" text-anchor="middle" font-size="19" font-weight="700" fill="#F85149">One memory</text>
+        <path class="wire clashwire" d="M190,54 H250 Q280,54 290,120" stroke="#F85149"/><path class="wire clashwire" d="M190,224 H250 Q280,224 290,160" stroke="#F85149"/>
+        <text class="collide" x="365" y="208" text-anchor="middle" font-size="21" font-weight="800" fill="#F85149">💥 collision — stall!</text>
+        <text x="240" y="20" font-size="16" fill="#F85149" font-weight="700">Both want it the same cycle</text>
+        <!-- arrow -->
+        <text x="520" y="150" font-size="40" font-weight="800" fill="#58A6FF">→</text>
+        <!-- right: the fix -->
+        <rect class="stagebox" x="600" y="30" width="150" height="48" rx="6" style="stroke:var(--accent)"/><text x="675" y="60" text-anchor="middle" font-size="18" font-weight="700">Fetch</text>
+        <rect class="stagebox" x="600" y="200" width="150" height="48" rx="6" style="stroke:var(--teal)"/><text x="675" y="230" text-anchor="middle" font-size="18" font-weight="700">Memory</text>
+        <rect x="820" y="24" width="150" height="56" rx="8" fill="rgba(63,185,80,.14)" stroke="#3FB950" stroke-width="2.5"/><text x="895" y="57" text-anchor="middle" font-size="18" font-weight="700" fill="#3FB950">I-cache</text>
+        <rect x="820" y="196" width="150" height="56" rx="8" fill="rgba(63,185,80,.14)" stroke="#3FB950" stroke-width="2.5"/><text x="895" y="229" text-anchor="middle" font-size="18" font-weight="700" fill="#3FB950">D-cache</text>
+        <path class="wire" d="M750,54 H820" stroke="#3FB950"/><path class="wire" d="M750,224 H820" stroke="#3FB950"/>
+        <text x="785" y="150" text-anchor="middle" font-size="18" font-weight="800" fill="#3FB950">no clash ✓</text>
+      </svg>
+    </div>
+    <div class="diag-caption">§6.7 — Separate instruction &amp; data caches remove the structural hazard.</div>
+  </section>
+
+  <section class="slide" data-chip="6 · Datapath &amp; Control">
+    <h2>Putting numbers on the stalls</h2>
+    <div class="foothold"><span class="lbl">Honest accounting ·</span> The ideal is S = 1 cycle per instruction. Each kind of stall we met
+      adds a penalty term — and these terms simply <b>add up</b> (Hamacher §6.8.1).</div>
+    <div class="body" style="align-items:center">
+      <div class="frag eqn"><span class="var">S</span> = 1 + δ<span class="sub">stall</span> + δ<span class="sub">branch</span> + δ<span class="sub">miss</span></div>
+      <ul class="points" style="margin-top:14px">
+        <li class="frag"><b class="emr">δ<sub>stall</sub></b> — load-use hazards (data): frequency × penalty.</li>
+        <li class="frag"><b class="emr">δ<sub>branch</sub></b> — branch mispredictions (control).</li>
+        <li class="frag"><b class="emr">δ<sub>miss</sub></b> — cache misses (memory) — usually the <b>biggest</b> term of all.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="6 · Datapath &amp; Control">
+    <h2>Which stall hurts most?</h2>
+    <div class="foothold"><span class="lbl">Reveal &amp; compare ·</span> Plug in typical numbers. Each bar is one term's contribution to S. Watch which one
+      dwarfs the others — it tells you where to spend design effort.</div>
+    <div class="body">
+      <div class="barchart">
+        <div class="frag barrow">
+          <div class="lab" style="color:var(--red)">δ<sub>stall</sub></div>
+          <div class="bartrack"><div class="barfill" style="--w:10%; background:var(--orange)"></div></div>
+          <div class="val" style="color:var(--orange)">0.10</div>
+        </div>
+        <div class="frag barrow">
+          <div class="lab" style="color:var(--red)">δ<sub>branch</sub></div>
+          <div class="bartrack"><div class="barfill" style="--w:2%; background:var(--yellow)"></div></div>
+          <div class="val" style="color:var(--yellow)">0.02</div>
+        </div>
+        <div class="frag barrow">
+          <div class="lab" style="color:var(--red)">δ<sub>miss</sub></div>
+          <div class="bartrack"><div class="barfill" style="--w:80%; background:var(--teal)"></div></div>
+          <div class="val" style="color:var(--teal)">0.80</div>
+        </div>
+      </div>
+      <div class="diag-caption frag">0.25×0.40×1 = 0.10 &nbsp;·&nbsp; 0.20×0.10×1 = 0.02 &nbsp;·&nbsp; (0.05 + 0.30×0.10)×10 = 0.80 &nbsp;→&nbsp; the cache miss dominates.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="6 · Datapath &amp; Control">
+    <h2>Worked example 6.2 — branch penalty</h2>
+    <div class="foothold"><span class="lbl">Trace it together ·</span> A program is <b>20% branches</b>, with static <b>not-taken</b> prediction (1-cycle penalty
+      when a branch <em>is</em> taken), no other stalls. How much does the taken-rate matter?</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">Penalty only when a branch is actually <b>taken</b>: &nbsp; δ<sub>branch</sub> = 0.20 × (fraction taken) × 1.</li>
+        <li class="frag"><b>30% taken:</b> δ<sub>branch</sub> = 0.20 × 0.30 = 0.06 &nbsp;→&nbsp; <b class="emg">S = 1.06</b>.</li>
+        <li class="frag"><b>70% taken:</b> δ<sub>branch</sub> = 0.20 × 0.70 = 0.14 &nbsp;→&nbsp; <b class="emr">S = 1.14</b>.</li>
+        <li class="frag">The 70%-taken program is slower by (1.14 / 1.06 − 1) × 100 ≈ <b class="emy">7.5%</b> — the <em>same code</em>, just more branches taken.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide key-slide" data-chip="6 · Datapath &amp; Control">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Give every stage its own hardware; <span class="hlg">duplicate the shared resources</span> that clash —<br>
+      and when you total the stalls, the <span class="hl">cache-miss</span> term usually dominates.</div>
+  </section>
+
+  <!-- ==================== CHAPTER 7 · SUPERSCALAR OPERATION ==================== -->
+  <section class="slide divider" data-chip="7 · Superscalar Operation">
+    <div class="kicker">CHAPTER 7</div>
+    <div class="chno">7</div>
+    <div class="chtitle">Superscalar Operation</div>
+    <div class="hook">A single pipeline can finish, at best, one instruction every cycle. To go faster still, we stop
+      waiting in one line — and open several checkouts at once.</div>
+    <div class="sec">Hamacher §6.9 · Multiple issue &amp; out-of-order execution</div>
+  </section>
+
+  <section class="slide" data-chip="7 · Superscalar Operation">
+    <h2>The ceiling — and how to break it</h2>
+    <div class="foothold"><span class="lbl">The analogy ·</span> A perfect pipeline is <b>one queue, one till</b>: at best one customer leaves per beat.
+      Want more throughput? Open a <b>second till</b> — serve two lines at once.</div>
+    <div class="body">
+      <div class="lanes">
+        <div class="lane-group">
+          <h3 style="color:var(--muted)">Single pipeline · one till</h3>
+          <div class="lane"><div class="dot"></div><div class="till">🧾</div></div>
+          <div class="diag-caption">≤ 1 instruction / cycle</div>
+        </div>
+        <div class="lane-group">
+          <h3 style="color:var(--green)">Superscalar · two tills</h3>
+          <div class="lane"><div class="dot" style="animation-delay:.0s"></div><div class="till">🧾</div></div>
+          <div class="lane"><div class="dot" style="background:var(--purple); box-shadow:0 0 12px var(--purple); animation-delay:.4s"></div><div class="till">🧾</div></div>
+          <div class="diag-caption" style="color:var(--green)">2+ instructions / cycle</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="7 · Superscalar Operation">
+    <h2>Multiple issue — more than one per cycle</h2>
+    <div class="foothold"><span class="lbl">Break the ceiling ·</span> A <b>superscalar</b> processor equips itself with <b>several execution units</b>
+      and issues multiple instructions each cycle — the hardware version of the second till.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">The <b>fetch unit</b> fetches <b>two or more</b> instructions every cycle into an <b>instruction queue</b>.</li>
+        <li class="frag">A <b class="emp">dispatch unit</b> sends <b>independent</b> instructions to <b>different</b> execution units.</li>
+        <li class="frag">Throughput can now exceed <b class="emg">one instruction per cycle</b> — this is <b>multiple issue</b>.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="7 · Superscalar Operation">
+    <h2>A superscalar processor (Fig 6.13)</h2>
+    <div class="foothold"><span class="lbl">The organization ·</span> Two execution units — an <b>arithmetic</b> unit and a two-stage
+      <b>Load/Store</b> unit — fed from a shared queue by the dispatch unit. Watch <b>two</b> instructions dispatched <b>together</b>, one to each unit.</div>
+    <div class="body" style="align-items:center">
+      <svg class="dp" width="1080" height="300" viewBox="0 0 1120 330">
+        <rect class="box" x="20" y="130" width="150" height="70" rx="8"/><text x="95" y="160" text-anchor="middle" font-size="18" font-weight="700">Fetch</text><text x="95" y="182" text-anchor="middle" font-size="18" font-weight="700">unit</text>
+        <rect class="q" x="230" y="135" width="220" height="60" rx="8"/><line x1="285" y1="135" x2="285" y2="195" stroke="#1F6FEB"/><line x1="340" y1="135" x2="340" y2="195" stroke="#1F6FEB"/><line x1="395" y1="135" x2="395" y2="195" stroke="#1F6FEB"/><text x="340" y="220" text-anchor="middle" font-size="17" fill="#C3D1E0">Instruction queue</text><path class="wire" d="M170,165 H230"/>
+        <rect class="box" x="500" y="130" width="150" height="70" rx="8"/><text x="575" y="160" text-anchor="middle" font-size="18" font-weight="700">Dispatch</text><text x="575" y="182" text-anchor="middle" font-size="18" font-weight="700">unit</text><path class="wire" d="M450,165 H500"/>
+        <rect class="unit" x="720" y="60" width="180" height="60" rx="8"/><text x="810" y="96" text-anchor="middle" font-size="18" font-weight="700">Arithmetic unit</text><path class="wire" d="M650,150 Q690,150 690,90 H720"/>
+        <rect class="unit" x="720" y="205" width="180" height="60" rx="8"/><text x="810" y="233" text-anchor="middle" font-size="18" font-weight="700">Load / Store</text><text x="810" y="253" text-anchor="middle" font-size="15" fill="#C3D1E0">(two-stage)</text><path class="wire" d="M650,180 Q690,180 690,235 H720"/>
+        <rect class="box" x="950" y="130" width="150" height="70" rx="8"/><text x="1025" y="160" text-anchor="middle" font-size="18" font-weight="700">Write</text><text x="1025" y="182" text-anchor="middle" font-size="18" font-weight="700">results</text><path class="wire" d="M900,90 Q940,90 940,150 H950"/><path class="wire" d="M900,235 Q940,235 940,180 H950"/>
+        <!-- travelling packets: one to the arithmetic unit, one to Load/Store -->
+        <!-- Parallel lanes on the shared wire (y 161 vs 169) so both dots stay visible, then split to the two units together. -->
+        <circle class="packet p1" r="11" style="offset-path:path('M95 161 H230 H340 H575 Q690 150 690 90 H810 Q940 90 940 161 H1025')"></circle>
+        <circle class="packet p2" r="11" style="offset-path:path('M95 169 H230 H340 H575 Q690 180 690 235 H810 Q940 235 940 169 H1025')"></circle>
+      </svg>
+    </div>
+    <div class="diag-caption">Two instructions issued the <b>same cycle</b> — <span style="color:var(--yellow)">one to the arithmetic unit</span> and <span style="color:var(--purple)">one to Load/Store</span> — so both units work at once.</div>
+  </section>
+
+  <section class="slide" data-chip="7 · Superscalar Operation" id="spacetime" data-anim="timeline">
+    <h2>Two instructions started every cycle (Fig 6.14)</h2>
+    <div class="foothold"><span class="lbl">In action ·</span> An arithmetic instruction and a Load/Store are <b>issued together</b> each cycle. This
+      four-instruction sequence finishes in <b>6 cycles</b> — a single pipeline would need more. <span style="font-size:18px">(auto-plays; press R to replay)</span></div>
+    <div class="body">
+      <div class="stage-area" style="width:1000px; height:270px">
+        <div class="cyc-num" style="left:230px">1</div><div class="cyc-num" style="left:326px">2</div><div class="cyc-num" style="left:422px">3</div>
+        <div class="cyc-num" style="left:518px">4</div><div class="cyc-num" style="left:614px">5</div><div class="cyc-num" style="left:710px">6</div>
+        <!-- Row 1: Add (issued cycle 1) -->
+        <div class="rowlab" style="top:56px; font-family:Consolas,monospace; font-size:19px; width:210px">Add R2,R3,#100</div>
+        <div class="stage sF" data-at="1" style="left:230px; top:48px; width:92px; height:46px">F</div><div class="stage sD" data-at="2" style="left:326px; top:48px; width:92px; height:46px">D</div><div class="stage sC" data-at="3" style="left:422px; top:48px; width:92px; height:46px">C</div><div class="stage sW" data-at="4" style="left:518px; top:48px; width:92px; height:46px">W</div>
+        <!-- Row 2: Load (issued cycle 1, has extra Memory stage) -->
+        <div class="rowlab" style="top:108px; font-family:Consolas,monospace; font-size:19px; width:210px">Load R5,16(R6)</div>
+        <div class="stage sF" data-at="1" style="left:230px; top:100px; width:92px; height:46px">F</div><div class="stage sD" data-at="2" style="left:326px; top:100px; width:92px; height:46px">D</div><div class="stage sC" data-at="3" style="left:422px; top:100px; width:92px; height:46px">C</div><div class="stage sM" data-at="4" style="left:518px; top:100px; width:92px; height:46px">M</div><div class="stage sW" data-at="5" style="left:614px; top:100px; width:92px; height:46px">W</div>
+        <!-- Row 3: Subtract (issued cycle 2) -->
+        <div class="rowlab" style="top:160px; font-family:Consolas,monospace; font-size:19px; width:210px">Subtract R7,R8,R9</div>
+        <div class="stage sF" data-at="2" style="left:326px; top:152px; width:92px; height:46px">F</div><div class="stage sD" data-at="3" style="left:422px; top:152px; width:92px; height:46px">D</div><div class="stage sC" data-at="4" style="left:518px; top:152px; width:92px; height:46px">C</div><div class="stage sW" data-at="5" style="left:614px; top:152px; width:92px; height:46px">W</div>
+        <!-- Row 4: Store (issued cycle 2, has extra Memory stage) -->
+        <div class="rowlab" style="top:212px; font-family:Consolas,monospace; font-size:19px; width:210px">Store R10,24(R11)</div>
+        <div class="stage sF" data-at="2" style="left:326px; top:204px; width:92px; height:46px">F</div><div class="stage sD" data-at="3" style="left:422px; top:204px; width:92px; height:46px">D</div><div class="stage sC" data-at="4" style="left:518px; top:204px; width:92px; height:46px">C</div><div class="stage sM" data-at="5" style="left:614px; top:204px; width:92px; height:46px">M</div><div class="stage sW" data-at="6" style="left:710px; top:204px; width:92px; height:46px">W</div>
+      </div>
+      <div class="diag-caption">Two rows light up together each cycle — arithmetic + Load/Store issued in parallel.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="7 · Superscalar Operation">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="ask-q">With several units running at once, a later instruction may <em>finish</em> before an earlier one. How do we still get the <em>correct</em> answer — and a clean picture if an exception fires?</div>
+    <div class="frag ask-a">Let them <em>execute</em> out of order, but <em>commit</em> in order.
+      <span class="q2">Extra bookkeeping hardware — reservation stations, register renaming, and a reorder buffer — lets results finish early yet be made visible strictly in program order.</span></div>
+  </section>
+
+  <section class="slide" data-chip="7 · Superscalar Operation">
+    <h2>Keeping many-in-flight correct</h2>
+    <div class="foothold"><span class="lbl">The price of parallelism ·</span> Running many instructions at once means they may finish <b>out of order</b>.
+      Four mechanisms keep the results correct and the exceptions <b>precise</b>.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag"><b class="emp">Reservation stations</b> — hold a dispatched instruction until <em>all</em> its operands have arrived.</li>
+        <li class="frag"><b class="emp">Out-of-order execution</b> — an independent instruction runs the moment it is ready, not in line order.</li>
+        <li class="frag"><b class="emp">Register renaming</b> — temporary registers remove <em>false</em> conflicts (two instructions reusing a name).</li>
+        <li class="frag"><b class="emp">Reorder buffer</b> — commits results strictly <b>in program order</b> → precise exceptions.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="7 · Superscalar Operation" id="robslide" data-anim="timeline">
+    <h2>Execute out of order, commit in order</h2>
+    <div class="foothold"><span class="lbl">Watch the buffer ·</span> Instructions finish whenever they are ready (left), but the reorder buffer releases
+      them <b>only in program order</b> (right) — so the visible result is always correct. <span style="font-size:18px">(auto-plays; press R to replay)</span></div>
+    <div class="body">
+      <div class="rob">
+        <div class="rob-col exec">
+          <h3>Execution finishes (out of order)</h3>
+          <div class="rob-row"><span class="nm">I1  Add</span>  <span class="rob-badge done" data-at="4">done</span></div>
+          <div class="rob-row"><span class="nm">I2  Load</span> <span class="rob-badge done" data-at="2">done</span></div>
+          <div class="rob-row"><span class="nm">I3  Sub</span>  <span class="rob-badge done" data-at="5">done</span></div>
+          <div class="rob-row"><span class="nm">I4  Mul</span>  <span class="rob-badge done" data-at="3">done</span></div>
+        </div>
+        <div class="rob-col commit">
+          <h3>Reorder buffer commits (in order)</h3>
+          <div class="rob-row"><span class="nm">I1  Add</span>  <span class="rob-badge ok" data-at="6">commit ✓</span></div>
+          <div class="rob-row"><span class="nm">I2  Load</span> <span class="rob-badge ok" data-at="7">commit ✓</span></div>
+          <div class="rob-row"><span class="nm">I3  Sub</span>  <span class="rob-badge ok" data-at="8">commit ✓</span></div>
+          <div class="rob-row"><span class="nm">I4  Mul</span>  <span class="rob-badge ok" data-at="9">commit ✓</span></div>
+        </div>
+      </div>
+      <div class="diag-caption">Left order of completion: I2, I4, I1, I3. Commit order: always I1, I2, I3, I4.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="7 · Superscalar Operation">
+    <h2>The three hazards — at a glance</h2>
+    <div class="foothold"><span class="lbl">Recap the whole unit ·</span> Every stall in Unit 3 was one of three kinds. Here is the complete map — a perfect
+      revision table before the exam.</div>
+    <div class="body">
+      <table class="haz">
+        <tr><th>Hazard</th><th>Cause</th><th>Common remedy</th></tr>
+        <tr class="frag"><td>Data</td><td>Instruction needs a result not yet produced</td><td>Operand forwarding · stall · instruction scheduling</td></tr>
+        <tr class="frag"><td>Control (Instruction)</td><td>Branch outcome / target not yet known</td><td>Decide early · delay slot · branch prediction + BTB</td></tr>
+        <tr class="frag"><td>Structural</td><td>Two stages need the same hardware resource</td><td>Duplicate resources (separate I-cache / D-cache)</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="slide key-slide" data-chip="7 · Superscalar Operation">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">Pipelining approaches one instruction per cycle;<br><span class="hlg">superscalar</span> pushes past it — <span class="hl">several per cycle</span>.</div>
+    <div class="key-sub">Multiple issue, out-of-order execution and a reorder buffer let independent instructions run in parallel, while results still commit in <b>program order</b>.</div>
+  </section>
+
+  <!-- ==================== CHAPTER 8 · THE ROLE OF CACHE MEMORY ==================== -->
+  <section class="slide divider" data-chip="8 · The Role of Cache Memory">
+    <div class="kicker">CHAPTER 8</div>
+    <div class="chno">8</div>
+    <div class="chtitle">The Role of Cache Memory</div>
+    <div class="hook">The pipeline is built to consume a memory word <em>every single cycle</em>. Main memory is far too slow to keep up —
+      so a small, fast <em>cache</em> is what makes the whole pipeline possible.</div>
+    <div class="sec">Hamacher §6.2, §6.8.1 · Syllabus CO3: role of cache memory</div>
+  </section>
+
+  <section class="slide" data-chip="8 · The Role of Cache Memory">
+    <div class="mic-badge">🎤 Ask the class</div>
+    <div class="ask-q">The pipeline needs an instruction word <em>every</em> cycle — and data words too. If main memory takes ~100 cycles to answer, how can the pipeline ever run at one instruction per cycle?</div>
+    <div class="frag ask-a">It can't — unless a much faster memory sits in front of it.
+      <span class="q2">That fast buffer is the <b>cache</b>: on a hit it answers in about one cycle, so the pipeline keeps flowing; main memory is touched only on the rarer miss.</span></div>
+  </section>
+
+  <section class="slide" data-chip="8 · The Role of Cache Memory">
+    <h2>Why the pipeline needs a cache</h2>
+    <div class="foothold"><span class="lbl">The speed gap ·</span> Every cycle, <b>Fetch</b> reads an instruction; about <b>one instruction in three</b> is a Load/Store
+      that touches data too. Main memory answers in <b>tens of cycles</b> — so without a fast memory in front, the pipe would stall almost constantly.</div>
+    <div class="body">
+      <!-- Bars grow when revealed (ported .barfill animation). Widths are illustrative, log-ish, to show the ~100x gap. -->
+      <div class="barchart">
+        <div class="frag barrow">
+          <div class="lab" style="color:var(--green)">L1 cache <span style="font-weight:400; color:var(--muted)">(hit)</span></div>
+          <div class="bartrack"><div class="barfill" style="--w:2%; background:var(--green)"></div></div>
+          <div class="val" style="color:var(--green)">~1 cycle</div>
+        </div>
+        <div class="frag barrow">
+          <div class="lab" style="color:var(--yellow)">L2 / L3 cache</div>
+          <div class="bartrack"><div class="barfill" style="--w:12%; background:var(--yellow)"></div></div>
+          <div class="val" style="color:var(--yellow)">~10 cycles</div>
+        </div>
+        <div class="frag barrow">
+          <div class="lab" style="color:var(--red)">Main memory (DRAM)</div>
+          <div class="bartrack"><div class="barfill" style="--w:100%; background:var(--red)"></div></div>
+          <div class="val" style="color:var(--red)">~100 cycles</div>
+        </div>
+      </div>
+      <div class="diag-caption frag">A cache bridges a ~100× speed gap — without it, "one instruction per cycle" is simply impossible.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="8 · The Role of Cache Memory">
+    <h2>The memory hierarchy</h2>
+    <div class="foothold"><span class="lbl">Fast-but-small over big-but-slow ·</span> No single memory is both huge and fast, so we <b>stack</b> them: each level
+      keeps the most-used data of the level below. The CPU sees nearly the <b>speed</b> of the top and the <b>size</b> of the bottom.</div>
+    <div class="body" style="align-items:center">
+      <!-- CSS "pyramid": rows widen going down = bigger & slower. Each is a reveal step. -->
+      <div style="width:900px; margin:2px auto 0; position:relative">
+        <div style="position:absolute; left:-6px; top:6px; font-size:17px; color:var(--green); font-weight:800; transform:rotate(-90deg); transform-origin:left top">faster ↑</div>
+        <div style="position:absolute; right:-10px; bottom:2px; font-size:17px; color:var(--red); font-weight:800; transform:rotate(-90deg); transform-origin:right bottom">bigger, slower ↓</div>
+        <div class="frag" style="width:34%; margin:7px auto; background:rgba(63,185,80,.14); border:2px solid var(--green); border-radius:10px; padding:9px 14px; text-align:center; font-weight:700">Registers <span style="color:var(--muted); font-weight:600; font-size:18px">— &lt;1 cycle · ~1 KB</span></div>
+        <div class="frag" style="width:52%; margin:7px auto; background:rgba(57,208,216,.13); border:2px solid var(--teal); border-radius:10px; padding:9px 14px; text-align:center; font-weight:700">L1 / L2 / L3 Cache (SRAM) <span style="color:var(--muted); font-weight:600; font-size:18px">— 1–30 cycles · KB–MB</span></div>
+        <div class="frag" style="width:72%; margin:7px auto; background:rgba(210,153,34,.13); border:2px solid var(--yellow); border-radius:10px; padding:9px 14px; text-align:center; font-weight:700">Main memory (DRAM) <span style="color:var(--muted); font-weight:600; font-size:18px">— ~100 cycles · GB</span></div>
+        <div class="frag" style="width:92%; margin:7px auto; background:rgba(248,81,73,.12); border:2px solid var(--red); border-radius:10px; padding:9px 14px; text-align:center; font-weight:700">Secondary storage (SSD / disk) <span style="color:var(--muted); font-weight:600; font-size:18px">— 10⁵–10⁶ cycles · TB+</span></div>
+      </div>
+      <div class="diag-caption frag">The cache is the level that sits between the CPU and main memory — holding the blocks the pipeline is using now.</div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="8 · The Role of Cache Memory">
+    <h2>Locality — why a small cache works</h2>
+    <div class="foothold"><span class="lbl">Programs are predictable ·</span> A tiny cache can capture <b>most</b> accesses because programs reuse the same few
+      locations, and the ones right next to them — the <b>principle of locality</b>.</div>
+    <div class="body">
+      <div class="cols">
+        <div class="col good">
+          <h3>Temporal locality</h3>
+          <ul>
+            <li class="frag">Reuse the <b>same</b> location again soon — a loop counter, a running <span class="reg">sum</span>, the top of the stack.</li>
+            <li class="frag">Keep a just-used block → the next reuse is a <b class="emg">hit</b>.</li>
+          </ul>
+        </div>
+        <div class="col good">
+          <h3>Spatial locality</h3>
+          <ul>
+            <li class="frag">Use locations <b>near</b> the last one — array elements, the next instruction in sequence.</li>
+            <li class="frag">Fetch a whole <b>block</b> (several words) at once → the neighbours are already there.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="frag codebox" style="margin:14px auto 0; display:block; max-width:760px; text-align:center">
+        <div class="instr-line" style="font-size:22px">for (i = 0; i &lt; N; i++)  sum += A[i];</div>
+        <div class="cap"><span class="reg">sum</span>, <span class="reg">i</span> reused each pass → temporal · <span class="reg">A[i], A[i+1]…</span> are neighbours → spatial</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="8 · The Role of Cache Memory">
+    <h2>Hit, miss, and average access time</h2>
+    <div class="foothold"><span class="lbl">Put a number on it ·</span> On a <b class="emg">hit</b> the cache answers in ~1 cycle and the pipe flows; on a
+      <b class="emr">miss</b> we pay a full trip to main memory. The <b>hit rate</b> decides the average.</div>
+    <div class="body" style="align-items:center">
+      <div class="frag eqn">t<span class="sub">avg</span> = t<span class="sub">hit</span> + (1 − <span class="var">h</span>) × p<span class="sub">miss</span></div>
+      <ul class="points" style="margin-top:8px">
+        <li class="frag"><b class="emt">h</b> = hit rate &nbsp;·&nbsp; <b class="emt">p<sub>miss</sub></b> = miss penalty (cycles to reach main memory).</li>
+        <li class="frag"><b>Example:</b> t<sub>hit</sub> = 1, h = 0.95, p<sub>miss</sub> = 100 &nbsp;→&nbsp; t<sub>avg</sub> = 1 + 0.05 × 100 = <b class="emy">6 cycles</b>.</li>
+        <li class="frag">Even a <b>95%</b> hit rate costs 6× the hit time — which is why raising the <b>hit rate</b> matters more than almost anything else.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" data-chip="8 · The Role of Cache Memory">
+    <h2>Cache in the pipeline</h2>
+    <div class="foothold"><span class="lbl">Back to the pipe ·</span> The cache is what actually lets the pipeline <b>sustain</b> one instruction per cycle —
+      and its misses are the <b>biggest</b> stall term of all.</div>
+    <div class="body">
+      <ul class="points">
+        <li class="frag">On a <b class="emg">hit</b>, Fetch and Memory each finish in <b>one cycle</b> → the pipe keeps its one-per-cycle rhythm.</li>
+        <li class="frag"><b>Separate I-cache &amp; D-cache</b> (a Harvard split) let Fetch and a Load/Store use memory in the <b>same</b> cycle — removing the structural hazard.</li>
+        <li class="frag">On a <b class="emr">miss</b>, the whole in-order pipe <b>stalls</b> until main memory answers — non-deterministic, and it <b>cannot be scheduled away</b>.</li>
+      </ul>
+      <div class="frag eqn" style="margin-top:6px; font-size:34px">δ<span class="sub">miss</span> = (m<span class="sub">i</span> + <span class="var">d</span> × m<span class="sub">d</span>) × p<span class="sub">m</span> = (0.05 + 0.30 × 0.10) × 10 = <b style="color:var(--red)">0.8</b></div>
+      <div class="diag-caption frag">Hamacher's numbers again: the cache-miss term (0.8) dwarfs the branch and load-use terms — usually the <b>dominant</b> penalty.</div>
+    </div>
+  </section>
+
+  <section class="slide key-slide" data-chip="8 · The Role of Cache Memory">
+    <div class="key-badge">🔑</div>
+    <div class="key-text">A <span class="hlg">cache</span> makes a slow main memory look fast —<br><span class="hl">locality</span> is why it works, and it is what lets the pipeline truly reach <span class="hl">one instruction per cycle</span>.</div>
+  </section>
+
+  <section class="slide key-slide" data-chip="Unit 3 · Complete">
+    <div class="key-badge">🎓</div>
+    <div class="key-text"><span class="hl">Unit 3 — Pipelining</span> complete.</div>
+    <div class="key-sub"><b style="color:var(--orange)">The whole story:</b> the pipelining idea · organization · performance · data, control &amp; structural hazards ·
+      instruction-set influence · datapath &amp; control · superscalar operation · and the <b>role of cache memory</b> that makes it all run.</div>
+  </section>
+
+  <!-- END -->
+
+</div>
+
+<div id="bar"></div>
+<div id="count"></div>
+<div id="chip"></div>
+
+<script>
+/* ============================================================================
+   REVEAL ENGINE — Space/→/click = next reveal or slide; ← = back; Home/End.
+   ============================================================================ */
+const slides = Array.from(document.querySelectorAll('.slide'));
+const bar = document.getElementById('bar'); const count = document.getElementById('count'); const chip = document.getElementById('chip');
+let si = 0, step = 0;
+function fragsOf(i){ return Array.from(slides[i].querySelectorAll('.frag')); }
+function showSlide(i, all){
+  slides.forEach((s,k)=> s.classList.toggle('active', k===i)); si=i;
+  const f=fragsOf(i);
+  if(all){ f.forEach(x=>x.classList.add('on')); step=f.length; } else { f.forEach(x=>x.classList.remove('on')); step=0; }
+  updateHud(); handleAnim(i);
+}
+function next(){ const f=fragsOf(si); if(step<f.length){ f[step].classList.add('on'); step++; updateHud(); } else if(si<slides.length-1){ showSlide(si+1,false); } }
+function prev(){ if(step>0){ step--; fragsOf(si)[step].classList.remove('on'); updateHud(); } else if(si>0){ showSlide(si-1,true); } }
+function updateHud(){ bar.style.width=(si/(slides.length-1)*100)+'%'; count.textContent=(si+1)+' / '+slides.length; chip.textContent=slides[si].dataset.chip||''; }
+document.addEventListener('keydown',(e)=>{ switch(e.key){
+  case 'ArrowRight': case ' ': case 'Enter': case 'PageDown': e.preventDefault(); next(); break;
+  case 'ArrowLeft': case 'PageUp': e.preventDefault(); prev(); break;
+  case 'Home': e.preventDefault(); showSlide(0,false); break;
+  case 'End': e.preventDefault(); showSlide(slides.length-1,true); break;
+  case 'r': case 'R': handleAnim(si); break; } });
+document.addEventListener('click',(e)=>{ if(e.target.tagName!=='A') next(); });
+
+/* ============================================================================
+   INTERACTIVE SIMULATOR (the two intro slides).
+   ============================================================================ */
+const UNITS = [{name:'Fetch',c:'#58A6FF'},{name:'Decode',c:'#BC8CFF'},{name:'Compute',c:'#F0883E'},{name:'Memory',c:'#39D0D8'},{name:'Write',c:'#3FB950'}];
+const INSTR = ['#58A6FF','#BC8CFF','#3FB950','#F0883E','#39D0D8'];
+const CREATURE = `
+  <svg class="creature" viewBox="0 0 120 120">
+    <path class="antenna" d="M60 26 V12" stroke="currentColor" stroke-width="4"/><circle cx="60" cy="9" r="5" fill="currentColor"/>
+    <rect x="18" y="26" width="84" height="80" rx="26" fill="currentColor"/>
+    <circle class="eye" cx="46" cy="58" r="10" fill="#fff"/><circle class="eye" cx="74" cy="58" r="10" fill="#fff"/>
+    <circle class="pupil" cx="46" cy="58" r="4.5" fill="#0D1117"/><circle class="pupil" cx="74" cy="58" r="4.5" fill="#0D1117"/>
+    <path class="mouth" d="M46 80 Q60 92 74 80" stroke="#0D1117" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <rect class="shades" x="32" y="52" width="56" height="14" rx="7" fill="#0D1117"/>
+  </svg>`;
+function buildBuddies(stage){
+  stage.innerHTML = UNITS.map(u => `
+    <div class="buddy relax" style="--uc:${u.c}"><div class="speech"></div><div class="token">I1</div>
+      <div class="scene"><div class="prop-relax">💤</div><div class="prop-work">🔨</div>${CREATURE}</div>
+      <div class="name" style="color:${u.c}">${u.name}</div></div>`).join('');
+}
+const MENU = [
+  { t:'Add   R1, R2, R3',  m:'Add',  d:'R1',  s:['R2','R3'] },
+  { t:'Sub   R4, R1, R5',  m:'Sub',  d:'R4',  s:['R1','R5'] },
+  { t:'Or    R6, R7, R8',  m:'Or',   d:'R6',  s:['R7','R8'] },
+  { t:'And   R8, R4, R6',  m:'And',  d:'R8',  s:['R4','R6'] },
+  { t:'Load  R2, (R9)',    m:'Load', d:'R2',  s:['R9'] },
+  { t:'Mul   R10, R2, R3', m:'Mul',  d:'R10', s:['R2','R3'] },
+];
+const BUBBLE = { bubble:true };
+function makeSim(slideId, mode){
+  const root=document.getElementById(slideId); if(!root) return {reset(){}};
+  const stage=root.querySelector('.cartoon-stage'); buildBuddies(stage);
+  const buddies=Array.from(stage.querySelectorAll('.buddy'));
+  const pnum=root.querySelector('.pnum'), bar2=root.querySelector('.clockbar'), sel=root.querySelector('.sim-select'), msgEl=root.querySelector('.sim-msg');
+  const btnIssue=root.querySelector('.sim-issue'), btnPulse=root.querySelector('.sim-pulse'), btnReset=root.querySelector('.sim-reset');
+  sel.innerHTML = MENU.map((m,i)=>`<option value="${i}">${m.t}</option>`).join('');
+  let stages=[null,null,null,null,null], pulse=0, issued=0, stalledText='';
+  const msg=(t,c)=>{ msgEl.textContent=t; msgEl.className='sim-msg '+(c||''); };
+  const busy=()=> stages.filter(s=>s&&s!==BUBBLE).length;
+  function sweep(){ bar2.style.transition='none'; bar2.style.width='0%'; void bar2.offsetWidth; bar2.style.transition='width 650ms linear'; bar2.style.width='100%'; }
+  function render(){
+    pnum.textContent=pulse;
+    buddies.forEach((b,i)=>{
+      b.classList.remove('work','bubbling','say'); b.classList.add('relax');
+      const it=stages[i], tok=b.querySelector('.token'), sp=b.querySelector('.speech');
+      if(it===BUBBLE){ b.classList.add('bubbling'); tok.textContent='bubble'; }
+      else if(it){ b.classList.remove('relax'); b.classList.add('work'); b.style.setProperty('--tc',it.color); tok.textContent=it.tag; tok.style.background=it.color; }
+      if(i===1 && stalledText){ b.classList.add('say'); sp.textContent=stalledText; }
+    });
+  }
+  function issue(){
+    const m=MENU[+sel.value]; const inst={tag:m.m+' '+m.d, dest:m.d, src:m.s, color:INSTR[issued%INSTR.length]};
+    if(mode==='nopipe'){ if(busy()){ msg('⏳ Wait — let the current instruction come out first!','warn'); return; }
+      stages[0]=inst; issued++; msg('Issued '+inst.tag+' → Fetch. Now step the clock.','ok'); }
+    else { if(stages[0]){ msg('Fetch is still busy — press Next clock pulse, then issue.','warn'); return; }
+      stages[0]=inst; issued++; msg('Issued '+inst.tag+' → Fetch.','ok'); }
+    render();
+  }
+  function nextPulse(){
+    pulse++; stalledText='';
+    if(mode==='nopipe'){ stages=[null,stages[0],stages[1],stages[2],stages[3]]; sweep(); render();
+      msg(busy()?'One unit works, the rest nap. Step again…':'Instruction finished and left the pipeline — issue the next one.', busy()?'info':'ok'); return; }
+    let waitOn=null; const dec=stages[1];
+    if(dec&&dec!==BUBBLE){ for(const srcReg of dec.src) for(const idx of [2,3,4]){ const p=stages[idx]; if(p&&p!==BUBBLE&&p.dest===srcReg) waitOn=p; } }
+    if(waitOn){ stages=[stages[0],stages[1],BUBBLE,stages[2],stages[3]];
+      stalledText='My '+waitOn.dest+' isn’t written back by '+waitOn.tag+' yet — still waiting!';
+      sweep(); render(); msg('⛔ '+dec.tag+' stalls in Decode — '+waitOn.dest+' not ready.','warn'); }
+    else { stages=[null,stages[0],stages[1],stages[2],stages[3]]; sweep(); render();
+      msg(busy()>=5?'🎉 All five stages busy — full house!':'Pipeline advancing — issue another instruction!', busy()>=5?'ok':'info'); }
+  }
+  function reset(){ stages=[null,null,null,null,null]; pulse=0; issued=0; stalledText=''; bar2.style.transition='none'; bar2.style.width='0%'; render();
+    msg(mode==='nopipe'?'Pick an instruction and issue it — only one fits at a time.':'Issue an instruction each pulse. Try a dependent one to trigger a stall.','info'); }
+  btnIssue.onclick=()=>{ issue(); btnIssue.blur(); };
+  btnPulse.onclick=()=>{ nextPulse(); btnPulse.blur(); };
+  btnReset.onclick=()=>{ reset(); btnReset.blur(); };
+  reset(); return { reset };
+}
+const sims = { 'anim-nopipe': makeSim('anim-nopipe','nopipe'), 'anim-pipe': makeSim('anim-pipe','pipe') };
+document.querySelectorAll('.sim').forEach(el => el.addEventListener('click', e => e.stopPropagation()));
+/* ============================================================================
+   TIMED TIMELINE PLAYER (ported from Unit3_Topics5-7_Deck.html).
+   ----------------------------------------------------------------------------
+   The integrated §5–7 slides include two "beat-driven" build-ups: the Fig 6.14
+   space-time chart (two instructions issued together each cycle) and the
+   reorder buffer. Their elements carry data-at="k" and light up (class "lit")
+   once a beat counter reaches k. Because paired instructions share the SAME
+   data-at value (e.g. Add F and Load F are both data-at="1"), they light up
+   together — the animation now matches "issued together", as requested.
+   One interval runs at a time; it resets on every slide change.
+   ============================================================================ */
+let animTimer = null;
+function stopAnim(){ if(animTimer){ clearInterval(animTimer); animTimer = null; } }
+function playTimeline(slide){
+  const els = Array.from(slide.querySelectorAll('[data-at]'));   /* every beat-driven cell/badge */
+  if(!els.length) return;
+  const maxAt = Math.max(...els.map(e => +e.dataset.at));        /* last beat in this diagram */
+  let beat = 0;
+  const tick = ()=>{
+    if(beat > maxAt + 2){                       /* short pause at full, then loop */
+      els.forEach(e => e.classList.remove('lit')); beat = 0; return;
+    }
+    els.forEach(e => e.classList.toggle('lit', +e.dataset.at <= beat));  /* all cells of this beat light together */
+    beat++;
+  };
+  els.forEach(e => e.classList.remove('lit'));  /* reset to blank */
+  tick();                                       /* show beat 0 at once */
+  animTimer = setInterval(tick, 750);           /* one clock cycle every 0.75 s */
+}
+
+/* Merged animation dispatcher: resets the two interactive sims (§1) AND drives
+   any data-anim="timeline" slide (§7). Called on every slide change and on R. */
+function handleAnim(i){
+  stopAnim();
+  const cur = slides[i];
+  if(!cur) return;
+  if(cur.id && sims[cur.id]) sims[cur.id].reset();          /* the without/with-pipelining sims */
+  if(cur.dataset.anim === 'timeline') playTimeline(cur);    /* Fig 6.14 & reorder-buffer builds */
+}
+
+showSlide(0,false);
+</script>
+</body>
+</html>

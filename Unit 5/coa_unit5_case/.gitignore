@@ -1,0 +1,4 @@
+# Teacher-only files — they contain the answer key. Never publish them.
+teacher/
+Code.gs
+source/

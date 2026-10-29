@@ -1,0 +1,1055 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Address Translation Lab</title>
+<!--
+  ============================================================================
+  ADDRESS TRANSLATION LAB  —  COA (CSE23CT201) · Unit 4 · Memory Management
+  ============================================================================
+  WHAT THIS FILE IS
+    A single, self-contained HTML page (no server, no build step) that
+    simulates how a logical address produced by a running Python program is
+    translated into a physical main-memory address.
+
+  HOW THE PIECES FIT TOGETHER (read this first)
+    1. <style>   : visual design. Colours are "tokens" (CSS variables) so the
+                   whole page switches between light and dark themes by
+                   redefining only the token values.
+    2. <body>    : the static skeleton — header, control bar, narration strip
+                   and three panels (Secondary storage | CPU + TLB | Main
+                   memory). The panels are EMPTY containers; JavaScript fills
+                   them on every render.
+    3. <script>  : four layers, top to bottom:
+         a. CONSTANTS  – sizes of memory, pages, TLB, disk.
+         b. WORLD DATA – the files on disk and the Python programs (their
+                         source code, their pages, and the list of memory
+                         references each line of code makes = the "trace").
+         c. ENGINE     – the simulator state object S, program loading,
+                         and the translation GENERATOR runRef(). A generator
+                         is a function that can pause (yield) after every
+                         micro-step, which is exactly what the Step button
+                         needs: each click resumes it for one more step.
+         d. VIEW       – render*() functions that redraw every panel from S,
+                         plus the event handlers for the buttons.
+    Data flow on every click of "Step":
+        button → doStep() → runRef generator advances one micro-step →
+        it mutates S (tables, frames, TLB, stats) and sets S.step/S.hl →
+        render() repaints all panels, highlighting what S.hl names.
+  ============================================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* ---------------------------------------------------------------------------
+   DESIGN TOKENS
+   Every colour used anywhere below comes from one of these variables.
+   Light palette on bare :root; dark palette redefined twice (system setting
+   and explicit data-theme="dark") so both ways of choosing dark work.
+   --------------------------------------------------------------------------- */
+:root{
+  --bg:#ECEFF3;        /* page ground: cool grey, like a lab bench */
+  --panel:#FFFFFF;     /* panel surface */
+  --panel2:#F5F7FA;    /* inset surfaces inside panels (tables, cells) */
+  --ink:#17202B;       /* main text */
+  --muted:#5A6776;     /* secondary text */
+  --line:#D3DAE2;      /* borders and hairlines */
+  --accent:#2F5FD0;    /* the concept being taught: addresses, CPU */
+  --os:#6A4FB6;        /* operating-system area: page/segment tables */
+  --disk:#8A6A3F;      /* secondary storage */
+  --hit:#1B8452;       /* TLB hit / successful access */
+  --miss:#B26F12;      /* TLB miss / replacement (warning) */
+  --fault:#C7333A;     /* page fault / protection fault (danger) */
+  --share:#0B8585;     /* shared frames (Part 2) */
+  --glow:rgba(47,95,208,.28);
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-head:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E1217; --panel:#161B22; --panel2:#1D242E; --ink:#E2E7ED; --muted:#94A1AF;
+    --line:#2B3440; --accent:#7098F4; --os:#A68CEB; --disk:#CFA66E; --hit:#43BF80;
+    --miss:#E3A43B; --fault:#F2646C; --share:#3DC7C7; --glow:rgba(112,152,244,.30);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E1217; --panel:#161B22; --panel2:#1D242E; --ink:#E2E7ED; --muted:#94A1AF;
+  --line:#2B3440; --accent:#7098F4; --os:#A68CEB; --disk:#CFA66E; --hit:#43BF80;
+  --miss:#E3A43B; --fault:#F2646C; --share:#3DC7C7; --glow:rgba(112,152,244,.30);
+}
+
+/* ---------- base ---------- */
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--font-body);}
+.wrap{padding-inline:16px;padding-block:14px 28px;max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1,h2,h3{font-family:var(--font-head);text-wrap:balance;margin:0}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- header ---------- */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.top h1{font-size:26px;letter-spacing:.2px}
+.top .sub{color:var(--muted);font-size:12.5px;text-transform:uppercase;letter-spacing:1.2px}
+.modes{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px}
+.modes button{border:0;background:transparent;padding:7px 14px;border-radius:7px;font-weight:600;color:var(--muted)}
+.modes button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.modes button:disabled{opacity:.55;cursor:not-allowed}
+
+/* ---------- control bar ---------- */
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.btn{border:1px solid var(--line);background:var(--panel2);padding:7px 12px;border-radius:7px;font-weight:600;font-size:13px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.ctl{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted)}
+.ctl select,.ctl input[type=range]{accent-color:var(--accent)}
+.ctl select{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
+.sep{width:1px;align-self:stretch;background:var(--line)}
+
+/* ---------- narration strip: the "what is happening now" line ---------- */
+.narr{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:stretch}
+.now{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--tone,var(--accent));border-radius:10px;padding:10px 14px;display:flex;gap:12px;align-items:flex-start;min-height:64px}
+.phase{font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:.8px;padding:3px 8px;border-radius:5px;white-space:nowrap;color:#fff;background:var(--tone,var(--accent))}
+.now .msg{font-size:15px;line-height:1.5}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(78px,auto));gap:4px 10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:11.5px;color:var(--muted)}
+.stats b{display:block;font-family:var(--font-mono);font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+@media (max-width:700px){.narr{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}}
+
+/* ---------- the three panels ---------- */
+.grid{display:grid;grid-template-columns:minmax(230px,.95fr) minmax(300px,1.15fr) minmax(320px,1.35fr);gap:12px;align-items:start}
+@media (max-width:1100px){.grid{grid-template-columns:1fr 1fr}.grid .mem{grid-column:1 / -1}}
+@media (max-width:720px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel > header{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.panel h2{font-size:17px}
+.panel h3{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-family:var(--font-body);font-weight:600}
+.hint{font-size:12px;color:var(--muted)}
+
+/* ---------- secondary storage ---------- */
+.files{display:flex;flex-direction:column;gap:4px}
+.file{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:6px 8px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);user-select:none;text-align:left}
+.file .sw{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.file .nm{font-family:var(--font-mono);font-size:12.5px}
+.file .kd{font-size:11px;color:var(--muted)}
+.file.prog{cursor:pointer}
+.file.prog:hover{border-color:var(--c)}
+.file.running{outline:2px solid var(--c)}
+.diskgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px}
+.blk{aspect-ratio:1;max-width:100%;border-radius:4px;border:1px solid var(--line);background:var(--panel2);font:500 9px/1 var(--font-mono);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);position:relative}
+.blk.used{background:color-mix(in srgb,var(--c) 20%,var(--panel));border-color:color-mix(in srgb,var(--c) 55%,var(--line));color:var(--ink)}
+.blk .bn{position:absolute;top:2px;left:3px;font-size:7.5px;color:var(--muted)}
+
+/* ---------- CPU panel ---------- */
+.procs{display:flex;flex-wrap:wrap;gap:4px}
+.pchip{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:3px 10px;font:500 12px var(--font-mono);display:flex;gap:6px;align-items:center}
+.pchip[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 18%,var(--panel))}
+.pchip .st{font-size:10px;color:var(--muted)}
+.regs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.reg{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-width:0}
+.reg .k{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.reg .v{font-family:var(--font-mono);font-size:15px;font-weight:600}
+.bits{display:flex;gap:6px;flex-wrap:wrap;font-family:var(--font-mono);font-size:13px;margin-top:2px}
+.bits span{padding:1px 5px;border-radius:4px}
+.b-page{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent)}
+.b-seg{background:color-mix(in srgb,var(--os) 20%,transparent);color:var(--os)}
+.b-off{background:color-mix(in srgb,var(--miss) 18%,transparent);color:var(--miss)}
+.b-frame{background:color-mix(in srgb,var(--hit) 20%,transparent);color:var(--hit)}
+.bits small{display:block;font-size:9.5px;color:var(--muted)}
+.code{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 0;font:12.5px/1.65 var(--font-mono);overflow-x:auto}
+.code div{padding:0 10px;white-space:pre}
+.code .ln{display:inline-block;width:20px;color:var(--muted)}
+.code .cur{background:color-mix(in srgb,var(--accent) 18%,transparent);box-shadow:inset 3px 0 0 var(--accent)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.kv{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:12px/1.6 var(--font-mono);min-height:52px;overflow-wrap:anywhere}
+.kv .k{color:var(--muted)}
+table.t{width:100%;border-collapse:collapse;font:12px var(--font-mono);font-variant-numeric:tabular-nums}
+table.t th{font:600 10.5px var(--font-body);text-transform:uppercase;letter-spacing:.6px;color:var(--muted);text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+table.t td{padding:3px 6px;border-bottom:1px solid var(--line)}
+.tscroll{overflow-x:auto}
+
+/* ---------- main memory ---------- */
+.osarea{border:1px solid color-mix(in srgb,var(--os) 45%,var(--line));border-radius:9px;background:color-mix(in srgb,var(--os) 6%,var(--panel));padding:8px}
+.osarea h3{color:var(--os)}
+.grp{margin-top:6px;font:600 11px var(--font-body);color:var(--os)}
+.frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px}
+.frame{border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--panel2);display:flex;flex-direction:column;gap:4px;min-width:0}
+.frame .fh{display:flex;justify-content:space-between;font:600 11px var(--font-mono)}
+.frame .fh .rg{color:var(--muted);font-weight:400}
+.frame .lbl{font-size:11.5px;min-height:17px;overflow-wrap:anywhere}
+.frame.off{opacity:.35}
+.frame.empty .lbl{color:var(--muted)}
+.words{display:grid;grid-template-columns:repeat(8,1fr);gap:2px}
+.words i{height:9px;border-radius:2px;background:var(--line)}
+.frame.full .words i{background:color-mix(in srgb,var(--c) 45%,var(--panel2))}
+.words i.acc{background:var(--hit)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--hit) 40%,transparent)}
+.badges{display:flex;flex-wrap:wrap;gap:3px}
+.badge{font:600 9.5px var(--font-mono);padding:1px 5px;border-radius:4px;background:var(--line);color:var(--muted)}
+.badge.dup{background:color-mix(in srgb,var(--miss) 22%,transparent);color:var(--miss)}
+.badge.dirty{background:color-mix(in srgb,var(--fault) 18%,transparent);color:var(--fault)}
+.badge.shared{background:color-mix(in srgb,var(--share) 20%,transparent);color:var(--share)}
+
+/* ---------- highlight states (driven by S.hl) ---------- */
+.hl{box-shadow:0 0 0 2px var(--accent),0 0 0 6px var(--glow)!important;transition:box-shadow .2s}
+.hl-fault{box-shadow:0 0 0 2px var(--fault),0 0 0 6px color-mix(in srgb,var(--fault) 25%,transparent)!important}
+.hl-hit{box-shadow:0 0 0 2px var(--hit),0 0 0 6px color-mix(in srgb,var(--hit) 25%,transparent)!important}
+tr.hl td{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+tr.hl-fault td{background:color-mix(in srgb,var(--fault) 16%,transparent)}
+tr.hl-hit td{background:color-mix(in srgb,var(--hit) 16%,transparent)}
+tr.hl,tr.hl-fault,tr.hl-hit{box-shadow:none!important}
+.calc{font:13px var(--font-mono);padding:6px 8px;border-radius:7px;background:color-mix(in srgb,var(--os) 12%,var(--panel2));border:1px dashed var(--os)}
+
+/* ---------- log ---------- */
+details.log{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+details.log summary{cursor:pointer;font-weight:600}
+.loglist{max-height:220px;overflow:auto;font-size:12.5px;display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.loglist div{display:grid;grid-template-columns:130px 1fr;gap:8px}
+.loglist .p{font:600 10.5px var(--font-mono);color:var(--tone)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <!-- HEADER: title + the Part 1 / Part 2 mode switch -->
+  <div class="top">
+    <div>
+      <div class="sub">COA · Unit 4 · Memory management hardware</div>
+      <h1>Address Translation Lab</h1>
+    </div>
+    <nav class="modes" aria-label="Simulation mode">
+      <button id="modePaging" aria-pressed="true">Part 1 · Paging</button>
+      <button id="modeSeg" aria-pressed="false">Part 2 · Segmented paging</button>
+    </nav>
+  </div>
+
+  <!-- CONTROL BAR: every button here calls one engine function (see VIEW layer) -->
+  <div class="controls" role="toolbar" aria-label="Simulation controls">
+    <button class="btn primary" id="bStep" title="Advance one micro-step">Step ▸</button>
+    <button class="btn" id="bRef" title="Complete the current memory reference">Finish reference ⏭</button>
+    <button class="btn" id="bFault" title="Run until the next page fault or protection fault">Run to next fault</button>
+    <button class="btn" id="bPlay">▶ Auto-play</button>
+    <label class="ctl" for="speed">Speed <input type="range" id="speed" min="150" max="2000" step="50" value="900"></label>
+    <span class="sep"></span>
+    <label class="ctl" for="tlbOn"><input type="checkbox" id="tlbOn" checked> Use TLB</label>
+    <label class="ctl" for="usable">Frames for programs
+      <select id="usable"><option>3</option><option selected>4</option><option>6</option><option>9</option></select>
+    </label>
+    <button class="btn" id="bReset">↺ Reset</button>
+  </div>
+
+  <!-- NARRATION: the current micro-step (phase chip + sentence) and live counters -->
+  <div class="narr">
+    <div class="now" id="now" aria-live="polite"></div>
+    <div class="stats" id="stats"></div>
+  </div>
+
+  <main class="grid">
+    <section class="panel" id="diskPanel" aria-label="Secondary storage"></section>
+    <section class="panel" id="cpuPanel" aria-label="Processor and TLB"></section>
+    <section class="panel mem" id="memPanel" aria-label="Main memory"></section>
+  </main>
+
+  <details class="log" open>
+    <summary>Step log</summary>
+    <div class="loglist" id="log"></div>
+  </details>
+</div>
+
+<script>
+/* ============================================================================
+   a. CONSTANTS  — the size of our small, readable machine
+   ============================================================================ */
+const WPP = 16;              // Words Per Page (= words per frame/block). 16 words → a 4-bit offset.
+const OFF_BITS = 4;          // offset field width in bits (2^4 = 16 words)
+const TOTAL_FRAMES = 12;     // main memory = 12 frames × 16 words = 192 words
+const OS_FRAMES = 3;         // frames 0,1,2 are reserved for the OS: page tables & segment tables live here
+const OS_WORDS = OS_FRAMES * WPP;   // 48 words of table space (addresses 0x00 – 0x2F)
+const TLB_SIZE = 4;          // the TLB holds only 4 translations (small + fast, like the real thing)
+const DISK_BLOCKS = 32;      // secondary storage shown as 32 page-sized blocks
+
+/* ============================================================================
+   b. WORLD DATA — what is on the disk, and what each Python program does
+   ============================================================================ */
+
+// Every file on secondary storage. `blocks` = which disk blocks hold its pages
+// (deliberately scattered: files on a disk are rarely contiguous).
+// kind: 'program' (double-click runs it), 'library' (pulled in by programs), 'data'.
+const FILES = [
+  { name:'marks.py',     kind:'program', color:'#3B7BEA', blocks:[2,3,4,9,10], pages:['code 0','code 1','code 2','list','vars'] },
+  { name:'greet.py',     kind:'program', color:'#12A07C', blocks:[13,14],      pages:['code','data'] },
+  { name:'hack.py',      kind:'program', color:'#DE4A52', blocks:[20,21],      pages:['code','data'] },
+  { name:'builtins.lib', kind:'library', color:'#9A68DE', blocks:[6],          pages:['print()'] },
+  { name:'photo.jpg',    kind:'data',    color:'#D0892C', blocks:[16,17,18,19], pages:['p0','p1','p2','p3'] },
+  { name:'notes.txt',    kind:'data',    color:'#7C8896', blocks:[11,12],      pages:['p0','p1'] },
+  { name:'song.mp3',     kind:'data',    color:'#C4549A', blocks:[24,25,26,27,28,29], pages:['p0','p1','p2','p3','p4','p5'] },
+  { name:'report.pdf',   kind:'data',    color:'#A77A2C', blocks:[5,22,23],    pages:['p0','p1','p2'] },
+];
+const fileByName = n => FILES.find(f => f.name === n);
+
+// Helper used by the trace builders below. `v` is the program's variable
+// snapshot; every reference records a COPY of it, so when the reference
+// completes the CPU panel can show the variables "as of" that moment.
+function makeTracer(){
+  const refs = [], v = {};
+  // line  : source line that caused this reference (1-based)
+  // kind  : 'fetch' (instruction), 'read' (data), 'write' (data)
+  // page  : the logical page id (see PROGRAMS[..].pages) being touched
+  // off   : word offset inside that page (0..15)
+  // note  : plain-English description shown in the narration
+  // extra : optional {out:'text'} = something printed when this ref completes
+  const push = (line, kind, page, off, note, extra = {}) =>
+    refs.push({ line, kind, page, off, note, vars:{...v}, ...extra });
+  return { refs, v, push };
+}
+
+/* Each program:
+   source   : the Python lines shown in the CPU panel
+   pages    : its LOGICAL pages, in order. Paging mode numbers them 0,1,2…
+              in this order. `seg` says which segment the page belongs to in
+              Part 2. `file`/`blk` say where the page's contents live on disk.
+   segments : Part 2 only — the named logical units and their protection bits
+   trace()  : builds the list of memory references the program makes.
+   NOTE: real CPython compiles each line to bytecode; here each line is
+   simplified to "one instruction fetch + the data it reads/writes". */
+const PROGRAMS = {
+  'marks.py': {
+    source: [
+      'marks = [78, 92, 65, 88, 71]',
+      'total = 0',
+      'for m in marks:',
+      '    total = total + m',
+      'avg = total / len(marks)',
+      'print(avg)',
+    ],
+    pages: [
+      { id:'code0', label:'code 0',            file:'marks.py',     blk:0, seg:0 },
+      { id:'code1', label:'code 1',            file:'marks.py',     blk:1, seg:0 },
+      { id:'code2', label:'code 2 (error handler)', file:'marks.py', blk:2, seg:0 },
+      { id:'list0', label:'list marks',        file:'marks.py',     blk:3, seg:1 },
+      { id:'vars0', label:'variables',         file:'marks.py',     blk:4, seg:1 },
+      { id:'lib0',  label:'print() code',      file:'builtins.lib', blk:0, seg:2 },
+    ],
+    segments: [
+      { name:'code',     prot:'R-X' },
+      { name:'data',     prot:'RW-' },
+      { name:'builtins', prot:'R-X', shared:'builtins' },
+    ],
+    trace(){
+      const { refs, v, push } = makeTracer();
+      const marks = [78, 92, 65, 88, 71];
+      push(1,'fetch','code0',0x0,'fetch the instruction for line 1');
+      v.marks = '[78, 92, 65, 88, 71]';
+      push(1,'write','list0',0x0,'store the list marks in memory');
+      push(2,'fetch','code0',0x3,'fetch the instruction for line 2');
+      let total = 0; v.total = 0;
+      push(2,'write','vars0',0x0,'write total = 0');
+      marks.forEach((m, i) => {
+        push(3,'fetch','code0',0x6,`fetch the loop instruction (item ${i})`);
+        push(3,'read','list0',i,`read marks[${i}] = ${m}`);
+        v.m = m;
+        push(3,'write','vars0',0x1,`write m = ${m}`);
+        push(4,'fetch','code0',0x9,'fetch the instruction for line 4');
+        push(4,'read','vars0',0x0,`read total = ${total}`);
+        push(4,'read','vars0',0x1,`read m = ${m}`);
+        total += m; v.total = total;
+        push(4,'write','vars0',0x0,`write total = ${total}`);
+      });
+      push(3,'fetch','code0',0x6,'fetch the loop instruction: no items left, leave the loop');
+      push(5,'fetch','code1',0x0,'fetch the instruction for line 5');
+      push(5,'read','vars0',0x0,`read total = ${total}`);
+      const avg = total / marks.length; v.avg = avg;
+      push(5,'write','vars0',0x2,`write avg = ${avg}`);
+      push(6,'fetch','code1',0x4,'fetch the instruction for line 6');
+      push(6,'read','vars0',0x2,`read avg = ${avg}`);
+      push(6,'fetch','lib0',0x0,'call print(): fetch the first instruction of the library code', { out:String(avg) });
+      return refs;
+    },
+  },
+
+  'greet.py': {
+    source: [
+      'name = "Asha"',
+      'for i in range(3):',
+      '    print("Hi", name)',
+    ],
+    pages: [
+      { id:'code0', label:'code',         file:'greet.py',     blk:0, seg:0 },
+      { id:'data0', label:'data',         file:'greet.py',     blk:1, seg:1 },
+      { id:'lib0',  label:'print() code', file:'builtins.lib', blk:0, seg:2 },
+    ],
+    segments: [
+      { name:'code',     prot:'R-X' },
+      { name:'data',     prot:'RW-' },
+      { name:'builtins', prot:'R-X', shared:'builtins' },
+    ],
+    trace(){
+      const { refs, v, push } = makeTracer();
+      push(1,'fetch','code0',0x0,'fetch the instruction for line 1');
+      v.name = '"Asha"';
+      push(1,'write','data0',0x0,'write name = "Asha"');
+      for (let i = 0; i < 3; i++){
+        push(2,'fetch','code0',0x4,`fetch the loop instruction (i = ${i})`);
+        v.i = i;
+        push(2,'write','data0',0x1,`write i = ${i}`);
+        push(3,'fetch','code0',0x8,'fetch the instruction for line 3');
+        push(3,'read','data0',0x0,'read name = "Asha"');
+        push(3,'fetch','lib0',0x0,'call print(): fetch the first instruction of the library code', { out:'Hi Asha' });
+      }
+      push(2,'fetch','code0',0x4,'fetch the loop instruction: range finished, leave the loop');
+      return refs;
+    },
+  },
+
+  'hack.py': {
+    source: [
+      'x = 5',
+      'patch(print, "EVIL")   # overwrite print() code',
+      'print(x)',
+    ],
+    pages: [
+      { id:'code0', label:'code',         file:'hack.py',      blk:0, seg:0 },
+      { id:'data0', label:'data',         file:'hack.py',      blk:1, seg:1 },
+      { id:'lib0',  label:'print() code', file:'builtins.lib', blk:0, seg:2 },
+    ],
+    segments: [
+      { name:'code',     prot:'R-X' },
+      { name:'data',     prot:'RW-' },
+      { name:'builtins', prot:'R-X', shared:'builtins' },
+    ],
+    trace(){
+      const { refs, v, push } = makeTracer();
+      push(1,'fetch','code0',0x0,'fetch the instruction for line 1');
+      v.x = 5;
+      push(1,'write','data0',0x0,'write x = 5');
+      push(2,'fetch','code0',0x4,'fetch the instruction for line 2');
+      push(2,'write','lib0',0x0,'WRITE into the first word of the print() code (an attack)', { attack:true });
+      push(3,'fetch','code0',0x8,'fetch the instruction for line 3');
+      push(3,'read','data0',0x0,'read x = 5');
+      push(3,'fetch','lib0',0x0,'call print(): fetch the (now overwritten) library code', { out:'EVIL' });
+      return refs;
+    },
+  },
+};
+
+/* ============================================================================
+   c. ENGINE
+   ============================================================================ */
+
+// Small formatting helpers
+const hex = (n, w = 2) => '0x' + n.toString(16).toUpperCase().padStart(w, '0');
+const bin = (n, w) => n.toString(2).padStart(w, '0');
+
+// S = the ENTIRE state of the simulated machine. render() draws only from S.
+let S = null;
+
+function freshState(mode){
+  return {
+    mode,                                   // 'paging' (Part 1) or 'seg' (Part 2)
+    usable: S ? S.usable : 4,               // how many frames programs may use (the knob)
+    tlbOn:  S ? S.tlbOn  : true,            // TLB switched on/off by the checkbox
+    frames: Array(TOTAL_FRAMES).fill(null), // frames[3..11] hold program pages; frames 0-2 = OS
+    os: Array(OS_WORDS).fill(null),         // the words of the OS region: page/segment table entries
+    osNext: 0,                              // next free word in the OS region (simple bump allocator)
+    fifo: [],                               // user frames in the order they were filled (FIFO replacement)
+    tlb: [],                                // up to TLB_SIZE entries {key, label, frame, prot, pteAddr}
+    procs: [],                              // loaded processes
+    running: null,                          // pid of the process the CPU is executing
+    sharedPT: {},                           // Part 2: shared segment name → its page-table base address
+    gen: null,                              // the paused translation generator (current reference)
+    genRef: null,                           // the reference that generator is translating
+    step: { phase:'READY', msg:'Double-click marks.py on the secondary storage to load it into main memory.', tone:'accent' },
+    hl: {},                                 // what to highlight on screen for the current micro-step
+    log: [],
+    stats: { refs:0, hit:0, miss:0, faults:0, mem:0, prot:0 },
+    la: null, pa: null,                     // last logical / physical address, for the register display
+    refAccesses: 0,                         // memory accesses used by the current reference
+  };
+}
+
+const running = () => S.procs.find(p => p.pid === S.running) || null;
+const userFrames = () => { const a = []; for (let f = OS_FRAMES; f < OS_FRAMES + S.usable; f++) a.push(f); return a; };
+
+// Record one micro-step: sets what the narration shows and what gets highlighted.
+// The generator does `yield say(...)` so the Step button pauses right here.
+function say(phase, msg, tone = 'accent', hl = {}){
+  S.step = { phase, msg, tone };
+  S.hl = hl;
+  if (!(S.log[0] && S.log[0].msg === msg)) S.log.unshift({ phase, msg, tone });   // skip exact repeats
+  if (S.log.length > 200) S.log.pop();
+  return phase;
+}
+
+// Allocate `n` consecutive words in the OS region (where tables live).
+function osAlloc(n){
+  if (S.osNext + n > OS_WORDS) throw new Error('OS table area full');
+  const base = S.osNext; S.osNext += n; return base;
+}
+
+// Where does logical page `pg` of a program live on disk?
+const diskBlockOf = pg => fileByName(pg.file).blocks[pg.blk];
+
+// Part 2 helper: segment number and page-within-segment of a program page.
+function segPos(prog, pageId){
+  const pg = prog.pages.find(p => p.id === pageId);
+  const inSeg = prog.pages.filter(p => p.seg === pg.seg);
+  return { seg: pg.seg, page: inSeg.indexOf(pg) };
+}
+
+/* ---- LOADING A PROGRAM (double-click on the disk) ------------------------
+   Pure DEMAND PAGING: loading only builds the tables in main memory with every
+   entry marked invalid (valid = 0). No page is copied yet — the very first
+   instruction fetch will cause a page fault, and pages arrive only when used. */
+function loadProgram(name){
+  const file = fileByName(name);
+  if (file.kind === 'data')    { say('NOT A PROGRAM', `${name} is a data file. Programs read data files; the CPU cannot execute them.`, 'miss'); return; }
+  if (file.kind === 'library') { say('LIBRARY', 'builtins.lib is not run on its own. Its pages are brought in when a program calls print().', 'miss', { disk:file.blocks }); return; }
+  if (S.gen)                   { say('BUSY', 'Finish the current memory reference first (press Finish reference).', 'miss'); return; }
+  if (S.procs.some(p => p.name === name)) { switchTo(S.procs.find(p => p.name === name).pid); return; }
+
+  const prog = PROGRAMS[name];
+  const p = { pid: S.procs.length + 1, name, prog, color:file.color, trace: prog.trace(), ip:0,
+              state:'ready', vars:{}, out:[], ptBase:null, stBase:null };
+  const highlightRows = [];
+
+  if (S.mode === 'paging'){
+    // One page table per process: one entry (one word) per logical page.
+    p.ptBase = osAlloc(prog.pages.length);
+    prog.pages.forEach((pg, i) => {
+      S.os[p.ptBase + i] = { type:'pte', pid:p.pid, owner:name, page:i, label:`${name} page ${i} (${pg.label})`,
+                             valid:0, frame:null, dirty:0, prot:null, disk:diskBlockOf(pg), color:file.color,
+                             diskFile:pg.file };
+      highlightRows.push(p.ptBase + i);
+    });
+    S.procs.push(p);
+    say('LOAD', `${name} becomes a process. The OS builds its page table at ${hex(p.ptBase)}–${hex(p.ptBase + prog.pages.length - 1)} in main memory, one entry per page, all with valid = 0. No page is copied yet: this is demand paging.`, 'accent', { os:highlightRows, disk:file.blocks });
+  } else {
+    loadSegmented(p, prog, file, highlightRows);   // Part 2 (defined further down)
+  }
+  switchTo(p.pid, true);
+}
+
+// Context switch: the CPU starts running another process.
+// The PTBR/STBR now points at that process's table, and the TLB is flushed
+// because its entries belonged to the previous process's address space.
+function switchTo(pid, quiet = false){
+  if (S.gen){ say('BUSY', 'Finish the current memory reference before switching processes.', 'miss'); return; }
+  const was = S.running;
+  S.running = pid;
+  if (was !== null && was !== pid){
+    S.tlb = [];
+    const p = running();
+    if (quiet){   // right after a load: keep the LOAD message, just add the switch to it
+      S.step.msg += ` The CPU switches to ${p.name}: ${S.mode === 'paging' ? 'PTBR' : 'STBR'} ← ${hex(S.mode === 'paging' ? p.ptBase : p.stBase)} and the TLB is flushed.`;
+      S.log[0].msg = S.step.msg;
+      return;
+    }
+    say('CONTEXT SWITCH', `CPU switches to ${p.name}. ${S.mode === 'paging' ? 'PTBR' : 'STBR'} ← ${hex(S.mode === 'paging' ? p.ptBase : p.stBase)}. The TLB is flushed: its entries described the other process's pages.`, 'os', { reg:true, tlb:'all' });
+  } else if (!quiet){
+    say('RUNNING', `${running().name} is running.`, 'accent');
+  }
+}
+
+/* ---- THE TRANSLATION GENERATOR ------------------------------------------
+   runRef(p, ref) walks ONE memory reference through the MMU. Each `yield`
+   is one click of the Step button. Returns 'ok' or 'killed'. */
+function* runRef(p, ref){
+  const prog = p.prog;
+  const pgIdx = prog.pages.findIndex(x => x.id === ref.page);   // paging page number
+  const paging = S.mode === 'paging';
+  const sp = paging ? null : segPos(prog, ref.page);              // Part 2 {seg, page}
+  const verb = ref.kind === 'fetch' ? 'fetches an instruction from' : ref.kind === 'read' ? 'reads' : 'writes';
+  S.stats.refs++; S.refAccesses = 0; S.pa = null;
+
+  // 1. The CPU produces the LOGICAL address from the running Python line.
+  S.la = paging ? { page:pgIdx, off:ref.off } : { seg:sp.seg, page:sp.page, off:ref.off };
+  const laText = paging
+    ? `page ${pgIdx} | offset ${hex(ref.off,1)}`
+    : `segment ${sp.seg} | page ${sp.page} | offset ${hex(ref.off,1)}`;
+  yield say('CPU', `Line ${ref.line}: ${ref.note}. The CPU generates logical address ${laHex()} = ${laText}.`, 'accent', { line:true, la:true });
+
+  for (;;){                                     // loop again after a page fault = restart the instruction
+    let frame = null, prot = null, pteAddr = null;
+    const key = paging ? String(pgIdx) : `${sp.seg}/${sp.page}`;
+
+    // 2. TLB: an associative search on the page number (all entries compared at once).
+    if (S.tlbOn){
+      const e = S.tlb.find(t => t.key === key);
+      if (e){
+        S.stats.hit++;
+        frame = e.frame; prot = e.prot; pteAddr = e.pteAddr;
+        yield say('TLB HIT', `The TLB holds ${paging ? 'page ' + pgIdx : 'segment ' + sp.seg + ', page ' + sp.page} → frame ${frame}. No table in memory has to be read.`, 'hit', { tlb:key });
+      } else {
+        S.stats.miss++;
+        yield say('TLB MISS', `No TLB entry for ${paging ? 'page ' + pgIdx : 'segment ' + sp.seg + ', page ' + sp.page}. The MMU must read the table${paging ? '' : 's'} in main memory.`, 'miss', { tlb:'miss' });
+      }
+    }
+
+    // 3. Table walk (only when the TLB did not answer).
+    if (frame === null){
+      let base, pageNo;
+      if (paging){
+        base = p.ptBase; pageNo = pgIdx;
+        yield say('PAGE TABLE BASE', `PTBR = ${hex(base)}: ${p.name}'s page table starts at main-memory address ${hex(base)}.`, 'os', { reg:true, os:rangeOf(base, prog.pages.length) });
+      } else {
+        const r = yield* segmentTableStep(p, sp);  // Part 2: STBR → segment table (1st memory access)
+        if (r === 'killed') return 'killed';
+        base = r; pageNo = sp.page;
+      }
+      pteAddr = base + pageNo;
+      yield say('ADD', `Entry address = page-table base + page number = ${hex(base)} + ${pageNo} = ${hex(pteAddr)}.`, 'os', { calc:{ base, pageNo, sum:pteAddr }, os:[pteAddr] });
+
+      const pte = S.os[pteAddr];
+      S.stats.mem++; S.refAccesses++;
+      if (!pte.valid){
+        yield say(`MEMORY ACCESS ${S.refAccesses}`, `Read the page-table entry at ${hex(pteAddr)}: valid bit = 0. This page is not in main memory.`, 'fault', { os:[pteAddr], osTone:'fault' });
+        yield* pageFault(p, pte, pteAddr);
+        S.refAccesses = 0;                      // count the accesses of the restarted attempt only
+        yield say('RESTART', `The instruction is restarted: the CPU issues logical address ${laHex()} again. (The access counter restarts too.)`, 'accent', { la:true, line:true });
+        continue;                               // back to the TLB lookup
+      }
+      frame = pte.frame; prot = pte.prot;
+      yield say(`MEMORY ACCESS ${S.refAccesses}`, `Read the page-table entry at ${hex(pteAddr)}: valid = 1, frame (block) number = ${frame}${paging ? '' : ', protection = ' + prot}.`, 'os', { os:[pteAddr], frame });
+
+      if (S.tlbOn){
+        let evicted = null;
+        if (S.tlb.length >= TLB_SIZE) evicted = S.tlb.shift();   // FIFO replacement inside the TLB
+        S.tlb.push({ key, label: paging ? `p${pgIdx}` : `s${sp.seg} p${sp.page}`, frame, prot, pteAddr });
+        yield say('TLB UPDATE', `Copy this translation into the TLB${evicted ? ` (the TLB is full, so its oldest entry, ${evicted.label}, is dropped)` : ''}, so the next reference to this page skips the table.`, 'hit', { tlb:key });
+      }
+    }
+
+    // 4. Protection check (Part 2: every page-table entry carries R/W/X bits).
+    if (!paging){
+      const need = ref.kind === 'fetch' ? 'X' : ref.kind === 'read' ? 'R' : 'W';
+      if (!prot.includes(need)){
+        S.stats.prot++; p.state = 'killed';
+        yield say('PROTECTION FAULT', `${p.name} tries to ${ref.kind === 'write' ? 'WRITE' : ref.kind.toUpperCase()} a page whose protection is ${prot}. The ${need} bit is missing, so the hardware traps to the OS and the OS terminates ${p.name}. The shared print() code is not changed.`, 'fault', { os:pteAddr != null ? [pteAddr] : [], osTone:'fault', frame, frameTone:'fault' });
+        return 'killed';
+      }
+    }
+
+    // 5. Physical address = frame number ‖ offset. The CPU finally touches the word.
+    const PA = frame * WPP + ref.off;
+    S.pa = { frame, off:ref.off, addr:PA };
+    S.stats.mem++; S.refAccesses++;
+    if (ref.kind === 'write'){ S.os[pteAddr].dirty = 1; }
+    if (ref.attack && paging){
+      S.frames[frame].corrupt = true;
+    }
+    const accessNote = S.refAccesses === 1
+      ? 'This reference needed only 1 memory access, thanks to the TLB.'
+      : paging
+        ? `This reference needed ${S.refAccesses} memory accesses: the page table, then the data.`
+        : `This reference needed ${S.refAccesses} memory accesses: the segment table, the page table, then the data.`;
+    const attackNote = (ref.attack && paging)
+      ? ' Nothing stopped this write: a plain page-table entry has no protection bits. Only hack.py\'s own copy of print() changed, because in paging every process loads its own copy.'
+      : '';
+    yield say('ACCESS', `Physical address = frame ${frame} ‖ offset ${hex(ref.off,1)} = ${hex(PA)}. The CPU ${verb} main memory at ${hex(PA)}. ${accessNote}${attackNote}`, ref.attack && paging ? 'fault' : 'hit', { frame, word:ref.off, pa:true });
+    return 'ok';
+  }
+}
+
+const rangeOf = (a, n) => Array.from({ length:n }, (_, i) => a + i);
+function laHex(){
+  const la = S.la; if (!la) return '—';
+  return S.mode === 'paging'
+    ? hex((la.page << OFF_BITS) | la.off)
+    : hex((la.seg << 6) | (la.page << OFF_BITS) | la.off);
+}
+
+/* ---- PAGE FAULT HANDLER (the operating system's job) --------------------- */
+function* pageFault(p, pte, pteAddr){
+  S.stats.faults++;
+  yield say('PAGE FAULT', `Page fault: the hardware traps to the operating system. ${p.name} is paused. The instruction will be restarted after the page is loaded.`, 'fault', { os:[pteAddr], osTone:'fault' });
+  yield say('PAGE FAULT', `The OS finds where this page is kept on secondary storage: ${pte.label} is in disk block ${pte.disk}.`, 'fault', { disk:[pte.disk] });
+
+  // Find a frame: a free one if possible, else evict the oldest (FIFO).
+  let f = userFrames().find(x => S.frames[x] === null);
+  if (f === undefined){
+    f = S.fifo.shift();
+    const vf = S.frames[f];
+    const vpte = S.os[vf.pteAddr];
+    yield say('REPLACEMENT', `No frame is free. FIFO replacement picks frame ${f}, the frame loaded earliest (it holds ${vf.label}).`, 'miss', { frame:f, frameTone:'fault' });
+    if (vpte.dirty){
+      yield say('WRITE BACK', `Frame ${f} is dirty (the program wrote to it), so it is first copied back to disk block ${vpte.disk}.`, 'miss', { frame:f, disk:[vpte.disk] });
+      vpte.dirty = 0;
+    }
+    vpte.valid = 0; vpte.frame = null;
+    S.tlb = S.tlb.filter(t => t.frame !== f);            // a stale TLB entry would point at the wrong page
+    S.frames[f] = null;
+    yield say('INVALIDATE', `The victim's page-table entry at ${hex(vf.pteAddr)} is set to valid = 0 and its TLB entry (if any) is removed.`, 'miss', { os:[vf.pteAddr] });
+  } else {
+    yield say('FREE FRAME', `Frame ${f} is free, so the page can go there.`, 'os', { frame:f });
+  }
+
+  S.frames[f] = { pteAddr, label:pte.label, disk:pte.disk, color:pte.color, shared:!!pte.shared, owner:pte.owner };
+  S.fifo.push(f);
+  yield say('DISK → MEMORY', `Copy disk block ${pte.disk} into frame ${f} (${hex(f * WPP)}–${hex(f * WPP + WPP - 1)}). A disk access takes milliseconds; a memory access takes nanoseconds.`, 'fault', { disk:[pte.disk], frame:f });
+
+  pte.valid = 1; pte.frame = f; pte.dirty = 0;
+  yield say('UPDATE TABLE', `Update the page-table entry at ${hex(pteAddr)}: valid = 1, frame = ${f}.`, 'os', { os:[pteAddr] });
+}
+
+/* ============================================================================
+   PART 2 · SEGMENTED PAGING
+   A logical address is now  segment (2 bits) | page (2 bits) | offset (4 bits).
+   Each process has a SEGMENT TABLE (base in the STBR). Each segment-table
+   entry holds the base of that segment's own PAGE TABLE and the segment's
+   length. So a TLB miss costs: segment table (access 1) + page table
+   (access 2) + the data itself (access 3).
+   Because a segment is a NAMED logical unit ("builtins"), the OS knows two
+   processes want the same thing and lets both segment tables point to ONE
+   page table → one copy in memory. Sharing is only safe with protection,
+   so every page-table entry carries R/W/X bits.
+   ============================================================================ */
+function loadSegmented(p, prog, file, hlRows){
+  const nseg = prog.segments.length;
+  p.stBase = osAlloc(nseg);                          // the segment table: one word per segment
+  const notes = [];
+  prog.segments.forEach((sg, s) => {
+    const pages = prog.pages.filter(pg => pg.seg === s);
+    let ptBase;
+    if (sg.shared && S.sharedPT[sg.shared] != null){
+      // Already loaded by another process: reuse its page table (and so its frames).
+      ptBase = S.sharedPT[sg.shared];
+      notes.push(`Segment ${s} (${sg.name}) is already known to the OS, so this segment-table entry points to the SAME page table at ${hex(ptBase)}. There is one copy of print() for every process.`);
+    } else {
+      ptBase = osAlloc(pages.length);                // a private page table for this segment
+      pages.forEach((pg, i) => {
+        S.os[ptBase + i] = {
+          type:'pte', owner: sg.shared || p.name,
+          group: sg.shared ? `${sg.shared} · shared page table` : `${p.name} · segment ${s} (${sg.name}) page table`,
+          page:i, label: sg.shared ? `${sg.shared} page ${i} (${pg.label})` : `${p.name} seg ${s} page ${i} (${pg.label})`,
+          valid:0, frame:null, dirty:0, prot:sg.prot, disk:diskBlockOf(pg), color:fileByName(pg.file).color,
+          shared: !!sg.shared,
+        };
+        hlRows.push(ptBase + i);
+      });
+      if (sg.shared) S.sharedPT[sg.shared] = ptBase;
+    }
+    S.os[p.stBase + s] = { type:'ste', owner:p.name, group:`${p.name} · segment table`, seg:s, name:sg.name,
+                           ptBase, length:pages.length, sharedTag: !!sg.shared };
+    hlRows.push(p.stBase + s);
+  });
+  S.procs.push(p);
+  say('LOAD', `${p.name} becomes a process with ${nseg} segments: ${prog.segments.map((g, i) => i + ' ' + g.name).join(', ')}. The OS builds its segment table at ${hex(p.stBase)} and a page table for each segment. Every page starts with valid = 0 and carries protection bits.${notes.length ? ' ' + notes.join(' ') : ''}`, 'accent', { os:hlRows, disk:file.blocks });
+}
+
+// First half of the Part 2 table walk: STBR → segment-table entry.
+// Returns the page-table base for the segment, or 'killed' on a length violation.
+function* segmentTableStep(p, sp){
+  const nseg = p.prog.segments.length;
+  yield say('SEGMENT TABLE BASE', `STBR = ${hex(p.stBase)}: ${p.name}'s segment table starts at main-memory address ${hex(p.stBase)}.`, 'os', { reg:true, os:rangeOf(p.stBase, nseg) });
+  const steAddr = p.stBase + sp.seg;
+  yield say('ADD', `Segment-table entry address = STBR + segment number = ${hex(p.stBase)} + ${sp.seg} = ${hex(steAddr)}.`, 'os', { calc:{ base:p.stBase, pageNo:sp.seg, sum:steAddr, what:'segment' }, os:[steAddr] });
+  S.stats.mem++; S.refAccesses++;
+  const ste = S.os[steAddr];
+  if (sp.page >= ste.length){
+    S.stats.prot++; p.state = 'killed';
+    yield say('SEGMENT LENGTH FAULT', `Page ${sp.page} is outside segment ${sp.seg}, which has only ${ste.length} page(s). The OS terminates ${p.name}.`, 'fault', { os:[steAddr], osTone:'fault' });
+    return 'killed';
+  }
+  yield say(`MEMORY ACCESS ${S.refAccesses}`, `Read the segment-table entry at ${hex(steAddr)}: segment ${sp.seg} (${ste.name}) has its page table at ${hex(ste.ptBase)} and a length of ${ste.length} page(s). Page ${sp.page} is within the length.${ste.sharedTag ? ' This page table is shared by every process that uses builtins.' : ''}`, 'os', { os:[steAddr] });
+  return ste.ptBase;
+}
+
+/* ---- STEPPING: what the buttons call ------------------------------------ */
+
+// Start translating the next memory reference of the running process.
+// Returns false (and says why) when there is nothing to run.
+function startNextRef(){
+  const p = running();
+  if (!p){ say('READY', 'Load a program first: double-click a .py file on the secondary storage.', 'accent'); return false; }
+  if (p.state !== 'ready'){
+    const other = S.procs.find(q => q.state === 'ready');
+    say(p.state === 'killed' ? 'TERMINATED' : 'FINISHED',
+        `${p.name} has ${p.state === 'killed' ? 'been terminated by the OS' : 'finished'}.` + (other ? ` Click ${other.name} in the CPU panel to run it.` : ' Load another program from the disk, or press Reset.'),
+        p.state === 'killed' ? 'fault' : 'hit');
+    return false;
+  }
+  S.genRef = p.trace[p.ip];
+  S.gen = runRef(p, S.genRef);
+  return true;
+}
+
+// Called when the generator returns: the reference is complete.
+function finishRef(result){
+  const p = running();
+  if (result === 'ok'){
+    Object.assign(p.vars, S.genRef.vars);
+    if (S.genRef.out) p.out.push(S.genRef.out);
+    p.ip++;
+    if (p.ip >= p.trace.length) p.state = 'done';
+  }
+  S.gen = null;
+}
+
+// One click of "Step": advance exactly one visible micro-step.
+function doStep(){
+  if (!S.gen && !startNextRef()){ stopPlay(); return render(); }
+  let r = S.gen.next();
+  if (r.done){                                   // the previous yield was the last one of that reference
+    finishRef(r.value);
+    if (!startNextRef()){ stopPlay(); return render(); }
+    r = S.gen.next();
+  }
+  render();
+}
+
+// "Finish reference": run the current reference to its end.
+function finishCurrent(){
+  if (!S.gen && !startNextRef()) return render();
+  let guard = 0, r;
+  do { r = S.gen.next(); } while (!r.done && ++guard < 100);
+  finishRef(r.value);
+  render();
+}
+
+// "Run to next fault": keep stepping until a page/protection fault appears.
+function runToFault(){
+  for (let i = 0; i < 2000; i++){
+    const before = S.stats.faults + S.stats.prot;
+    if (!S.gen && !startNextRef()) break;
+    const r = S.gen.next();
+    if (r.done){ finishRef(r.value); continue; }
+    if (S.stats.faults + S.stats.prot > before) break;
+  }
+  render();
+}
+
+// Auto-play = pressing Step on a timer.
+let timer = null;
+function startPlay(){ stopPlay(); timer = setInterval(doStep, +document.getElementById('speed').value); document.getElementById('bPlay').textContent = '⏸ Pause'; }
+function stopPlay(){ if (timer) clearInterval(timer); timer = null; const b = document.getElementById('bPlay'); if (b) b.textContent = '▶ Auto-play'; }
+
+/* ============================================================================
+   d. VIEW — every render function reads S and rewrites one panel
+   ============================================================================ */
+const TONES = { accent:'var(--accent)', hit:'var(--hit)', miss:'var(--miss)', fault:'var(--fault)', os:'var(--os)' };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+
+function render(){
+  renderNow(); renderStats(); renderDisk(); renderCPU(); renderMem(); renderLog();
+  document.getElementById('bPlay').disabled = false;
+}
+
+// Narration strip
+function renderNow(){
+  const el = document.getElementById('now');
+  el.style.setProperty('--tone', TONES[S.step.tone] || TONES.accent);
+  el.innerHTML = `<span class="phase">${esc(S.step.phase)}</span><div class="msg">${esc(S.step.msg)}</div>`;
+}
+
+// Counters: effective memory accesses per reference is the key number for the TLB lesson
+function renderStats(){
+  const st = S.stats, avg = st.refs ? (st.mem / st.refs).toFixed(2) : '—';
+  document.getElementById('stats').innerHTML = `
+    <div><b>${st.refs}</b>references</div>
+    <div><b>${st.hit}</b>TLB hits</div>
+    <div><b>${st.miss}</b>TLB misses</div>
+    <div><b>${st.faults}</b>page faults</div>
+    <div><b>${st.mem}</b>memory accesses</div>
+    <div><b>${avg}</b>accesses / ref</div>`;
+}
+
+// Secondary storage: file list (double-click to load) + the block map
+function renderDisk(){
+  const hlDisk = new Set(S.hl.disk || []);
+  const blockOwner = {};
+  FILES.forEach(f => f.blocks.forEach((b, i) => blockOwner[b] = { f, i }));
+  const runningName = running()?.name;
+  const files = FILES.map(f => `
+    <div class="file ${f.kind === 'program' ? 'prog' : ''} ${f.name === runningName ? 'running' : ''}" style="--c:${f.color}"
+         data-file="${f.name}" tabindex="0" role="button" aria-label="${f.name}, ${f.kind}${f.kind === 'program' ? ', double-click to load' : ''}">
+      <span class="sw"></span><span class="nm">${f.name}</span>
+      <span class="kd">${f.kind === 'program' ? '▶ program' : f.kind} · ${f.blocks.length} pg</span>
+    </div>`).join('');
+  let blocks = '';
+  for (let b = 0; b < DISK_BLOCKS; b++){
+    const o = blockOwner[b];
+    blocks += o
+      ? `<div class="blk used ${hlDisk.has(b) ? 'hl' : ''}" style="--c:${o.f.color}" title="block ${b}: ${o.f.name} ${o.f.pages[o.i]}"><span class="bn">${b}</span>${esc(o.f.name.split('.')[0].slice(0,5))}<br>${esc(o.f.pages[o.i].split(' ')[0].slice(0,5))}${/\d/.test(o.f.pages[o.i]) && o.f.kind!=='data' ? '' : ''}</div>`
+      : `<div class="blk" title="block ${b}: free"><span class="bn">${b}</span></div>`;
+  }
+  document.getElementById('diskPanel').innerHTML = `
+    <header><h2>Secondary storage</h2><span class="hint">disk · page-sized blocks</span></header>
+    <div class="hint">Double-click a <b>.py</b> program to load it. Everything on the disk is stored in page-sized blocks.</div>
+    <div class="files">${files}</div>
+    <h3>Disk blocks</h3>
+    <div class="diskgrid">${blocks}</div>`;
+}
+
+// CPU panel: processes, registers (LA → PA), Python source, variables, output, TLB
+function renderCPU(){
+  const p = running();
+  const paging = S.mode === 'paging';
+  const procs = S.procs.map(q => `
+    <button class="pchip" style="--c:${q.color}" data-pid="${q.pid}" aria-pressed="${q.pid === S.running}">
+      ${q.name}<span class="st">${q.state === 'ready' ? (q.pid === S.running ? 'running' : 'waiting') : q.state}</span></button>`).join('') || '<span class="hint">No process yet.</span>';
+
+  // Logical address register with its bit fields coloured
+  let laBits = '<span class="hint">—</span>';
+  if (S.la){
+    laBits = paging
+      ? `<span class="b-page">${bin(S.la.page,3)}<small>page ${S.la.page}</small></span><span class="b-off">${bin(S.la.off,4)}<small>offset ${S.la.off}</small></span>`
+      : `<span class="b-seg">${bin(S.la.seg,2)}<small>seg ${S.la.seg}</small></span><span class="b-page">${bin(S.la.page,2)}<small>page ${S.la.page}</small></span><span class="b-off">${bin(S.la.off,4)}<small>offset ${S.la.off}</small></span>`;
+  }
+  let paBits = '<span class="hint">not yet translated</span>';
+  if (S.pa){
+    paBits = `<span class="b-frame">${bin(S.pa.frame,4)}<small>frame ${S.pa.frame}</small></span><span class="b-off">${bin(S.pa.off,4)}<small>offset ${S.pa.off}</small></span>`;
+  }
+  const baseReg = paging ? 'PTBR' : 'STBR';
+  const baseVal = p ? hex(paging ? p.ptBase : p.stBase) : '—';
+
+  // Python source with the current line highlighted
+  const curLine = S.gen ? S.genRef.line : (p && p.state === 'ready' ? p.trace[p.ip]?.line : null);
+  const src = p ? p.prog.source.map((l, i) => `<div class="${curLine === i + 1 ? 'cur' : ''}"><span class="ln">${i + 1}</span>${esc(l)}</div>`).join('') : '<div class="hint">Load a program to see its source.</div>';
+  const vars = p && Object.keys(p.vars).length ? Object.entries(p.vars).map(([k, v]) => `<div><span class="k">${esc(k)}</span> = ${esc(v)}</div>`).join('') : '<span class="hint">—</span>';
+  const out = p && p.out.length ? p.out.map(o => `<div>${esc(o)}</div>`).join('') : '<span class="hint">—</span>';
+
+  // TLB rows
+  const tlbHl = S.hl.tlb;
+  let tlbRows = '';
+  for (let i = 0; i < TLB_SIZE; i++){
+    const e = S.tlb[i];
+    const cls = e && tlbHl === e.key ? (S.step.phase === 'TLB HIT' ? 'hl-hit' : 'hl') : '';
+    tlbRows += e
+      ? `<tr class="${cls}"><td>${paging ? e.key : e.key.replace('/', ' / ')}</td><td>${e.frame}</td>${paging ? '' : `<td>${e.prot}</td>`}</tr>`
+      : `<tr><td class="hint">empty</td><td></td>${paging ? '' : '<td></td>'}</tr>`;
+  }
+  const tlbBox = (tlbHl === 'miss' || tlbHl === 'all') ? 'hl' : '';
+
+  document.getElementById('cpuPanel').innerHTML = `
+    <header><h2>Processor</h2><span class="hint">click a process to switch</span></header>
+    <div class="procs">${procs}</div>
+    <div class="regs">
+      <div class="reg ${S.hl.la ? 'hl' : ''}"><div class="k">Logical address</div><div class="v">${S.la ? laHex() : '—'}</div><div class="bits">${laBits}</div></div>
+      <div class="reg ${S.hl.pa ? 'hl-hit' : ''}"><div class="k">Physical address</div><div class="v">${S.pa ? hex(S.pa.addr) : '—'}</div><div class="bits">${paBits}</div></div>
+      <div class="reg ${S.hl.reg ? 'hl' : ''}"><div class="k">${baseReg} (table base)</div><div class="v">${baseVal}</div></div>
+      <div class="reg"><div class="k">This reference</div><div class="v">${S.gen || S.pa ? S.refAccesses + ' mem. access' + (S.refAccesses === 1 ? '' : 'es') : '—'}</div></div>
+    </div>
+    ${S.hl.calc ? `<div class="calc">${hex(S.hl.calc.base)} (${S.hl.calc.what === 'segment' ? 'STBR' : 'page-table base'}) + ${S.hl.calc.pageNo} (${S.hl.calc.what === 'segment' ? 'segment' : 'page'}) = <b>${hex(S.hl.calc.sum)}</b> → ${S.hl.calc.what === 'segment' ? 'segment' : 'page'}-table entry address</div>` : ''}
+    <h3>Python program ${p ? '· ' + esc(p.name) : ''}</h3>
+    <div class="code ${S.hl.line ? '' : ''}">${src}</div>
+    <div class="row2">
+      <div><h3>Variables</h3><div class="kv">${vars}</div></div>
+      <div><h3>Output</h3><div class="kv">${out}</div></div>
+    </div>
+    <h3>TLB · translation look-aside buffer (${TLB_SIZE} entries)${S.tlbOn ? '' : ' · switched off'}</h3>
+    <div class="tscroll ${tlbBox}" style="border-radius:8px">
+      <table class="t"><thead><tr><th>${paging ? 'Page' : 'Seg / page'}</th><th>Frame</th>${paging ? '' : '<th>Prot</th>'}</tr></thead><tbody>${tlbRows}</tbody></table>
+    </div>`;
+}
+
+// Main memory: the OS region (tables) and the program frames
+function renderMem(){
+  const hlOs = new Set(S.hl.os || []);
+  const osCls = a => hlOs.has(a) ? (S.hl.osTone === 'fault' ? 'hl-fault' : 'hl') : '';
+  const paging = S.mode === 'paging';
+
+  // Group the OS words by their owner so each table gets a heading.
+  let osHtml = '';
+  if (S.osNext === 0){
+    osHtml = '<div class="hint">Empty. Tables appear here when a program is loaded.</div>';
+  } else {
+    let rows = '', lastGroup = null;
+    const ptHead = `<tr><th>Addr</th><th>Page</th><th>Valid</th><th>Frame</th><th>Dirty</th>${paging ? '' : '<th>Prot</th>'}<th>On disk</th></tr>`;
+    for (let a = 0; a < S.osNext; a++){
+      const w = S.os[a]; if (!w) continue;
+      const group = w.group || (w.type === 'pte' ? `${w.owner} · page table` : `${w.owner} · segment table`);
+      if (group !== lastGroup){
+        rows += `<tr><td colspan="7" class="grp">${esc(group)}</td></tr>`;
+        rows += w.type === 'ste' ? `<tr><th>Addr</th><th>Seg</th><th colspan="2">Page-table base</th><th colspan="3">Length</th></tr>` : ptHead;
+        lastGroup = group;
+      }
+      if (w.type === 'pte'){
+        rows += `<tr class="${osCls(a)}"><td>${hex(a)}</td><td>${w.page}</td><td>${w.valid}</td><td>${w.frame ?? '—'}</td><td>${w.dirty}</td>${paging ? '' : `<td>${w.prot}</td>`}<td>blk ${w.disk}</td></tr>`;
+      } else {
+        rows += `<tr class="${osCls(a)}"><td>${hex(a)}</td><td>${w.seg} ${esc(w.name)}</td><td colspan="2">${hex(w.ptBase)}${w.sharedTag ? ' <span class="badge shared">shared</span>' : ''}</td><td colspan="3">${w.length} page${w.length > 1 ? 's' : ''}</td></tr>`;
+      }
+    }
+    osHtml = `<div class="tscroll"><table class="t">${rows}</table></div>`;
+  }
+
+  // Program frames
+  const usable = new Set(userFrames());
+  const byDisk = {};
+  for (let f = OS_FRAMES; f < TOTAL_FRAMES; f++) if (S.frames[f]) (byDisk[S.frames[f].disk] ||= []).push(f);
+  let frames = '';
+  for (let f = OS_FRAMES; f < TOTAL_FRAMES; f++){
+    const fr = S.frames[f];
+    const on = usable.has(f);
+    const isHl = S.hl.frame === f;
+    const cls = isHl ? (S.hl.frameTone === 'fault' ? 'hl-fault' : (S.step.phase === 'ACCESS' ? 'hl-hit' : 'hl')) : '';
+    let words = '';
+    for (let w = 0; w < WPP; w++) words += `<i class="${isHl && S.hl.word === w ? 'acc' : ''}"></i>`;
+    const badges = [];
+    if (fr){
+      const pte = S.os[fr.pteAddr];
+      badges.push(`<span class="badge">FIFO #${S.fifo.indexOf(f) + 1}</span>`);
+      if (pte && pte.dirty) badges.push('<span class="badge dirty">dirty</span>');
+      if (fr.shared) badges.push('<span class="badge shared">shared</span>');
+      const twins = byDisk[fr.disk].filter(x => x !== f);
+      if (twins.length) badges.push(`<span class="badge dup">same data as frame ${twins.join(', ')}</span>`);
+      if (fr.corrupt) badges.push('<span class="badge dirty">overwritten!</span>');
+    }
+    frames += `
+      <div class="frame ${fr ? 'full' : 'empty'} ${on ? '' : 'off'} ${cls}" style="--c:${fr ? fr.color : 'transparent'}">
+        <div class="fh"><span>Frame ${f}</span><span class="rg">${hex(f * WPP)}–${hex(f * WPP + WPP - 1)}</span></div>
+        <div class="lbl">${fr ? esc(fr.label) : (on ? 'free' : 'not available')}</div>
+        <div class="words">${words}</div>
+        <div class="badges">${badges.join('')}</div>
+      </div>`;
+  }
+
+  document.getElementById('memPanel').innerHTML = `
+    <header><h2>Main memory</h2><span class="hint">${TOTAL_FRAMES} frames × ${WPP} words · physical address = frame ‖ offset</span></header>
+    <div class="osarea">
+      <h3>Frames 0–2 · operating system area (${hex(0)}–${hex(OS_WORDS - 1)}): ${paging ? 'page tables' : 'segment & page tables'}</h3>
+      ${osHtml}
+    </div>
+    <h3>Frames ${OS_FRAMES}–${TOTAL_FRAMES - 1} · program pages (${S.usable} available, set by the knob)</h3>
+    <div class="hint">Copies of print() code in memory right now: <b class="mono">${S.frames.filter(f => f && f.disk === fileByName('builtins.lib').blocks[0]).length}</b>${paging ? ' · in paging, each process loads its own copy' : ' · in segmented paging, the builtins segment is shared'}</div>
+    <div class="frames">${frames}</div>`;
+}
+
+function renderLog(){
+  document.getElementById('log').innerHTML = S.log.slice(0, 80).map(l =>
+    `<div><span class="p" style="--tone:${TONES[l.tone]}">${esc(l.phase)}</span><span>${esc(l.msg)}</span></div>`).join('');
+}
+
+/* ---- wiring: buttons and double-clicks ---------------------------------- */
+function reset(mode = S ? S.mode : 'paging'){
+  stopPlay();
+  S = freshState(mode);
+  document.getElementById('modePaging').setAttribute('aria-pressed', mode === 'paging');
+  document.getElementById('modeSeg').setAttribute('aria-pressed', mode === 'seg');
+  if (mode === 'seg') say('READY', 'Part 2 · Segmented paging. Double-click marks.py, then greet.py, then hack.py.', 'accent');
+  render();
+}
+
+document.getElementById('bStep').onclick = () => { stopPlay(); doStep(); };
+document.getElementById('bRef').onclick = () => { stopPlay(); finishCurrent(); };
+document.getElementById('bFault').onclick = () => { stopPlay(); runToFault(); };
+document.getElementById('bPlay').onclick = () => timer ? stopPlay() : startPlay();
+document.getElementById('speed').oninput = () => { if (timer) startPlay(); };
+document.getElementById('bReset').onclick = () => reset();
+document.getElementById('tlbOn').onchange = e => { S.tlbOn = e.target.checked; if (!S.tlbOn) S.tlb = []; render(); };
+document.getElementById('usable').onchange = e => { S.usable = +e.target.value; reset(); };
+document.getElementById('modePaging').onclick = () => reset('paging');
+document.getElementById('modeSeg').onclick = () => reset('seg');
+
+// Double-click (or Enter key) on a disk file loads it; click on a process chip switches to it.
+document.getElementById('diskPanel').addEventListener('dblclick', e => {
+  const f = e.target.closest('[data-file]'); if (f){ loadProgram(f.dataset.file); render(); }
+});
+document.getElementById('diskPanel').addEventListener('keydown', e => {
+  const f = e.target.closest('[data-file]'); if (f && e.key === 'Enter'){ loadProgram(f.dataset.file); render(); }
+});
+document.getElementById('cpuPanel').addEventListener('click', e => {
+  const c = e.target.closest('[data-pid]'); if (c){ stopPlay(); switchTo(+c.dataset.pid); render(); }
+});
+
+reset('paging');
+</script>
+</body></html>
