@@ -18,3 +18,11 @@ Unit 3/Hamacher_Ch06_Pipelining.pdf
 # Class-only copies that embed textbook figures — never publish to the public repo
 *_CLASS.html
 *_CLASS.*.png
+
+# Original lecture recordings (90-125 MB each). GitHub rejects files over 100 MB,
+# so only the small web copies in videos/web/ are published. They were made with:
+#   ffmpeg -i "IN.mp4" -c:v libx264 -preset veryfast -crf 28 -pix_fmt yuv420p \
+#          -c:a aac -b:a 96k -movflags +faststart "videos/web/UnitN_Video.mp4"
+videos/*.mp4
+# leftover partial encode
+videos/web/*.tmp.mp4

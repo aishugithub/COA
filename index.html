@@ -366,6 +366,9 @@
              elsewhere on this page), so the page keeps telling the truth about
              what exists rather than the layout quietly reshuffling per unit.
 
+             Units 1-5 also have a "Video Lecture" slot right after Foothold,
+             linking to a recorded lecture in videos/web/.
+
              Exceptions: Unit 3 — Pipelining has a fourth "Simulator" slot after
              Foothold, linking to AVPS (our pipeline simulator); Unit 5 has a fourth
              "Case Study" slot linking to the in-class case-study test.
@@ -432,6 +435,25 @@
               </span>
               <span class="u-open">Open course →</span>
             </a>
+            <!-- Video slot: a recorded lecture for this unit.
+                 HOW IT WORKS: an ordinary ".unit" card (same styling as its neighbours)
+                 whose link points straight at an .mp4 file in videos/web/. Every modern
+                 browser, phones included, plays an .mp4 link in its own built-in player,
+                 so no extra code is needed. target="_blank" opens it in a new tab so this
+                 index page stays open behind it.
+                 WHY videos/web/: the originals in videos/ are 90-125 MB and GitHub refuses
+                 any file over 100 MB, so .gitignore keeps the originals out of git. The
+                 web/ copies are re-encoded small (about 6-15 MB each) with "faststart" on,
+                 so a video starts playing before the whole file has downloaded.
+                 EDIT: for a new recording, re-encode it into videos/web/ with the ffmpeg
+                 command noted in .gitignore, then add a card like this one. -->
+            <a class="unit" href="videos/web/Unit1_Video.mp4" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 1 — Video Lecture</span>
+                <span class="u-sub">Unit 1 recorded lecture · 9 min · plays in your browser</span>
+              </span>
+              <span class="u-open">Watch video →</span>
+            </a>
           </div>
         </div>
 
@@ -463,6 +485,14 @@
                 <span class="u-sub">Self-paced interactive lessons for this unit</span>
               </span>
               <span class="u-open">Open course →</span>
+            </a>
+            <!-- Video slot: same kind of card as Unit 1's (see the comment there). -->
+            <a class="unit" href="videos/web/Unit2_Video.mp4" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 2 — Video Lecture</span>
+                <span class="u-sub">Complete instruction execution · 11 min · plays in your browser</span>
+              </span>
+              <span class="u-open">Watch video →</span>
             </a>
           </div>
         </div>
@@ -496,6 +526,14 @@
                 <span class="u-sub">Self-paced interactive lessons for this unit</span>
               </span>
               <span class="u-open">Open course →</span>
+            </a>
+            <!-- Video slot: same kind of card as Unit 1's (see the comment there). -->
+            <a class="unit" href="videos/web/Unit3_Video.mp4" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 3 — Video Lecture</span>
+                <span class="u-sub">Data hazards &amp; forwarding · 16 min · plays in your browser</span>
+              </span>
+              <span class="u-open">Watch video →</span>
             </a>
             <!-- Simulator slot (Unit 3 only). This is an extra fourth card after the
                  usual Deck · Notes · Foothold slots, because pipelining is the one
@@ -545,6 +583,14 @@
               </span>
               <span class="u-open">Open course →</span>
             </a>
+            <!-- Video slot: same kind of card as Unit 1's (see the comment there). -->
+            <a class="unit" href="videos/web/Unit4_Video.mp4" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 4 — Video Lecture</span>
+                <span class="u-sub">Cache mapping techniques · 12 min · plays in your browser</span>
+              </span>
+              <span class="u-open">Watch video →</span>
+            </a>
           </div>
         </div>
 
@@ -579,6 +625,14 @@
                 <span class="u-sub">Self-paced interactive lessons for this unit</span>
               </span>
               <span class="u-open">Open course →</span>
+            </a>
+            <!-- Video slot: same kind of card as Unit 1's (see the comment there). -->
+            <a class="unit" href="videos/web/Unit5_Video.mp4" target="_blank" rel="noopener">
+              <span>
+                <span class="u-title">Unit 5 — Video Lecture</span>
+                <span class="u-sub">Direct Memory Access (DMA) · 8 min · plays in your browser</span>
+              </span>
+              <span class="u-open">Watch video →</span>
             </a>
             <!-- Case-study slot (Unit 5 only) — an extra fourth card, like Unit 3's
                  simulator. The in-class case-study test: students read a real-life
